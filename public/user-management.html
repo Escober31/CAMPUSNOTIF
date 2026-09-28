@@ -104,7 +104,7 @@
               <h3>Real-Time Sign-in Activity</h3>
               <p class="text-muted text-sm">Chronological record of recent user sign-ins</p>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="renderLogs()">🔄 Refresh</button>
+            <button class="btn btn-secondary btn-sm" onclick="refreshLogs(this)" id="btnRefreshLogs"><span class="refresh-icon">🔄</span> Refresh</button>
           </div>
           <div style="overflow-x:auto;">
             <table class="data-table">
@@ -335,6 +335,24 @@
       } else {
         UI.toast('Failed to delete user.', 'error');
       }
+    }
+
+    function refreshLogs(btn) {
+      // Add spinning animation to button
+      btn.classList.add('btn-refreshing');
+      btn.disabled = true;
+
+      // Simulate a brief loading delay for visual feedback
+      setTimeout(() => {
+        renderLogs();
+        renderUsers();
+        updateStats();
+
+        btn.classList.remove('btn-refreshing');
+        btn.disabled = false;
+
+        UI.toast('Sign-in logs refreshed successfully!', 'success');
+      }, 600);
     }
   </script>
 </body>

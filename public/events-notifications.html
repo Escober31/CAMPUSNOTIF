@@ -186,6 +186,25 @@
       renderEvents();
       renderNotifications();
       updateNotifBadge();
+
+      // Handle highlight from dashboard search
+      const params = new URLSearchParams(window.location.search);
+      const highlightId = params.get('highlight');
+      if (highlightId) {
+        setTimeout(() => {
+          const el = document.getElementById('event-' + highlightId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.outline = '2px solid var(--primary-500)';
+            el.style.outlineOffset = '4px';
+            el.style.transition = 'outline-color 2s ease';
+            setTimeout(() => {
+              el.style.outlineColor = 'transparent';
+              setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; }, 2000);
+            }, 2000);
+          }
+        }, 300);
+      }
     });
 
     function switchTab(tab) {

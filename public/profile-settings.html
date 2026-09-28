@@ -178,15 +178,15 @@
           <div class="form-group">
             <label class="form-label">Theme</label>
             <div class="role-selector" style="max-width:400px;">
-              <div class="role-option selected" onclick="selectTheme(this, 'dark')">
+              <div class="role-option" id="theme-dark" onclick="setTheme('dark')">
                 <div class="role-icon">🌙</div>
                 <div class="role-name">Dark</div>
                 <div class="role-desc">Easy on the eyes</div>
               </div>
-              <div class="role-option" onclick="selectTheme(this, 'light')" style="opacity:0.5; cursor:not-allowed;">
+              <div class="role-option" id="theme-light" onclick="setTheme('light')">
                 <div class="role-icon">☀️</div>
                 <div class="role-name">Light</div>
-                <div class="role-desc">Coming soon</div>
+                <div class="role-desc">Bright & clean</div>
               </div>
             </div>
           </div>
@@ -194,11 +194,11 @@
           <div class="form-group" style="margin-top:var(--space-xl);">
             <label class="form-label">Accent Color</label>
             <div class="flex gap-md" style="margin-top:var(--space-sm);">
-              <button class="btn btn-icon" style="background:var(--gradient-primary); width:36px; height:36px; border-radius:50%; border:2px solid white;" title="Indigo" onclick="UI.toast('Accent color set to Indigo','success')"></button>
-              <button class="btn btn-icon" style="background:linear-gradient(135deg, #22d3ee, #06b6d4); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Cyan" onclick="UI.toast('Accent color coming soon','info')"></button>
-              <button class="btn btn-icon" style="background:linear-gradient(135deg, #34d399, #059669); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Emerald" onclick="UI.toast('Accent color coming soon','info')"></button>
-              <button class="btn btn-icon" style="background:linear-gradient(135deg, #fb7185, #e11d48); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Rose" onclick="UI.toast('Accent color coming soon','info')"></button>
-              <button class="btn btn-icon" style="background:linear-gradient(135deg, #fbbf24, #d97706); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Amber" onclick="UI.toast('Accent color coming soon','info')"></button>
+              <button class="btn btn-icon accent-btn" data-accent="indigo" style="background:var(--gradient-primary);" title="Indigo" onclick="setAccentColor('indigo', this)"></button>
+              <button class="btn btn-icon accent-btn" data-accent="cyan" style="background:linear-gradient(135deg, #22d3ee, #06b6d4);" title="Cyan" onclick="setAccentColor('cyan', this)"></button>
+              <button class="btn btn-icon accent-btn" data-accent="emerald" style="background:linear-gradient(135deg, #34d399, #059669);" title="Emerald" onclick="setAccentColor('emerald', this)"></button>
+              <button class="btn btn-icon accent-btn" data-accent="rose" style="background:linear-gradient(135deg, #fb7185, #e11d48);" title="Rose" onclick="setAccentColor('rose', this)"></button>
+              <button class="btn btn-icon accent-btn" data-accent="amber" style="background:linear-gradient(135deg, #fbbf24, #d97706);" title="Amber" onclick="setAccentColor('amber', this)"></button>
             </div>
           </div>
 
@@ -208,7 +208,7 @@
               <div class="text-muted text-sm">Enable smooth transitions and micro-animations</div>
             </div>
             <label class="toggle">
-              <input type="checkbox" checked id="settingAnimations">
+              <input type="checkbox" checked id="settingAnimations" onchange="toggleAnimations(this.checked)">
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -219,7 +219,7 @@
               <div class="text-muted text-sm">Reduce spacing for more content on screen</div>
             </div>
             <label class="toggle">
-              <input type="checkbox" id="settingCompact">
+              <input type="checkbox" id="settingCompact" onchange="toggleCompact(this.checked)">
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -406,14 +406,61 @@
     }
 
     function selectTheme(el, theme) {
-      if (theme === 'light') {
-        UI.toast('Light theme coming soon!', 'info');
-        return;
-      }
-      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-      UI.toast('Theme applied!', 'success');
+      setTheme(theme);
     }
+
+    function setTheme(theme) {
+      AppearancePrefs.update('theme', theme);
+      // Update UI selection
+      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+      const selected = document.getElementById('theme-' + theme);
+      if (selected) selected.classList.add('selected');
+      UI.toast(`${theme === 'light' ? '☀️ Light' : '🌙 Dark'} theme applied!`, 'success');
+    }
+
+    function setAccentColor(color, btn) {
+      AppearancePrefs.update('accent', color);
+      // Update active button ring
+      document.querySelectorAll('.accent-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const labels = { indigo: 'Indigo', cyan: 'Cyan', emerald: 'Emerald', rose: 'Rose', amber: 'Amber' };
+      UI.toast(`Accent color set to ${labels[color] || color}!`, 'success');
+    }
+
+    function toggleAnimations(enabled) {
+      AppearancePrefs.update('animations', enabled);
+      UI.toast(enabled ? '✨ Animations enabled!' : 'Animations disabled.', enabled ? 'success' : 'info');
+    }
+
+    function toggleCompact(enabled) {
+      AppearancePrefs.update('compact', enabled);
+      UI.toast(enabled ? '🔍 Compact mode enabled!' : 'Compact mode disabled.', enabled ? 'success' : 'info');
+    }
+
+    // Initialize Appearance tab with saved preferences
+    function initAppearanceTab() {
+      const prefs = AppearancePrefs.get();
+
+      // Theme selector
+      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+      const themeEl = document.getElementById('theme-' + prefs.theme);
+      if (themeEl) themeEl.classList.add('selected');
+
+      // Accent color buttons
+      document.querySelectorAll('.accent-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-accent') === prefs.accent);
+      });
+
+      // Toggles
+      const animToggle = document.getElementById('settingAnimations');
+      if (animToggle) animToggle.checked = prefs.animations;
+
+      const compactToggle = document.getElementById('settingCompact');
+      if (compactToggle) compactToggle.checked = prefs.compact;
+    }
+
+    // Run after DOM is ready (after initPage already ran)
+    initAppearanceTab();
 
     function changePassword(e) {
       e.preventDefault();

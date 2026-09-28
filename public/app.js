@@ -682,10 +682,61 @@ function applyRole() {
   }
 }
 
+// ─── Appearance Preferences ───
+const AppearancePrefs = {
+  _key: 'campusnotify_appearance',
+
+  getDefaults() {
+    return { theme: 'dark', accent: 'indigo', animations: true, compact: false };
+  },
+
+  get() {
+    try {
+      const stored = localStorage.getItem(this._key);
+      if (stored) return { ...this.getDefaults(), ...JSON.parse(stored) };
+    } catch (e) {}
+    return this.getDefaults();
+  },
+
+  save(prefs) {
+    localStorage.setItem(this._key, JSON.stringify(prefs));
+  },
+
+  update(key, value) {
+    const prefs = this.get();
+    prefs[key] = value;
+    this.save(prefs);
+    this.apply(prefs);
+    return prefs;
+  },
+
+  apply(prefs) {
+    if (!prefs) prefs = this.get();
+
+    // Theme
+    document.body.classList.toggle('light-theme', prefs.theme === 'light');
+
+    // Accent color — remove all accent classes, then add the active one
+    document.body.classList.remove('accent-cyan', 'accent-emerald', 'accent-rose', 'accent-amber');
+    if (prefs.accent && prefs.accent !== 'indigo') {
+      document.body.classList.add('accent-' + prefs.accent);
+    }
+
+    // Animations
+    document.body.classList.toggle('no-animations', !prefs.animations);
+
+    // Compact mode
+    document.body.classList.toggle('compact-mode', !!prefs.compact);
+  }
+};
+
 // ─── Page Init ───
 function initPage(activePage) {
   if (!Auth.requireAuth()) return false;
   applyRole();
+
+  // Apply saved appearance preferences
+  AppearancePrefs.apply();
 
   // Inject sidebar
   const sidebarTarget = document.getElementById('app-sidebar');
@@ -695,3 +746,4 @@ function initPage(activePage) {
   }
   return true;
 }
+
