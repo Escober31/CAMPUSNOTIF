@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify Events & Notifications — Upcoming campus events and your notification inbox.">
+  <title>Events & Notifications — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>📅 <span class="text-gradient">Events & Notifications</span></h1>
+            <p class="page-subtitle">Upcoming campus events and your real-time alerts center.</p>
+          </div>
+          <div class="admin-only" id="adminEventControls">
+            <button class="btn btn-primary" onclick="openCreateEventModal()" id="btnCreateEvent">
+              ✚ New Event
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="pageTabs">
+        <button class="tab-btn active" data-tab="events" onclick="switchTab('events')" id="tab-events">📅 Events</button>
+        <button class="tab-btn" data-tab="notifications" onclick="switchTab('notifications')" id="tab-notifications">
+          🔔 Notifications
+          <span id="notifBadge" class="badge badge-danger" style="margin-left:6px; display:none;">0</span>
+        </button>
+      </div>
+
+      <!-- Events Tab -->
+      <div class="tab-content active" id="content-events">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-bar" style="flex:1; max-width:360px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search events..." id="eventSearch" oninput="filterEvents()">
+          </div>
+          <select class="form-select" style="width:160px;" id="eventCategory" onchange="filterEvents()">
+            <option value="">All Categories</option>
+            <option value="Academic">Academic</option>
+            <option value="Sports">Sports</option>
+            <option value="Career">Career</option>
+            <option value="Student Life">Student Life</option>
+          </select>
+        </div>
+
+        <div id="eventsList" class="flex flex-col gap-lg stagger"></div>
+
+        <div id="eventsEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">📅</div>
+          <h3>No events found</h3>
+          <p>Try adjusting your search criteria or category filter.</p>
+        </div>
+      </div>
+
+      <!-- Notifications Tab -->
+      <div class="tab-content" id="content-notifications">
+        <div class="flex items-center justify-between mb-lg">
+          <p class="text-secondary text-sm"><span id="unreadCount">0</span> unread notifications</p>
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()" id="btnMarkAllRead">✓ Mark all as read</button>
+        </div>
+        <div id="notificationsList" class="flex flex-col gap-sm"></div>
+
+        <div id="notifsEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">🔔</div>
+          <h3>All caught up!</h3>
+          <p>You have no notifications at this time.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Event Create/Edit Modal (Admin only) -->
+  <div class="modal-overlay" id="eventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="eventModalTitle">✚ Create New Event</h3>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('eventModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm" onsubmit="saveEvent(event)">
+          <input type="hidden" id="editEventId">
+
+          <div class="form-group">
+            <label class="form-label" for="evTitle">Event Title</label>
+            <input type="text" id="evTitle" class="form-input" placeholder="e.g. Annual Hackathon 2026" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="evDesc">Description</label>
+            <textarea id="evDesc" class="form-textarea" placeholder="Detailed event description..." required></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="evCategory">Category</label>
+              <select id="evCategory" class="form-select" required>
+                <option value="Academic">Academic</option>
+                <option value="Sports">Sports</option>
+                <option value="Career">Career</option>
+                <option value="Student Life">Student Life</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="evDate">Date</label>
+              <input type="date" id="evDate" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="evTime">Time</label>
+              <input type="text" id="evTime" class="form-input" placeholder="e.g. 2:00 PM – 5:00 PM" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="evLocation">Location</label>
+              <input type="text" id="evLocation" class="form-input" placeholder="e.g. Auditorium A, Building 3" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('eventModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="document.getElementById('eventForm').requestSubmit()" id="eventSubmitBtn">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Event Confirmation Modal -->
+  <div class="modal-overlay confirm-dialog" id="deleteEventModal">
+    <div class="modal">
+      <div class="modal-body" style="text-align:center; padding:var(--space-2xl);">
+        <div class="confirm-icon">🗑️</div>
+        <h3 style="margin-bottom:var(--space-sm);">Delete Event?</h3>
+        <p>This action cannot be undone. The event will be permanently removed for all students.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="btn btn-secondary" onclick="UI.closeModal('deleteEventModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDeleteEvent()" id="confirmDeleteEventBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read Event Modal (For students and admin) -->
+  <div class="modal-overlay" id="readEventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="tag" id="readEventCategory">Academic</span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readEventModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readEventTitle" style="margin-bottom: var(--space-md);"></h2>
+        <div style="background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-md); margin-bottom:var(--space-lg); display:flex; flex-wrap:wrap; gap:var(--space-md);">
+          <span class="text-sm text-secondary" id="readEventDate">📅 Date</span>
+          <span class="text-sm text-secondary" id="readEventTime">🕐 Time</span>
+          <span class="text-sm text-secondary" id="readEventLocation">📍 Location</span>
+        </div>
+        <div class="text-secondary" id="readEventDesc" style="line-height:1.7; font-size:0.95rem; white-space:pre-wrap;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="UI.toast('Marked as interested! You will be reminded.', 'success'); UI.closeModal('readEventModal');">Interested 👍</button>
+        <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let deleteTargetEventId = null;
+    let notificationsData = [...NOTIFICATIONS];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('events')) return;
+      renderEvents();
+      renderNotifications();
+      updateNotifBadge();
+    });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      document.getElementById(`content-${tab}`).classList.add('active');
+    }
+
+    // ─── Events Logic ───
+    function renderEvents(data) {
+      const events = data || EventsStore.getAll();
+      const list = document.getElementById('eventsList');
+      const empty = document.getElementById('eventsEmpty');
+      const isAdmin = Auth.getRole() === 'admin';
+
+      if (events.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      // Sort events by date ascending
+      const sorted = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      list.innerHTML = sorted.map(ev => {
+        const d = new Date(ev.date + 'T00:00:00');
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-US', { month: 'short' });
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+        return `
+          <div class="event-card animate-slide-up" id="event-${ev.id}">
+            <div class="event-date-badge">
+              <span class="day">${day}</span>
+              <span class="month">${month}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="flex items-center justify-between" style="margin-bottom:var(--space-sm);">
+                <div class="flex items-center gap-md" style="flex-wrap:wrap;">
+                  <span class="tag">${ev.category}</span>
+                  <span class="text-muted text-sm">${dayName}</span>
+                </div>
+                ${isAdmin ? `
+                  <div class="flex gap-sm">
+                    <button class="btn btn-ghost btn-icon sm" onclick="openEditEventModal(${ev.id})" title="Edit Event">✏️</button>
+                    <button class="btn btn-ghost btn-icon sm" onclick="openDeleteEventModal(${ev.id})" title="Delete Event">🗑️</button>
+                  </div>
+                ` : `
+                  <button class="btn btn-ghost btn-sm" onclick="readEvent(${ev.id})" style="color:var(--primary-400);">Read Details →</button>
+                `}
+              </div>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readEvent(${ev.id})">${ev.title}</h3>
+              <p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${ev.description}</p>
+              <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
+                <span class="text-muted text-sm">📍 ${ev.location}</span>
+                <span class="text-muted text-sm">🕐 ${ev.time}</span>
+                <span class="text-muted text-sm">👥 ${(ev.attendees || 0).toLocaleString()} interested</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterEvents() {
+      const search = document.getElementById('eventSearch').value.toLowerCase();
+      const category = document.getElementById('eventCategory').value;
+
+      let events = EventsStore.getAll();
+
+      if (search) {
+        events = events.filter(ev =>
+          ev.title.toLowerCase().includes(search) || ev.description.toLowerCase().includes(search) || ev.location.toLowerCase().includes(search)
+        );
+      }
+      if (category) {
+        events = events.filter(ev => ev.category === category);
+      }
+
+      renderEvents(events);
+    }
+
+    // Read full event details (available to student and admin)
+    function readEvent(id) {
+      const ev = EventsStore.getById(id);
+      if (!ev) return;
+      document.getElementById('readEventCategory').textContent = ev.category;
+      document.getElementById('readEventTitle').textContent = ev.title;
+      document.getElementById('readEventDate').textContent = '📅 ' + UI.formatDate(ev.date);
+      document.getElementById('readEventTime').textContent = '🕐 ' + ev.time;
+      document.getElementById('readEventLocation').textContent = '📍 ' + ev.location;
+      document.getElementById('readEventDesc').textContent = ev.description;
+      UI.openModal('readEventModal');
+    }
+
+    // Admin: Open Create Modal
+    function openCreateEventModal() {
+      document.getElementById('eventModalTitle').textContent = '✚ Create New Event';
+      document.getElementById('eventSubmitBtn').textContent = 'Publish Event';
+      document.getElementById('eventForm').reset();
+      document.getElementById('editEventId').value = '';
+      UI.openModal('eventModal');
+    }
+
+    // Admin: Open Edit Modal
+    function openEditEventModal(id) {
+      const ev = EventsStore.getById(id);
+      if (!ev) return;
+      document.getElementById('eventModalTitle').textContent = '✏️ Edit Event';
+      document.getElementById('eventSubmitBtn').textContent = 'Save Changes';
+      document.getElementById('editEventId').value = ev.id;
+      document.getElementById('evTitle').value = ev.title;
+      document.getElementById('evDesc').value = ev.description;
+      document.getElementById('evCategory').value = ev.category;
+      document.getElementById('evDate').value = ev.date;
+      document.getElementById('evTime').value = ev.time;
+      document.getElementById('evLocation').value = ev.location;
+      UI.openModal('eventModal');
+    }
+
+    // Admin: Save or Update Event
+    function saveEvent(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editEventId').value;
+      const data = {
+        title: document.getElementById('evTitle').value.trim(),
+        description: document.getElementById('evDesc').value.trim(),
+        category: document.getElementById('evCategory').value,
+        date: document.getElementById('evDate').value,
+        time: document.getElementById('evTime').value.trim(),
+        location: document.getElementById('evLocation').value.trim()
+      };
+
+      if (editId) {
+        EventsStore.update(parseInt(editId), data);
+        UI.toast('Event updated successfully!', 'success');
+      } else {
+        EventsStore.add(data);
+        UI.toast('Event created successfully!', 'success');
+      }
+
+      UI.closeModal('eventModal');
+      renderEvents();
+    }
+
+    // Admin: Delete Event
+    function openDeleteEventModal(id) {
+      deleteTargetEventId = id;
+      UI.openModal('deleteEventModal');
+    }
+
+    function confirmDeleteEvent() {
+      if (deleteTargetEventId) {
+        EventsStore.delete(deleteTargetEventId);
+        UI.toast('Event deleted successfully.', 'warning');
+        deleteTargetEventId = null;
+        UI.closeModal('deleteEventModal');
+        renderEvents();
+      }
+    }
+
+    // ─── Notifications Logic ───
+    function renderNotifications() {
+      const list = document.getElementById('notificationsList');
+      const empty = document.getElementById('notifsEmpty');
+
+      if (notificationsData.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      list.innerHTML = notificationsData.map(n => `
+        <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="markRead(${n.id})" style="cursor:pointer;">
+          <div class="notification-dot ${n.type}">
+            ${n.icon}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div class="font-semibold text-sm" style="margin-bottom:2px;">${n.title}</div>
+            <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px;">${n.message}</div>
+            <div class="text-muted" style="font-size:0.75rem;">${n.time}</div>
+          </div>
+          ${!n.read ? '<div style="width:8px; height:8px; border-radius:50%; background:var(--primary-500); flex-shrink:0;"></div>' : ''}
+        </div>
+      `).join('');
+
+      updateNotifBadge();
+    }
+
+    function markRead(id) {
+      const notif = notificationsData.find(n => n.id === id);
+      if (notif && !notif.read) {
+        notif.read = true;
+        renderNotifications();
+      }
+    }
+
+    function markAllRead() {
+      notificationsData.forEach(n => n.read = true);
+      renderNotifications();
+      UI.toast('All notifications marked as read.', 'success');
+    }
+
+    function updateNotifBadge() {
+      const unread = notificationsData.filter(n => !n.read).length;
+      document.getElementById('unreadCount').textContent = unread;
+      const badge = document.getElementById('notifBadge');
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

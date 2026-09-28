@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify Profile & Settings — Manage your account, preferences, and notification settings.">
+  <title>Profile & Settings — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <h1>👤 <span class="text-gradient">Profile & Settings</span></h1>
+        <p class="page-subtitle">Manage your account information and preferences.</p>
+      </div>
+
+      <!-- Profile Header Card -->
+      <div class="profile-header animate-slide-up" id="profileHeader">
+        <div class="profile-avatar-lg" id="profileAvatar">AR</div>
+        <div class="profile-info">
+          <h2 id="profileName">Alex Rivera</h2>
+          <p class="profile-role" id="profileRole">🎓 Student — Computer Science</p>
+          <p class="profile-email" id="profileEmail">✉️ alex.rivera@campus.edu</p>
+          <div class="flex gap-md mt-md">
+            <span class="badge badge-primary" id="profileIdBadge">ID: STU-2024-0042</span>
+            <span class="badge badge-success">Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tabs -->
+      <div class="tabs" id="settingsTabs">
+        <button class="tab-btn active" data-tab="personal" onclick="switchSettingsTab('personal')">Personal Info</button>
+        <button class="tab-btn" data-tab="notifications" onclick="switchSettingsTab('notifications')">Notifications</button>
+        <button class="tab-btn" data-tab="appearance" onclick="switchSettingsTab('appearance')">Appearance</button>
+        <button class="tab-btn" data-tab="security" onclick="switchSettingsTab('security')">Security</button>
+      </div>
+
+      <!-- Personal Info Tab -->
+      <div class="tab-content active" id="content-personal">
+        <div class="settings-section animate-slide-up">
+          <h3>Personal Information</h3>
+          <form id="personalForm" onsubmit="savePersonalInfo(event)">
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="firstName">First Name</label>
+                <input type="text" id="firstName" class="form-input" value="Alex">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="lastName">Last Name</label>
+                <input type="text" id="lastName" class="form-input" value="Rivera">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="emailField">Email Address</label>
+                <input type="email" id="emailField" class="form-input" value="alex.rivera@campus.edu" disabled style="opacity:0.6;">
+                <small class="text-muted" style="font-size:0.75rem;">Contact admin to change email.</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="phone">Phone Number</label>
+                <input type="tel" id="phone" class="form-input" placeholder="+1 (555) 000-0000">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="department">Department</label>
+                <select id="department" class="form-select">
+                  <option value="Computer Science" selected>Computer Science</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Business">Business</option>
+                  <option value="Arts & Sciences">Arts & Sciences</option>
+                  <option value="Medicine">Medicine</option>
+                  <option value="Law">Law</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="year">Year</label>
+                <select id="year" class="form-select">
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year" selected>3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                  <option value="Graduate">Graduate</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bio">Bio</label>
+              <textarea id="bio" class="form-textarea" placeholder="Tell us about yourself..." style="min-height:80px;">Computer Science student interested in AI and web development.</textarea>
+            </div>
+            <div class="flex justify-between items-center" style="margin-top:var(--space-lg);">
+              <span></span>
+              <button type="submit" class="btn btn-primary" id="savePersonalBtn">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Notifications Tab -->
+      <div class="tab-content" id="content-notifications">
+        <div class="settings-section animate-slide-up">
+          <h3>Notification Preferences</h3>
+          <p class="text-secondary text-sm mb-lg">Choose how and when you'd like to be notified.</p>
+
+          <div class="toggle-wrapper">
+            <div>
+              <div class="font-semibold text-sm">📢 Announcement Alerts</div>
+              <div class="text-muted text-sm">Get notified when new announcements are posted</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked id="notifAnnouncements">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-wrapper" style="border-top:1px solid var(--border-subtle); padding-top:var(--space-md);">
+            <div>
+              <div class="font-semibold text-sm">📅 Event Reminders</div>
+              <div class="text-muted text-sm">Receive reminders before upcoming events</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked id="notifEvents">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-wrapper" style="border-top:1px solid var(--border-subtle); padding-top:var(--space-md);">
+            <div>
+              <div class="font-semibold text-sm">🔴 Urgent Notifications</div>
+              <div class="text-muted text-sm">Always receive urgent priority announcements</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked disabled id="notifUrgent">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-wrapper" style="border-top:1px solid var(--border-subtle); padding-top:var(--space-md);">
+            <div>
+              <div class="font-semibold text-sm">✉️ Email Notifications</div>
+              <div class="text-muted text-sm">Receive a daily email digest of campus updates</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="notifEmail">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-wrapper" style="border-top:1px solid var(--border-subtle); padding-top:var(--space-md);">
+            <div>
+              <div class="font-semibold text-sm">📱 Push Notifications</div>
+              <div class="text-muted text-sm">Enable browser push notifications</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked id="notifPush">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="flex justify-between items-center" style="margin-top:var(--space-xl);">
+            <span></span>
+            <button class="btn btn-primary" onclick="saveNotifPrefs()">Save Preferences</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance Tab -->
+      <div class="tab-content" id="content-appearance">
+        <div class="settings-section animate-slide-up">
+          <h3>Appearance</h3>
+          <p class="text-secondary text-sm mb-lg">Customize the look and feel of your experience.</p>
+
+          <div class="form-group">
+            <label class="form-label">Theme</label>
+            <div class="role-selector" style="max-width:400px;">
+              <div class="role-option selected" onclick="selectTheme(this, 'dark')">
+                <div class="role-icon">🌙</div>
+                <div class="role-name">Dark</div>
+                <div class="role-desc">Easy on the eyes</div>
+              </div>
+              <div class="role-option" onclick="selectTheme(this, 'light')" style="opacity:0.5; cursor:not-allowed;">
+                <div class="role-icon">☀️</div>
+                <div class="role-name">Light</div>
+                <div class="role-desc">Coming soon</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:var(--space-xl);">
+            <label class="form-label">Accent Color</label>
+            <div class="flex gap-md" style="margin-top:var(--space-sm);">
+              <button class="btn btn-icon" style="background:var(--gradient-primary); width:36px; height:36px; border-radius:50%; border:2px solid white;" title="Indigo" onclick="UI.toast('Accent color set to Indigo','success')"></button>
+              <button class="btn btn-icon" style="background:linear-gradient(135deg, #22d3ee, #06b6d4); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Cyan" onclick="UI.toast('Accent color coming soon','info')"></button>
+              <button class="btn btn-icon" style="background:linear-gradient(135deg, #34d399, #059669); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Emerald" onclick="UI.toast('Accent color coming soon','info')"></button>
+              <button class="btn btn-icon" style="background:linear-gradient(135deg, #fb7185, #e11d48); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Rose" onclick="UI.toast('Accent color coming soon','info')"></button>
+              <button class="btn btn-icon" style="background:linear-gradient(135deg, #fbbf24, #d97706); width:36px; height:36px; border-radius:50%; border:2px solid transparent;" title="Amber" onclick="UI.toast('Accent color coming soon','info')"></button>
+            </div>
+          </div>
+
+          <div class="toggle-wrapper" style="margin-top:var(--space-xl); border-top:1px solid var(--border-subtle); padding-top:var(--space-lg);">
+            <div>
+              <div class="font-semibold text-sm">✨ Animations</div>
+              <div class="text-muted text-sm">Enable smooth transitions and micro-animations</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" checked id="settingAnimations">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-wrapper" style="border-top:1px solid var(--border-subtle); padding-top:var(--space-md);">
+            <div>
+              <div class="font-semibold text-sm">🔍 Compact Mode</div>
+              <div class="text-muted text-sm">Reduce spacing for more content on screen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="settingCompact">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Tab -->
+      <div class="tab-content" id="content-security">
+        <div class="settings-section animate-slide-up">
+          <h3>Change Password</h3>
+          <form onsubmit="changePassword(event)">
+            <div class="form-group">
+              <label class="form-label" for="currentPassword">Current Password</label>
+              <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password">
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="newPassword">New Password</label>
+                <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" class="form-input" placeholder="Re-enter new password">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+          </form>
+        </div>
+
+        <div class="settings-section animate-slide-up" style="margin-top:var(--space-lg);">
+          <h3>Sessions & Security</h3>
+
+          <div class="toggle-wrapper">
+            <div>
+              <div class="font-semibold text-sm">🔐 Two-Factor Authentication</div>
+              <div class="text-muted text-sm">Add an extra layer of security to your account</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="setting2FA">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div style="margin-top:var(--space-xl); padding-top:var(--space-lg); border-top:1px solid var(--border-subtle);">
+            <h4 class="text-secondary mb-md">Active Sessions</h4>
+            <div class="notification-item">
+              <div class="notification-dot success">💻</div>
+              <div style="flex:1;">
+                <div class="font-semibold text-sm">Current Browser Session</div>
+                <div class="text-muted" style="font-size:0.78rem;">Windows · Chrome · Last active: Now</div>
+              </div>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          <div style="margin-top:var(--space-xl); padding-top:var(--space-lg); border-top:1px solid var(--border-subtle);">
+            <h4 class="text-secondary mb-md" style="color:var(--accent-rose);">Danger Zone</h4>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-sm">Sign Out</div>
+                <div class="text-muted text-sm">End your current session and return to login</div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="Auth.logout()">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('profile')) return;
+
+      const user = Auth.getUser();
+      const role = Auth.getRole();
+
+      // Populate profile header
+      document.getElementById('profileAvatar').textContent = user.avatar;
+      document.getElementById('profileName').textContent = user.name;
+      document.getElementById('profileEmail').textContent = '✉️ ' + user.email;
+      document.getElementById('profileIdBadge').textContent = 'ID: ' + user.id;
+
+      if (role === 'admin') {
+        document.getElementById('profileRole').textContent = '🛡️ Admin/Staff — ' + (user.title || user.department);
+      } else {
+        document.getElementById('profileRole').textContent = '🎓 Student — ' + user.department + (user.year ? ' · ' + user.year : '');
+      }
+
+      // Populate personal form
+      const names = (user.name || '').trim().split(/\s+/);
+      const titles = ['dr.', 'dr', 'prof.', 'prof', 'mr.', 'mr', 'ms.', 'ms', 'mrs.', 'mrs', 'dean'];
+      if (names.length > 2 && titles.includes(names[0].toLowerCase())) {
+        document.getElementById('firstName').value = names[0];
+        document.getElementById('lastName').value = names.slice(1).join(' ');
+      } else if (names.length >= 2) {
+        document.getElementById('firstName').value = names[0];
+        document.getElementById('lastName').value = names.slice(1).join(' ');
+      } else {
+        document.getElementById('firstName').value = names[0] || '';
+        document.getElementById('lastName').value = '';
+      }
+
+      document.getElementById('emailField').value = user.email;
+      if (user.phone) document.getElementById('phone').value = user.phone;
+      if (user.bio) document.getElementById('bio').value = user.bio;
+
+      if (user.department) {
+        const deptSelect = document.getElementById('department');
+        for (let opt of deptSelect.options) {
+          if (opt.value === user.department) { opt.selected = true; break; }
+        }
+      }
+
+      if (role === 'admin') {
+        const yearGroup = document.getElementById('year')?.closest('.form-group');
+        if (yearGroup) {
+          const yearSelect = document.getElementById('year');
+          if (yearSelect) {
+            yearSelect.innerHTML = '<option value="Staff" selected>Staff / Faculty (Permanent)</option>';
+            yearSelect.disabled = true;
+          }
+        }
+      } else if (user.year) {
+        const yearSelect = document.getElementById('year');
+        if (yearSelect) {
+          for (let opt of yearSelect.options) {
+            if (opt.value === user.year) { opt.selected = true; break; }
+          }
+        }
+      }
+    });
+
+    function switchSettingsTab(tab) {
+      document.querySelectorAll('#settingsTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`#settingsTabs [data-tab="${tab}"]`).classList.add('active');
+      document.getElementById(`content-${tab}`).classList.add('active');
+    }
+
+    function savePersonalInfo(e) {
+      e.preventDefault();
+      const fn = document.getElementById('firstName').value.trim();
+      const ln = document.getElementById('lastName').value.trim();
+      const newFullName = (fn + ' ' + ln).trim();
+      const dept = document.getElementById('department').value;
+      const yr = document.getElementById('year')?.value || '';
+      const phone = document.getElementById('phone').value.trim();
+      const bio = document.getElementById('bio').value.trim();
+
+      const updated = Auth.updateUser({
+        name: newFullName,
+        avatar: Auth.getInitials(newFullName),
+        department: dept,
+        year: yr,
+        phone: phone,
+        bio: bio
+      });
+
+      if (updated) {
+        // Update header & sidebar live
+        document.getElementById('profileAvatar').textContent = updated.avatar;
+        document.getElementById('profileName').textContent = updated.name;
+        const role = Auth.getRole();
+        if (role === 'admin') {
+          document.getElementById('profileRole').textContent = '🛡️ Admin/Staff — ' + (updated.title || updated.department);
+        } else {
+          document.getElementById('profileRole').textContent = '🎓 Student — ' + updated.department;
+        }
+
+        const sidebarName = document.querySelector('.sidebar-user .user-name');
+        const sidebarAvatar = document.querySelector('.sidebar-user .user-avatar');
+        if (sidebarName) sidebarName.textContent = updated.name;
+        if (sidebarAvatar) sidebarAvatar.textContent = updated.avatar;
+      }
+
+      UI.toast('Personal information saved successfully!', 'success');
+    }
+
+    function saveNotifPrefs() {
+      UI.toast('Notification preferences saved!', 'success');
+    }
+
+    function selectTheme(el, theme) {
+      if (theme === 'light') {
+        UI.toast('Light theme coming soon!', 'info');
+        return;
+      }
+      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      UI.toast('Theme applied!', 'success');
+    }
+
+    function changePassword(e) {
+      e.preventDefault();
+      const newPw = document.getElementById('newPassword').value;
+      const confirmPw = document.getElementById('confirmPassword').value;
+
+      if (!newPw || !confirmPw) {
+        UI.toast('Please fill in all password fields.', 'warning');
+        return;
+      }
+      if (newPw !== confirmPw) {
+        UI.toast('Passwords do not match!', 'error');
+        return;
+      }
+      UI.toast('Password updated successfully!', 'success');
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    }
+  </script>
+</body>
+</html>

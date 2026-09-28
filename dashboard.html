@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify Dashboard — Overview of announcements, events, and campus activity at a glance.">
+  <title>Dashboard — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>Good <span class="text-gradient" id="greeting">afternoon</span>, <span id="userName">Student</span> 👋</h1>
+            <p class="page-subtitle">Here's what's happening on campus today.</p>
+          </div>
+          <div class="flex gap-md">
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Search anything..." id="dashSearch">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid stagger" id="statsGrid">
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon indigo">📢</div>
+          <div class="stat-value" id="statAnnouncements">0</div>
+          <div class="stat-label">Active Announcements</div>
+          <div class="stat-trend up">↑ 3 this week</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon cyan">📅</div>
+          <div class="stat-value" id="statEvents">5</div>
+          <div class="stat-label">Upcoming Events</div>
+          <div class="stat-trend up">↑ 2 new</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon amber">🔔</div>
+          <div class="stat-value" id="statNotifications">0</div>
+          <div class="stat-label">Unread Notifications</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon emerald">📌</div>
+          <div class="stat-value" id="statPinned">0</div>
+          <div class="stat-label">Pinned Items</div>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid-2">
+        <!-- Recent Announcements -->
+        <div class="card" style="transform:none;">
+          <div class="flex items-center justify-between mb-lg">
+            <h3>📢 Recent Announcements</h3>
+            <a href="announcements.html" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div id="recentAnnouncements" class="flex flex-col gap-md"></div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="card" style="transform:none;">
+          <div class="flex items-center justify-between mb-lg">
+            <h3>📅 Upcoming Events</h3>
+            <a href="events-notifications.html" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div id="upcomingEvents" class="flex flex-col gap-md"></div>
+        </div>
+      </div>
+
+      <!-- Admin Reports Section -->
+      <div class="admin-only-block mt-xl">
+        <div class="card" style="transform:none;">
+          <div class="flex items-center justify-between mb-lg">
+            <h3>📊 Quick Reports</h3>
+            <span class="badge badge-primary">Admin</span>
+          </div>
+          <div class="grid-3" style="margin-top: var(--space-lg);">
+            <div>
+              <h4 class="text-secondary mb-md text-sm">Announcements by Category</h4>
+              <div class="mini-chart" id="chartCategories"></div>
+            </div>
+            <div>
+              <h4 class="text-secondary mb-md text-sm">Priority Distribution</h4>
+              <div class="mini-chart" id="chartPriority"></div>
+            </div>
+            <div>
+              <h4 class="text-secondary mb-md text-sm">Weekly Activity</h4>
+              <div class="mini-chart" id="chartWeekly"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('dashboard')) return;
+
+      const user = Auth.getUser();
+      const announcements = AnnouncementsStore.getAll();
+
+      // Greeting
+      const hour = new Date().getHours();
+      let greet = 'morning';
+      if (hour >= 12 && hour < 17) greet = 'afternoon';
+      else if (hour >= 17) greet = 'evening';
+      document.getElementById('greeting').textContent = greet;
+      const nameParts = (user.name || '').trim().split(/\s+/);
+      let displayGreetingName = nameParts[0] || 'User';
+      if (['dr.', 'dr', 'prof.', 'prof', 'mr.', 'mr', 'ms.', 'ms', 'mrs.', 'mrs'].includes(nameParts[0].toLowerCase()) && nameParts.length > 1) {
+        displayGreetingName = nameParts.length > 2 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : nameParts[1];
+      }
+      document.getElementById('userName').textContent = displayGreetingName;
+
+      // Events
+      const allEvents = EventsStore.getAll();
+      document.getElementById('statEvents').textContent = allEvents.length;
+
+      // Stats
+      document.getElementById('statAnnouncements').textContent = announcements.length;
+      document.getElementById('statNotifications').textContent = NOTIFICATIONS.filter(n => !n.read).length;
+      document.getElementById('statPinned').textContent = announcements.filter(a => a.pinned).length;
+
+      // Recent Announcements (top 4)
+      const recentContainer = document.getElementById('recentAnnouncements');
+      const recent = announcements.slice(0, 4);
+      if (recent.length === 0) {
+        recentContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No announcements yet</h3>
+            <p>Check back later for updates.</p>
+          </div>`;
+      } else {
+        recentContainer.innerHTML = recent.map(a => `
+          <div class="notification-item ${a.pinned ? 'unread' : ''}" style="cursor:pointer;" onclick="window.location.href='announcements.html'">
+            <div class="notification-dot ${a.priority === 'urgent' ? 'alert' : a.priority === 'important' ? 'warning' : 'info'}">
+              ${a.priority === 'urgent' ? '🔴' : a.priority === 'important' ? '🟡' : '🔵'}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="font-semibold text-sm" style="margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.title}</div>
+              <div class="text-muted" style="font-size:0.78rem;">${a.author} · ${UI.formatDate(a.date)}</div>
+            </div>
+            ${a.pinned ? '<span class="badge badge-primary">Pinned</span>' : ''}
+          </div>
+        `).join('');
+      }
+
+      // Upcoming Events (top 3)
+      const eventsContainer = document.getElementById('upcomingEvents');
+      const upcomingEvents = allEvents.slice(0, 3);
+      eventsContainer.innerHTML = upcomingEvents.map(ev => {
+        const d = new Date(ev.date + 'T00:00:00');
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-US', { month: 'short' });
+        return `
+          <div class="event-card" style="padding:var(--space-lg);" onclick="window.location.href='events-notifications.html'">
+            <div class="event-date-badge" style="width:52px; height:58px;">
+              <span class="day" style="font-size:1.2rem;">${day}</span>
+              <span class="month" style="font-size:0.6rem;">${month}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="font-semibold text-sm" style="margin-bottom:4px;">${ev.title}</div>
+              <div class="text-muted" style="font-size:0.78rem;">📍 ${ev.location} · 🕐 ${ev.time}</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Admin Charts
+      if (Auth.getRole() === 'admin') {
+        renderCharts(announcements);
+      }
+    });
+
+    function renderCharts(announcements) {
+      // Category chart
+      const categories = {};
+      announcements.forEach(a => { categories[a.category] = (categories[a.category] || 0) + 1; });
+      const catChart = document.getElementById('chartCategories');
+      const maxCat = Math.max(...Object.values(categories), 1);
+      catChart.innerHTML = Object.entries(categories).map(([cat, count]) => `
+        <div class="bar" style="height: ${(count / maxCat) * 100}%;">
+          <span class="bar-label">${cat}</span>
+        </div>
+      `).join('');
+
+      // Priority chart
+      const priorities = { urgent: 0, important: 0, normal: 0 };
+      announcements.forEach(a => { priorities[a.priority] = (priorities[a.priority] || 0) + 1; });
+      const priChart = document.getElementById('chartPriority');
+      const maxPri = Math.max(...Object.values(priorities), 1);
+      const priColors = { urgent: 'var(--gradient-danger)', important: 'var(--gradient-warning)', normal: 'var(--gradient-accent)' };
+      priChart.innerHTML = Object.entries(priorities).map(([pri, count]) => `
+        <div class="bar" style="height: ${(count / maxPri) * 100}%; background: ${priColors[pri]};">
+          <span class="bar-label">${pri}</span>
+        </div>
+      `).join('');
+
+      // Weekly chart (mock)
+      const weekData = [3, 5, 2, 7, 4, 6, 3];
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weekChart = document.getElementById('chartWeekly');
+      const maxWeek = Math.max(...weekData);
+      weekChart.innerHTML = weekData.map((val, i) => `
+        <div class="bar" style="height: ${(val / maxWeek) * 100}%;">
+          <span class="bar-label">${days[i]}</span>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

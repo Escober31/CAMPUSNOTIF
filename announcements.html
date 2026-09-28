@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify Announcements — View, create, and manage school announcements.">
+  <title>Announcements — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>📢 <span class="text-gradient">Announcements</span></h1>
+            <p class="page-subtitle">Stay updated with the latest campus news and updates.</p>
+          </div>
+          <div class="admin-only">
+            <button class="btn btn-primary" onclick="openCreateModal()" id="btnCreateAnnouncement">
+              ✚ New Announcement
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar animate-fade-in">
+        <div class="search-bar" style="flex:1; max-width:360px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search announcements..." id="searchInput" oninput="filterAnnouncements()">
+        </div>
+        <select class="form-select" style="width:160px;" id="filterCategory" onchange="filterAnnouncements()">
+          <option value="">All Categories</option>
+          <option value="Academic">Academic</option>
+          <option value="Facility">Facility</option>
+          <option value="Student Life">Student Life</option>
+        </select>
+        <select class="form-select" style="width:140px;" id="filterPriority" onchange="filterAnnouncements()">
+          <option value="">All Priorities</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="important">🟡 Important</option>
+          <option value="normal">🔵 General</option>
+        </select>
+      </div>
+
+      <!-- Announcements List -->
+      <div id="announcementsList" class="flex flex-col gap-lg stagger"></div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No announcements found</h3>
+        <p>Try adjusting your search or filter criteria.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div class="modal-overlay" id="announcementModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Create Announcement</h3>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('announcementModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="announcementForm" onsubmit="saveAnnouncement(event)">
+          <input type="hidden" id="editId">
+
+          <div class="form-group">
+            <label class="form-label" for="annTitle">Title</label>
+            <input type="text" id="annTitle" class="form-input" placeholder="Enter announcement title" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="annBody">Content</label>
+            <textarea id="annBody" class="form-textarea" placeholder="Write your announcement..." required></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="annCategory">Category</label>
+              <select id="annCategory" class="form-select" required>
+                <option value="Academic">Academic</option>
+                <option value="Facility">Facility</option>
+                <option value="Student Life">Student Life</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="annPriority">Priority</label>
+              <select id="annPriority" class="form-select" required>
+                <option value="normal">🔵 General</option>
+                <option value="important">🟡 Important</option>
+                <option value="urgent">🔴 Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox-group">
+              <input type="checkbox" id="annPinned" class="form-checkbox">
+              <label for="annPinned" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">📌 Pin this announcement</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('announcementModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="document.getElementById('announcementForm').requestSubmit()" id="modalSubmitBtn">Publish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay confirm-dialog" id="deleteModal">
+    <div class="modal">
+      <div class="modal-body" style="text-align:center; padding:var(--space-2xl);">
+        <div class="confirm-icon">🗑️</div>
+        <h3 style="margin-bottom:var(--space-sm);">Delete Announcement?</h3>
+        <p>This action cannot be undone. The announcement will be permanently removed.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="btn btn-secondary" onclick="UI.closeModal('deleteModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read Announcement Detail Modal -->
+  <div class="modal-overlay" id="readAnnouncementModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span id="readAnnPriority"></span>
+          <span id="readAnnCategory"></span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readAnnouncementModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readAnnTitle" style="margin-bottom:var(--space-md);"></h2>
+        <div class="announcement-meta" style="margin-bottom:var(--space-lg); padding-bottom:var(--space-md); border-bottom:1px solid var(--border-subtle);">
+          <span id="readAnnAuthor"></span>
+          <span id="readAnnDate"></span>
+        </div>
+        <div id="readAnnBody" class="text-secondary" style="font-size:0.95rem; line-height:1.8; white-space:pre-wrap;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let deleteTargetId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('announcements')) return;
+      renderAnnouncements();
+    });
+
+    function renderAnnouncements(data) {
+      const announcements = data || AnnouncementsStore.getAll();
+      const list = document.getElementById('announcementsList');
+      const empty = document.getElementById('emptyState');
+      const isAdmin = Auth.getRole() === 'admin';
+
+      if (announcements.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      // Sort: pinned first, then by date
+      const sorted = [...announcements].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.date) - new Date(a.date);
+      });
+
+      list.innerHTML = sorted.map(a => `
+        <div class="announcement-card animate-slide-up" id="announcement-${a.id}">
+          <div class="card-priority ${a.priority}"></div>
+          <div class="announcement-header">
+            <div style="flex:1; min-width:0; padding-left: 12px;">
+              <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+                ${a.pinned ? '<span class="badge badge-primary">📌 Pinned</span>' : ''}
+                ${UI.priorityBadge(a.priority)}
+                ${UI.categoryBadge(a.category)}
+              </div>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.title}</h3>
+              <div class="announcement-body" style="cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.body}</div>
+              <div class="announcement-meta">
+                <span>✍️ ${a.author}</span>
+                <span>📅 ${UI.formatDate(a.date)}</span>
+                ${!isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="readAnnouncement(${a.id})" style="color:var(--primary-400); padding:2px 8px; font-size:0.75rem;">Read More →</button>` : ''}
+              </div>
+            </div>
+            ${isAdmin ? `
+              <div class="announcement-actions">
+                <button class="btn btn-ghost btn-icon sm" onclick="openEditModal(${a.id})" title="Edit">✏️</button>
+                <button class="btn btn-ghost btn-icon sm" onclick="openDeleteModal(${a.id})" title="Delete">🗑️</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function readAnnouncement(id) {
+      const a = AnnouncementsStore.getById(id);
+      if (!a) return;
+      document.getElementById('readAnnPriority').innerHTML = UI.priorityBadge(a.priority);
+      document.getElementById('readAnnCategory').innerHTML = UI.categoryBadge(a.category);
+      document.getElementById('readAnnTitle').textContent = a.title;
+      document.getElementById('readAnnAuthor').textContent = '✍️ ' + a.author;
+      document.getElementById('readAnnDate').textContent = '📅 ' + UI.formatDate(a.date);
+      document.getElementById('readAnnBody').textContent = a.body;
+      UI.openModal('readAnnouncementModal');
+    }
+
+    function filterAnnouncements() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const category = document.getElementById('filterCategory').value;
+      const priority = document.getElementById('filterPriority').value;
+
+      let announcements = AnnouncementsStore.getAll();
+
+      if (search) {
+        announcements = announcements.filter(a =>
+          a.title.toLowerCase().includes(search) || a.body.toLowerCase().includes(search)
+        );
+      }
+      if (category) {
+        announcements = announcements.filter(a => a.category === category);
+      }
+      if (priority) {
+        announcements = announcements.filter(a => a.priority === priority);
+      }
+
+      renderAnnouncements(announcements);
+    }
+
+    function openCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Create Announcement';
+      document.getElementById('modalSubmitBtn').textContent = 'Publish';
+      document.getElementById('announcementForm').reset();
+      document.getElementById('editId').value = '';
+      UI.openModal('announcementModal');
+    }
+
+    function openEditModal(id) {
+      const a = AnnouncementsStore.getById(id);
+      if (!a) return;
+
+      document.getElementById('modalTitle').textContent = 'Edit Announcement';
+      document.getElementById('modalSubmitBtn').textContent = 'Save Changes';
+      document.getElementById('editId').value = a.id;
+      document.getElementById('annTitle').value = a.title;
+      document.getElementById('annBody').value = a.body;
+      document.getElementById('annCategory').value = a.category;
+      document.getElementById('annPriority').value = a.priority;
+      document.getElementById('annPinned').checked = a.pinned;
+      UI.openModal('announcementModal');
+    }
+
+    function saveAnnouncement(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editId').value;
+      const data = {
+        title: document.getElementById('annTitle').value,
+        body: document.getElementById('annBody').value,
+        category: document.getElementById('annCategory').value,
+        priority: document.getElementById('annPriority').value,
+        pinned: document.getElementById('annPinned').checked
+      };
+
+      if (editId) {
+        AnnouncementsStore.update(parseInt(editId), data);
+        UI.toast('Announcement updated successfully!', 'success');
+      } else {
+        AnnouncementsStore.add(data);
+        UI.toast('Announcement published successfully!', 'success');
+      }
+
+      UI.closeModal('announcementModal');
+      renderAnnouncements();
+    }
+
+    function openDeleteModal(id) {
+      deleteTargetId = id;
+      UI.openModal('deleteModal');
+    }
+
+    function confirmDelete() {
+      if (deleteTargetId) {
+        AnnouncementsStore.delete(deleteTargetId);
+        UI.toast('Announcement deleted.', 'warning');
+        deleteTargetId = null;
+        UI.closeModal('deleteModal');
+        renderAnnouncements();
+      }
+    }
+  </script>
+</body>
+</html>

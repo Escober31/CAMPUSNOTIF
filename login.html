@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify — Your school announcements, events, and notifications hub. Login to stay connected.">
+  <title>CampusNotify — Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="login-page">
+    <!-- Hero Side -->
+    <div class="login-hero">
+      <div class="login-hero-content animate-fade-in">
+        <div class="hero-logo">🔔</div>
+        <h1><span class="text-gradient">CampusNotify</span></h1>
+        <p>Your centralized hub for school announcements, events, and real-time notifications. Stay informed, stay connected.</p>
+
+        <div class="login-features">
+          <div class="login-feature">
+            <div class="feature-icon">📢</div>
+            <span>Announcements</span>
+          </div>
+          <div class="login-feature">
+            <div class="feature-icon">📅</div>
+            <span>Events</span>
+          </div>
+          <div class="login-feature">
+            <div class="feature-icon">🔔</div>
+            <span>Notifications</span>
+          </div>
+          <div class="login-feature">
+            <div class="feature-icon">📊</div>
+            <span>Dashboard</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Form Side -->
+    <div class="login-form-container animate-slide-up">
+      <h2>Welcome Back</h2>
+      <p class="login-subtitle">Sign in to your CampusNotify account</p>
+
+      <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" class="form-input" placeholder="you@campus.edu" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-xl);">
+          <div class="form-checkbox-group">
+            <input type="checkbox" id="remember" class="form-checkbox">
+            <label for="remember" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">Remember me</label>
+          </div>
+          <a href="#" style="font-size:0.85rem; color:var(--primary-400); font-weight:500;">Forgot password?</a>
+        </div>
+
+        <!-- Create Account link for both Student & Admin -->
+        <div id="createAccountRow" style="text-align:center; margin-bottom:var(--space-lg); animation: fadeIn 300ms ease;">
+          <p style="font-size:0.85rem; color:var(--text-secondary);" id="createAccountPrompt">
+            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" style="color:var(--primary-400); font-weight:600;">Create Account</a>
+          </p>
+        </div>
+
+        <div class="login-divider">Select your role</div>
+
+        <div class="role-selector" id="roleSelector">
+          <div class="role-option selected" data-role="student" id="role-student" onclick="selectRole('student')">
+            <div class="role-icon">🎓</div>
+            <div class="role-name">Student</div>
+            <div class="role-desc">View announcements & events</div>
+          </div>
+          <div class="role-option" data-role="admin" id="role-admin" onclick="selectRole('admin')">
+            <div class="role-icon">🛡️</div>
+            <div class="role-name">Admin / Staff</div>
+            <div class="role-desc">Manage & publish content</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="loginBtn">
+          Sign In
+        </button>
+      </form>
+
+      <div style="margin-top:var(--space-xl); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.78rem; color:var(--text-muted); text-align:center;">
+        <span style="color:var(--text-secondary); font-weight:600;">Default Demo Logins:</span><br>
+        🎓 Student: <code style="color:var(--primary-300);">alex.rivera@campus.edu</code> (pwd: <code style="color:var(--text-secondary);">password123</code>)<br>
+        🛡️ Admin: <code style="color:var(--accent-cyan);">sarah.chen@campus.edu</code> (pwd: <code style="color:var(--text-secondary);">password123</code>)<br>
+        <span style="font-size:0.72rem; opacity:0.8;">Or click <b>Create Account</b> to register your own account!</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let selectedRole = 'student';
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+      document.querySelector(`[data-role="${role}"]`).classList.add('selected');
+
+      // Update create account text to reflect selected role
+      const prompt = document.getElementById('createAccountPrompt');
+      if (role === 'admin') {
+        prompt.innerHTML = `Don't have an admin account? <a href="#" onclick="openCreateAccountModal(event)" style="color:var(--primary-400); font-weight:600;">Create Account</a>`;
+      } else {
+        prompt.innerHTML = `Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" style="color:var(--primary-400); font-weight:600;">Create Account</a>`;
+      }
+    }
+
+    function openCreateAccountModal(e) {
+      if (e) e.preventDefault();
+      const modalTitle = document.getElementById('createModalTitle');
+      const studentFields = document.getElementById('studentSpecificFields');
+      const nameInput = document.getElementById('newName');
+
+      if (selectedRole === 'admin') {
+        modalTitle.innerHTML = '🛡️ Create Admin / Staff Account';
+        nameInput.placeholder = 'Dr. Jane Smith';
+        studentFields.style.display = 'none';
+      } else {
+        modalTitle.innerHTML = '🎓 Create Student Account';
+        nameInput.placeholder = 'Alex Rivera';
+        studentFields.style.display = 'grid';
+      }
+
+      document.getElementById('createAccountForm').reset();
+      UI.openModal('createAccountModal');
+    }
+
+    function handleCreateAccount(e) {
+      e.preventDefault();
+      const name = document.getElementById('newName').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const pw = document.getElementById('newPw').value;
+      const pwConfirm = document.getElementById('newPwConfirm').value;
+      const dept = document.getElementById('newDept')?.value || 'Computer Science';
+      const year = document.getElementById('newYear')?.value || '1st Year';
+
+      if (!name || !email || !pw) {
+        UI.toast('Please fill in all required fields.', 'warning');
+        return;
+      }
+
+      if (pw !== pwConfirm) {
+        UI.toast('Passwords do not match!', 'error');
+        return;
+      }
+
+      const roleLabel = selectedRole === 'admin' ? 'Admin' : 'Student';
+      const newUser = Auth.registerUser({
+        name,
+        email,
+        password: pw,
+        role: selectedRole,
+        department: dept,
+        year: selectedRole === 'student' ? year : '',
+        title: selectedRole === 'admin' ? (name.toLowerCase().startsWith('dr.') ? 'Dean of Students' : 'Administrator') : ''
+      });
+
+      UI.closeModal('createAccountModal');
+      UI.toast(`${roleLabel} account created for ${name}! Signing in...`, 'success');
+
+      // Pre-fill fields on login form
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = pw;
+
+      // Automatically sign in with the newly created profile
+      setTimeout(() => {
+        Auth.loginWithUser(newUser);
+      }, 700);
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+
+      btn.textContent = 'Verifying...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        // Strict credential validation
+        const authResult = Auth.authenticate(email, password, selectedRole);
+
+        if (!authResult.success) {
+          btn.textContent = 'Sign In';
+          btn.disabled = false;
+          UI.toast(authResult.message, 'error');
+          return;
+        }
+
+        UI.toast(`Welcome, ${authResult.user.name}!`, 'success');
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 500);
+      }, 500);
+    }
+
+    // Redirect if already logged in
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+
+  <!-- Create Account Modal (Adapts to Student or Admin) -->
+  <div class="modal-overlay" id="createAccountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="createModalTitle">🎓 Create Student Account</h3>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('createAccountModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createAccountForm" onsubmit="handleCreateAccount(event)">
+          <div class="form-group">
+            <label class="form-label" for="newName">Full Name</label>
+            <input type="text" id="newName" class="form-input" placeholder="Alex Rivera" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="newEmail">Email Address</label>
+            <input type="email" id="newEmail" class="form-input" placeholder="alex.rivera@campus.edu" required>
+          </div>
+
+          <!-- Student specific fields -->
+          <div class="grid-2" id="studentSpecificFields">
+            <div class="form-group">
+              <label class="form-label" for="newDept">Department</label>
+              <select id="newDept" class="form-select">
+                <option value="Computer Science" selected>Computer Science</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Business">Business</option>
+                <option value="Arts & Sciences">Arts & Sciences</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Law">Law</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="newYear">Academic Year</label>
+              <select id="newYear" class="form-select">
+                <option value="1st Year" selected>1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Graduate">Graduate</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="newPw">Password</label>
+              <input type="password" id="newPw" class="form-input" placeholder="Create password" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="newPwConfirm">Confirm Password</label>
+              <input type="password" id="newPwConfirm" class="form-input" placeholder="Re-enter password" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('createAccountModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="document.getElementById('createAccountForm').requestSubmit()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+
