@@ -1999,3 +1999,630 @@ body.no-animations *::after {
   border-color: white;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
+
+/* =========================================
+   Mobile Responsive Overrides
+   ========================================= */
+
+/* --- Tablet & Below (≤768px) --- */
+@media (max-width: 768px) {
+  /* Typography scale down */
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.1rem; }
+
+  /* Main content padding */
+  .main-content {
+    padding: var(--space-md);
+    padding-top: 72px;
+  }
+
+  /* Page header */
+  .page-header {
+    margin-bottom: var(--space-lg);
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Search bar */
+  .search-bar {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Stats grid — 2 columns on tablet */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.6rem;
+  }
+
+  .stat-card .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .filter-bar .search-bar {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .filter-bar .form-select {
+    width: 100% !important;
+  }
+
+  /* Tabs — scrollable horizontally */
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* Cards */
+  .card {
+    padding: var(--space-lg);
+  }
+
+  /* Announcement cards */
+  .announcement-card {
+    padding: var(--space-lg);
+  }
+
+  .announcement-header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .announcement-actions {
+    align-self: flex-end;
+  }
+
+  .announcement-meta {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  /* Event cards */
+  .event-card {
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+  }
+
+  .event-date-badge {
+    width: 56px;
+    height: 56px;
+    align-self: flex-start;
+  }
+
+  .event-date-badge .day {
+    font-size: 1.3rem;
+  }
+
+  /* Profile header */
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .profile-avatar-lg {
+    margin: 0 auto;
+  }
+
+  .profile-info {
+    text-align: center;
+  }
+
+  .profile-info .flex {
+    justify-content: center;
+  }
+
+  /* Settings section */
+  .settings-section {
+    padding: var(--space-lg);
+  }
+
+  /* Toggle wrapper — ensure label text doesn't get squished */
+  .toggle-wrapper > div:first-child {
+    flex: 1;
+    min-width: 0;
+    padding-right: var(--space-md);
+  }
+
+  /* Modal — full width on mobile */
+  .modal-overlay {
+    padding: var(--space-md);
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 92vh;
+  }
+
+  .modal-header {
+    padding: var(--space-lg);
+  }
+
+  .modal-body {
+    padding: var(--space-lg);
+  }
+
+  .modal-footer {
+    padding: var(--space-md) var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* grid-2 inside modals and forms */
+  .modal .grid-2,
+  .settings-section .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Toast — full width */
+  .toast-container {
+    left: var(--space-md);
+    right: var(--space-md);
+    top: var(--space-md);
+  }
+
+  .toast {
+    min-width: unset;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Data table — allow horizontal scroll */
+  .data-table th,
+  .data-table td {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* Login page refinements */
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    min-height: 30vh;
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .login-hero-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .login-hero-content p {
+    font-size: 0.9rem;
+  }
+
+  .login-hero-content .hero-logo {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+
+  .login-form-container {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .login-features {
+    display: none;
+  }
+
+  .role-selector {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+
+  .role-option {
+    padding: var(--space-md);
+  }
+
+  .role-option .role-icon {
+    font-size: 1.5rem;
+  }
+
+  .role-option .role-name {
+    font-size: 0.8rem;
+  }
+
+  .role-option .role-desc {
+    font-size: 0.68rem;
+  }
+
+  /* Dashboard content grid */
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Dashboard search bar in header */
+  .flex.gap-md {
+    width: 100%;
+  }
+
+  /* Admin report chart area */
+  .mini-chart {
+    height: 90px;
+  }
+
+  /* Confirm dialog */
+  .confirm-dialog .modal {
+    max-width: 100%;
+  }
+
+  /* Sidebar toggle position adjustment */
+  .sidebar-toggle {
+    top: var(--space-md);
+    left: var(--space-md);
+  }
+
+  /* Accent buttons — slightly smaller */
+  .accent-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* --- Small Phones (≤480px) --- */
+@media (max-width: 480px) {
+  /* Even more compact typography */
+  h1 { font-size: 1.35rem; }
+  h2 { font-size: 1.15rem; }
+  h3 { font-size: 1rem; }
+
+  html {
+    font-size: 15px;
+  }
+
+  /* Main content tighter padding */
+  .main-content {
+    padding: var(--space-sm);
+    padding-top: 64px;
+  }
+
+  /* Stats grid — single column */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+
+  .stat-card {
+    padding: var(--space-md);
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.75rem;
+  }
+
+  .stat-card .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Card — even less padding */
+  .card {
+    padding: var(--space-md);
+  }
+
+  .announcement-card {
+    padding: var(--space-md);
+  }
+
+  .event-card {
+    padding: var(--space-md);
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.55rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-lg {
+    padding: 0.7rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  /* Form inputs */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  /* Login page — hero shrinks further */
+  .login-hero {
+    min-height: auto;
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .login-hero-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .login-hero-content p {
+    font-size: 0.82rem;
+  }
+
+  .login-hero-content .hero-logo {
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+  }
+
+  .login-form-container {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .login-form-container h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Role selector — keep 2-col but tighter */
+  .role-selector {
+    gap: var(--space-xs);
+  }
+
+  .role-option {
+    padding: var(--space-sm);
+  }
+
+  .role-option .role-icon {
+    font-size: 1.2rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .role-option .role-name {
+    font-size: 0.75rem;
+  }
+
+  .role-option .role-desc {
+    display: none;
+  }
+
+  /* Profile header */
+  .profile-avatar-lg {
+    width: 72px;
+    height: 72px;
+    font-size: 1.8rem;
+  }
+
+  /* Notification item */
+  .notification-item {
+    padding: var(--space-md);
+  }
+
+  .notification-dot {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  /* Sidebar toggle */
+  .sidebar-toggle {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+    top: var(--space-sm);
+    left: var(--space-sm);
+  }
+
+  /* Modal — bottom sheet style */
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 95vh;
+  }
+
+  /* Badges */
+  .badge {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+  }
+
+  /* Tags */
+  .tag {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  /* Data table — smaller text */
+  .data-table th,
+  .data-table td {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .empty-state .empty-icon {
+    font-size: 2rem;
+  }
+
+  /* Search dropdown */
+  .search-results-dropdown {
+    max-height: 280px;
+  }
+
+  /* Page subtitle */
+  .page-header .page-subtitle {
+    font-size: 0.82rem;
+  }
+}
+
+/* --- Ultra-small (≤360px) — narrow phones --- */
+@media (max-width: 360px) {
+  h1 { font-size: 1.2rem; }
+  h2 { font-size: 1.05rem; }
+
+  html {
+    font-size: 14px;
+  }
+
+  .main-content {
+    padding: var(--space-xs);
+    padding-top: 56px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .stat-card .stat-icon {
+    margin-bottom: 0;
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.25rem;
+  }
+
+  /* Login — single column role selector */
+  .role-selector {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Landscape phone fix --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .login-hero {
+    min-height: auto;
+    padding: var(--space-md);
+  }
+
+  .login-hero-content h1 {
+    font-size: 1.4rem;
+  }
+
+  .login-hero-content .hero-logo {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .login-hero-content p {
+    display: none;
+  }
+}
+
+/* --- Touch-friendly adjustments --- */
+@media (pointer: coarse) {
+  /* Larger tap targets */
+  .nav-item {
+    padding: 0.85rem var(--space-md);
+    min-height: 44px;
+  }
+
+  .btn {
+    min-height: 42px;
+  }
+
+  .btn-sm {
+    min-height: 36px;
+  }
+
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn-icon.sm {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Disable hover transform effects on touch */
+  .card:hover,
+  .stat-card:hover,
+  .announcement-card:hover,
+  .event-card:hover {
+    transform: none;
+  }
+
+  .btn-primary:hover,
+  .btn-danger:hover {
+    transform: none;
+  }
+
+  /* Active state for touch instead of hover */
+  .card:active {
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-primary:active {
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    transform: scale(0.98);
+  }
+
+  /* Prevent scrollbar on sidebar */
+  .sidebar {
+    scrollbar-width: none;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+}
