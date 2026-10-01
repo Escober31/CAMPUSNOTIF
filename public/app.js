@@ -553,6 +553,10 @@ const NotificationsStore = {
     localStorage.setItem(key, JSON.stringify(notifications));
   },
 
+  getById(id) {
+    return this.getAll().find(n => n.id === id);
+  },
+
   getUnreadCount() {
     return this.getAll().filter(n => !n.read).length;
   },
@@ -587,7 +591,56 @@ const NotificationsStore = {
     };
     all.unshift(item);
     this.save(all);
+
+    // Sync to base key and other user stores so students and campus hub receive it
+    try {
+      const baseRaw = localStorage.getItem(this._baseKey);
+      let baseList = baseRaw ? JSON.parse(baseRaw) : [];
+      if (Array.isArray(baseList)) {
+        baseList = baseList.filter(n => n.id !== item.id);
+        baseList.unshift({ ...item });
+        localStorage.setItem(this._baseKey, JSON.stringify(baseList));
+      }
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(this._baseKey + '_') && k !== this._getKey()) {
+          let userNotifs = JSON.parse(localStorage.getItem(k) || '[]');
+          if (Array.isArray(userNotifs)) {
+            userNotifs = userNotifs.filter(n => n.id !== item.id);
+            userNotifs.unshift({ ...item, read: false });
+            localStorage.setItem(k, JSON.stringify(userNotifs));
+          }
+        }
+      }
+    } catch (e) {}
+
     return item;
+  },
+
+  delete(id) {
+    const all = this.getAll().filter(n => n.id !== id);
+    this.save(all);
+    try {
+      const baseRaw = localStorage.getItem(this._baseKey);
+      if (baseRaw) {
+        let baseList = JSON.parse(baseRaw);
+        if (Array.isArray(baseList)) {
+          baseList = baseList.filter(n => n.id !== id);
+          localStorage.setItem(this._baseKey, JSON.stringify(baseList));
+        }
+      }
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(this._baseKey + '_') && k !== this._getKey()) {
+          let userNotifs = JSON.parse(localStorage.getItem(k) || '[]');
+          if (Array.isArray(userNotifs)) {
+            userNotifs = userNotifs.filter(n => n.id !== id);
+            localStorage.setItem(k, JSON.stringify(userNotifs));
+          }
+        }
+      }
+    } catch (e) {}
+    return all;
   },
 
   updateSidebarBadge() {

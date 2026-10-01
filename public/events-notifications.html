@@ -19,9 +19,12 @@
             <h1>📅 <span class="text-gradient">Events & Notifications</span></h1>
             <p class="page-subtitle">Upcoming campus events and your real-time alerts center.</p>
           </div>
-          <div class="admin-only" id="adminEventControls">
+          <div class="admin-only" id="adminEventControls" style="gap:var(--space-sm);">
             <button class="btn btn-primary" onclick="openCreateEventModal()" id="btnCreateEvent">
               ✚ New Event
+            </button>
+            <button class="btn btn-primary" onclick="openCreateNotifModal()" id="btnCreateNotif" style="display:none;">
+              ✚ New Notification
             </button>
           </div>
         </div>
@@ -64,16 +67,34 @@
 
       <!-- Notifications Tab -->
       <div class="tab-content" id="content-notifications">
-        <div class="flex items-center justify-between mb-lg">
-          <p class="text-secondary text-sm"><span id="unreadCount">0</span> unread notifications</p>
+        <!-- Notification Filter & Action Bar -->
+        <div class="flex items-center justify-between mb-lg" style="flex-wrap:wrap; gap:var(--space-md);">
+          <div class="flex items-center gap-md" style="flex-wrap:wrap; flex:1; min-width:280px;">
+            <p class="text-secondary text-sm" style="margin-bottom:0; white-space:nowrap;"><span id="unreadCount">0</span> unread notifications</p>
+            <div class="search-bar" style="flex:1; max-width:260px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Search notifications..." id="notifSearch" oninput="filterNotifications()">
+            </div>
+            <select class="form-select" style="width:140px; padding:6px 12px; font-size:0.85rem;" id="notifTypeFilter" onchange="filterNotifications()">
+              <option value="">All Types</option>
+              <option value="info">ℹ️ Info</option>
+              <option value="warning">⚠️ Warning</option>
+              <option value="alert">🔴 Alert</option>
+              <option value="success">✅ Success</option>
+            </select>
+          </div>
           <button class="btn btn-ghost btn-sm" onclick="markAllRead()" id="btnMarkAllRead">✓ Mark all as read</button>
         </div>
+
         <div id="notificationsList" class="flex flex-col gap-sm"></div>
 
         <div id="notifsEmpty" class="empty-state" style="display:none;">
           <div class="empty-icon">🔔</div>
           <h3>All caught up!</h3>
           <p>You have no notifications at this time.</p>
+          <div class="admin-only" style="margin-top:var(--space-md); justify-content:center;">
+            <button class="btn btn-primary btn-sm" onclick="openCreateNotifModal()">✚ Create Notification</button>
+          </div>
         </div>
       </div>
 
@@ -176,6 +197,109 @@
     </div>
   </div>
 
+  <!-- Notification Create Modal (Admin only) -->
+  <div class="modal-overlay" id="notifModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="notifModalTitle">✚ Create New Notification</h3>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('notifModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="notifForm" onsubmit="saveNotification(event)">
+          <div class="form-group">
+            <label class="form-label" for="notifTitle">Notification Title</label>
+            <input type="text" id="notifTitle" class="form-input" placeholder="e.g. Scheduled Campus Maintenance" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="notifMessage">Message</label>
+            <textarea id="notifMessage" class="form-textarea" placeholder="Detailed notification message for students and campus members..." rows="3" required></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="notifType">Type / Severity</label>
+              <select id="notifType" class="form-select" onchange="handleNotifTypeChange()" required>
+                <option value="info">ℹ️ Information (Blue)</option>
+                <option value="warning">⚠️ Warning / Reminder (Amber)</option>
+                <option value="alert">🔴 Urgent Alert (Rose)</option>
+                <option value="success">✅ Success / Update (Emerald)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="notifIcon">Icon</label>
+              <select id="notifIcon" class="form-select" required>
+                <option value="📢">📢 Announcement</option>
+                <option value="🔔">🔔 Alert / Bell</option>
+                <option value="⚠️">⚠️ Warning Sign</option>
+                <option value="🔴">🔴 Urgent Notice</option>
+                <option value="✅">✅ Success / Checkmark</option>
+                <option value="📅">📅 Calendar / Event</option>
+                <option value="🎉">🎉 Celebration / Award</option>
+                <option value="💡">💡 Tip / Information</option>
+                <option value="🏫">🏫 Campus Notice</option>
+                <option value="💻">💻 IT / System Alert</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="notifTarget">Audience Target</label>
+            <select id="notifTarget" class="form-select">
+              <option value="all">👥 All Campus (Students & Staff)</option>
+              <option value="students">🎓 Students Only</option>
+              <option value="faculty">👨‍🏫 Faculty & Staff</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('notifModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="document.getElementById('notifForm').requestSubmit()" id="notifSubmitBtn">Publish Notification</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Notification Confirmation Modal -->
+  <div class="modal-overlay confirm-dialog" id="deleteNotifModal">
+    <div class="modal">
+      <div class="modal-body" style="text-align:center; padding:var(--space-2xl);">
+        <div class="confirm-icon">🗑️</div>
+        <h3 style="margin-bottom:var(--space-sm);">Delete Notification?</h3>
+        <p>This action cannot be undone. The notification will be removed permanently.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="btn btn-secondary" onclick="UI.closeModal('deleteNotifModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDeleteNotif()" id="confirmDeleteNotifBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read Notification Detail Modal -->
+  <div class="modal-overlay" id="readNotifModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="badge" id="readNotifBadge">Info</span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readNotifModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="flex items-center gap-md mb-md">
+          <div class="notification-dot info" id="readNotifDot" style="width:42px; height:42px; font-size:1.25rem; flex-shrink:0;">📢</div>
+          <div style="min-width:0;">
+            <h3 id="readNotifTitle" style="margin-bottom:2px; font-size:1.15rem;"></h3>
+            <span class="text-muted text-sm" id="readNotifTime"></span>
+          </div>
+        </div>
+        <div class="text-secondary" id="readNotifMessage" style="line-height:1.7; font-size:0.95rem; white-space:pre-wrap; margin-top:var(--space-md); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md);"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readNotifModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script src="stores.js"></script>
   <script>
@@ -188,11 +312,18 @@
       renderNotifications();
       updateNotifBadge();
 
-      // Handle tab selection from query params (e.g., ?tab=notifications)
+      // Handle tab selection and creation trigger from query params
       const params = new URLSearchParams(window.location.search);
       const targetTab = params.get('tab');
       if (targetTab === 'notifications' || targetTab === 'events') {
         switchTab(targetTab);
+      }
+      if (params.get('create') === '1' || params.get('createNotif') === '1') {
+        if (targetTab === 'notifications') {
+          setTimeout(openCreateNotifModal, 250);
+        } else {
+          setTimeout(openCreateEventModal, 250);
+        }
       }
 
       // Handle highlight from dashboard search
@@ -217,8 +348,20 @@
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-      document.getElementById(`content-${tab}`).classList.add('active');
+      const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+      const activeContent = document.getElementById(`content-${tab}`);
+      if (activeContent) activeContent.classList.add('active');
+
+      const btnCreateEvent = document.getElementById('btnCreateEvent');
+      const btnCreateNotif = document.getElementById('btnCreateNotif');
+      if (tab === 'events') {
+        if (btnCreateEvent) btnCreateEvent.style.display = 'inline-flex';
+        if (btnCreateNotif) btnCreateNotif.style.display = 'none';
+      } else if (tab === 'notifications') {
+        if (btnCreateEvent) btnCreateEvent.style.display = 'none';
+        if (btnCreateNotif) btnCreateNotif.style.display = 'inline-flex';
+      }
     }
 
     // ─── Events Logic ───
@@ -377,38 +520,86 @@
     }
 
     // ─── Notifications Logic ───
-    function renderNotifications() {
+    let deleteTargetNotifId = null;
+
+    function renderNotifications(data) {
       const list = document.getElementById('notificationsList');
       const empty = document.getElementById('notifsEmpty');
+      const isAdmin = Auth.getRole() === 'admin';
+      const items = data || notificationsData;
 
-      if (notificationsData.length === 0) {
+      if (!items || items.length === 0) {
         list.innerHTML = '';
         empty.style.display = 'block';
         return;
       }
 
       empty.style.display = 'none';
-      list.innerHTML = notificationsData.map(n => `
-        <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="markRead(${n.id})" style="cursor:pointer;">
-          <div class="notification-dot ${n.type}">
-            ${n.icon}
+      list.innerHTML = items.map(n => {
+        const badgeClass = n.type === 'alert' ? 'badge-danger' : n.type === 'warning' ? 'badge-warning' : n.type === 'success' ? 'badge-success' : 'badge-primary';
+        return `
+          <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="readNotif(${n.id})" style="cursor:pointer;">
+            <div class="notification-dot ${n.type || 'info'}">
+              ${n.icon || '🔔'}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="flex items-center justify-between" style="margin-bottom:2px;">
+                <div class="font-semibold text-sm">${n.title}</div>
+                ${isAdmin ? `
+                  <div class="flex gap-xs" onclick="event.stopPropagation();">
+                    <button class="btn btn-ghost btn-icon sm" onclick="openDeleteNotifModal(${n.id})" title="Delete Notification">🗑️</button>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px; line-height:1.5;">${n.message}</div>
+              <div class="flex items-center gap-md">
+                <span class="text-muted" style="font-size:0.75rem;">${n.time}</span>
+                <span class="badge ${badgeClass}" style="font-size:0.68rem;">${n.type || 'info'}</span>
+              </div>
+            </div>
+            ${!n.read ? '<div style="width:8px; height:8px; border-radius:50%; background:var(--primary-500); flex-shrink:0;"></div>' : ''}
           </div>
-          <div style="flex:1; min-width:0;">
-            <div class="font-semibold text-sm" style="margin-bottom:2px;">${n.title}</div>
-            <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px;">${n.message}</div>
-            <div class="text-muted" style="font-size:0.75rem;">${n.time}</div>
-          </div>
-          ${!n.read ? '<div style="width:8px; height:8px; border-radius:50%; background:var(--primary-500); flex-shrink:0;"></div>' : ''}
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       updateNotifBadge();
     }
 
-    function markRead(id) {
+    function readNotif(id) {
       notificationsData = NotificationsStore.markAsRead(id);
       renderNotifications();
       updateNotifBadge();
+
+      const n = NotificationsStore.getById(id);
+      if (!n) return;
+
+      const badgeClass = n.type === 'alert' ? 'badge-danger' : n.type === 'warning' ? 'badge-warning' : n.type === 'success' ? 'badge-success' : 'badge-primary';
+      const badgeEl = document.getElementById('readNotifBadge');
+      if (badgeEl) {
+        badgeEl.className = 'badge ' + badgeClass;
+        badgeEl.textContent = (n.type || 'info').toUpperCase();
+      }
+
+      const dotEl = document.getElementById('readNotifDot');
+      if (dotEl) {
+        dotEl.className = 'notification-dot ' + (n.type || 'info');
+        dotEl.textContent = n.icon || '🔔';
+      }
+
+      const titleEl = document.getElementById('readNotifTitle');
+      if (titleEl) titleEl.textContent = n.title;
+
+      const timeEl = document.getElementById('readNotifTime');
+      if (timeEl) timeEl.textContent = '🕒 ' + n.time;
+
+      const msgEl = document.getElementById('readNotifMessage');
+      if (msgEl) msgEl.textContent = n.message;
+
+      UI.openModal('readNotifModal');
+    }
+
+    function markRead(id) {
+      readNotif(id);
     }
 
     function markAllRead() {
@@ -420,15 +611,110 @@
 
     function updateNotifBadge() {
       const unread = NotificationsStore.getUnreadCount();
-      document.getElementById('unreadCount').textContent = unread;
+      const countEl = document.getElementById('unreadCount');
+      if (countEl) countEl.textContent = unread;
       const badge = document.getElementById('notifBadge');
-      if (unread > 0) {
-        badge.textContent = unread;
-        badge.style.display = 'inline-flex';
-      } else {
-        badge.style.display = 'none';
+      if (badge) {
+        if (unread > 0) {
+          badge.textContent = unread;
+          badge.style.display = 'inline-flex';
+        } else {
+          badge.style.display = 'none';
+        }
       }
       NotificationsStore.updateSidebarBadge();
+    }
+
+    // Admin: Open Create Notification Modal
+    function openCreateNotifModal() {
+      document.getElementById('notifModalTitle').textContent = '✚ Create New Notification';
+      document.getElementById('notifSubmitBtn').textContent = 'Publish Notification';
+      document.getElementById('notifForm').reset();
+      handleNotifTypeChange();
+      UI.openModal('notifModal');
+    }
+
+    // Auto-update icon based on selected notification type
+    function handleNotifTypeChange() {
+      const type = document.getElementById('notifType').value;
+      const iconSelect = document.getElementById('notifIcon');
+      const iconMap = {
+        info: '📢',
+        warning: '⚠️',
+        alert: '🔴',
+        success: '✅'
+      };
+      if (iconMap[type]) {
+        iconSelect.value = iconMap[type];
+      }
+    }
+
+    // Admin: Save / Publish Notification
+    function saveNotification(e) {
+      e.preventDefault();
+      const title = document.getElementById('notifTitle').value.trim();
+      const message = document.getElementById('notifMessage').value.trim();
+      const type = document.getElementById('notifType').value;
+      const icon = document.getElementById('notifIcon').value;
+
+      if (!title || !message) {
+        UI.toast('Please fill in all required fields.', 'warning');
+        return;
+      }
+
+      const newNotif = {
+        title,
+        message,
+        type,
+        icon,
+        time: 'Just now'
+      };
+
+      NotificationsStore.add(newNotif);
+      notificationsData = NotificationsStore.getAll();
+      UI.toast('Notification published successfully!', 'success');
+      UI.closeModal('notifModal');
+      document.getElementById('notifForm').reset();
+      renderNotifications();
+      updateNotifBadge();
+    }
+
+    // Admin: Open Delete Notification Modal
+    function openDeleteNotifModal(id) {
+      deleteTargetNotifId = id;
+      UI.openModal('deleteNotifModal');
+    }
+
+    // Admin: Confirm Delete Notification
+    function confirmDeleteNotif() {
+      if (deleteTargetNotifId) {
+        NotificationsStore.delete(deleteTargetNotifId);
+        notificationsData = NotificationsStore.getAll();
+        UI.toast('Notification deleted successfully.', 'warning');
+        deleteTargetNotifId = null;
+        UI.closeModal('deleteNotifModal');
+        renderNotifications();
+        updateNotifBadge();
+      }
+    }
+
+    // Search and category filtering for notifications
+    function filterNotifications() {
+      const search = (document.getElementById('notifSearch')?.value || '').toLowerCase().trim();
+      const type = document.getElementById('notifTypeFilter')?.value || '';
+
+      let filtered = [...notificationsData];
+      if (search) {
+        filtered = filtered.filter(n =>
+          n.title.toLowerCase().includes(search) ||
+          n.message.toLowerCase().includes(search)
+        );
+      }
+      if (type) {
+        filtered = filtered.filter(n => n.type === type);
+      }
+
+      renderNotifications(filtered);
     }
   </script>
 </body>

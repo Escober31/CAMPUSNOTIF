@@ -22,9 +22,17 @@
             <h1>📢 <span class="text-gradient">Campus Hub</span></h1>
             <p class="page-subtitle">Your central feed for campus announcements, events, and notifications.</p>
           </div>
-          <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search campus updates..." id="hubSearch">
+          <div class="flex items-center gap-md">
+            <div class="admin-only">
+              <a href="events-notifications.html?tab=notifications&create=1" class="btn btn-primary"
+                id="btnHubCreateNotif" style="white-space:nowrap;">
+                ✚ New Notification
+              </a>
+            </div>
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Search campus updates..." id="hubSearch">
+            </div>
           </div>
         </div>
       </div>
