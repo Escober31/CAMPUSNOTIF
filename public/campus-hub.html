@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="CampusNotify Campus Hub — Your central feed for announcements, events, and notifications.">
+  <title>Campus Hub — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>📢 <span class="text-gradient">Campus Hub</span></h1>
+            <p class="page-subtitle">Your central feed for campus announcements, events, and notifications.</p>
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search campus updates..." id="hubSearch">
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="hub-filters animate-fade-in">
+        <div class="hub-type-filters" id="typeFilters">
+          <button class="hub-filter-chip active" data-type="all">All</button>
+          <button class="hub-filter-chip" data-type="announcement">📢 Announcements</button>
+          <button class="hub-filter-chip" data-type="event">📅 Events</button>
+          <button class="hub-filter-chip" data-type="notification">🔔 Notifications</button>
+        </div>
+        <div class="hub-category-filters" id="categoryFilters">
+          <button class="hub-cat-chip active" data-cat="all">All</button>
+          <button class="hub-cat-chip" data-cat="Academic">Academic</button>
+          <button class="hub-cat-chip" data-cat="Student Life">Student Life</button>
+          <button class="hub-cat-chip" data-cat="Facility">Facilities</button>
+          <button class="hub-cat-chip" data-cat="Sports">Sports</button>
+          <button class="hub-cat-chip" data-cat="Career">Career</button>
+        </div>
+      </div>
+
+      <!-- Feed -->
+      <div id="hubFeed" class="hub-feed stagger"></div>
+      <div id="hubEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>No updates found</h3>
+        <p>Try adjusting your search or filter criteria.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Read Announcement Modal -->
+  <div class="modal-overlay" id="readAnnouncementModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span id="readAnnPriority"></span>
+          <span id="readAnnCategory"></span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readAnnouncementModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readAnnTitle" style="margin-bottom:var(--space-md);"></h2>
+        <div class="announcement-meta"
+          style="margin-bottom:var(--space-lg); padding-bottom:var(--space-md); border-bottom:1px solid var(--border-subtle);">
+          <span id="readAnnAuthor"></span>
+          <span id="readAnnDate"></span>
+        </div>
+        <div id="readAnnBody" class="text-secondary" style="font-size:0.95rem; line-height:1.8; white-space:pre-wrap;">
+        </div>
+      </div>
+      <div class="modal-footer" id="readAnnFooter">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read Event Modal -->
+  <div class="modal-overlay" id="readEventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="tag" id="readEvCategory"></span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readEventModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readEvTitle" style="margin-bottom:var(--space-md);"></h2>
+        <div
+          style="background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-md); margin-bottom:var(--space-lg); display:flex; flex-wrap:wrap; gap:var(--space-md);">
+          <span class="text-sm text-secondary" id="readEvDate">📅 Date</span>
+          <span class="text-sm text-secondary" id="readEvTime">🕐 Time</span>
+          <span class="text-sm text-secondary" id="readEvLocation">📍 Location</span>
+          <span class="text-sm text-secondary" id="readEvInterested">👥 Interested</span>
+        </div>
+        <div class="text-secondary" id="readEvDesc" style="line-height:1.7; font-size:0.95rem; white-space:pre-wrap;">
+        </div>
+      </div>
+      <div class="modal-footer" id="readEvFooter">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+  <script src="stores.js"></script>
+  <script>
+    // ─── State ───
+    let currentTypeFilter = 'all';
+    let currentCategoryFilter = 'all';
+    let currentSearch = '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('campus-hub')) return;
+
+      renderFeed();
+
+      // Handle query params
+      const params = new URLSearchParams(window.location.search);
+      const typeParam = params.get('type');
+      if (typeParam && ['announcement', 'event', 'notification'].includes(typeParam)) {
+        setTypeFilter(typeParam);
+      }
+
+      const highlightParam = params.get('highlight');
+      if (highlightParam) {
+        setTimeout(() => {
+          const el = document.getElementById('hub-' + highlightParam);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('hub-highlighted');
+            setTimeout(() => el.classList.remove('hub-highlighted'), 3000);
+          }
+        }, 400);
+      }
+
+      // Search
+      const searchInput = document.getElementById('hubSearch');
+      searchInput.addEventListener('input', function () {
+        currentSearch = this.value.trim().toLowerCase();
+        renderFeed();
+      });
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.target.value = '';
+          currentSearch = '';
+          renderFeed();
+          e.target.blur();
+        }
+      });
+
+      // Filter chip click handlers
+      document.querySelectorAll('.hub-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => setTypeFilter(chip.dataset.type));
+      });
+      document.querySelectorAll('.hub-cat-chip').forEach(chip => {
+        chip.addEventListener('click', () => setCategoryFilter(chip.dataset.cat));
+      });
+
+      // Close reminder menus on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.reminder-wrapper')) {
+          document.querySelectorAll('.reminder-menu.open').forEach(m => m.classList.remove('open'));
+        }
+      });
+
+      // Close modals on overlay backdrop click or Escape
+      document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.remove('active');
+        });
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        }
+      });
+    });
+
+    // ─── Feed Building ───
+    function buildFeed() {
+      const announcements = AnnouncementsStore.getAll();
+      const events = EventsStore.getAll();
+      const notifications = NotificationsStore.getAll();
+      const feed = [];
+
+      announcements.forEach(a => {
+        feed.push({
+          feedType: 'announcement', id: a.id, title: a.title, body: a.body,
+          category: a.category, priority: a.priority, pinned: a.pinned,
+          author: a.author, date: a.date,
+          sortDate: new Date(a.date + 'T00:00:00').getTime(),
+          sortPriority: a.pinned ? 0 : 1,
+          data: a
+        });
+      });
+
+      events.forEach(e => {
+        feed.push({
+          feedType: 'event', id: e.id, title: e.title, body: e.description,
+          category: e.category, date: e.date, time: e.time,
+          location: e.location, attendees: e.attendees || 0,
+          sortDate: new Date(e.date + 'T00:00:00').getTime(),
+          sortPriority: 1,
+          data: e
+        });
+      });
+
+      notifications.forEach(n => {
+        feed.push({
+          feedType: 'notification', id: n.id, title: n.title, body: n.message,
+          category: null, notifType: n.type, icon: n.icon,
+          time: n.time, read: n.read,
+          actionType: n.actionType || null, actionId: n.actionId || null,
+          sortDate: parseRelativeTime(n.time),
+          sortPriority: n.read ? 2 : 0,
+          data: n
+        });
+      });
+
+      feed.sort((a, b) => {
+        if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
+        return b.sortDate - a.sortDate;
+      });
+
+      return feed;
+    }
+
+    function filterFeed(feed) {
+      let filtered = feed;
+
+      if (currentTypeFilter !== 'all') {
+        filtered = filtered.filter(item => item.feedType === currentTypeFilter);
+      }
+
+      if (currentCategoryFilter !== 'all') {
+        filtered = filtered.filter(item => {
+          if (item.feedType === 'notification') {
+            return currentTypeFilter === 'all' || currentTypeFilter === 'notification';
+          }
+          return item.category === currentCategoryFilter;
+        });
+      }
+
+      if (currentSearch) {
+        filtered = filtered.filter(item => {
+          const fields = [item.title, item.body, item.category, item.author, item.location].filter(Boolean);
+          return fields.some(f => f.toLowerCase().includes(currentSearch));
+        });
+      }
+
+      return filtered;
+    }
+
+    function renderFeed() {
+      const feed = buildFeed();
+      const filtered = filterFeed(feed);
+      const container = document.getElementById('hubFeed');
+      const empty = document.getElementById('hubEmpty');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = filtered.map(item => {
+        if (item.feedType === 'announcement') return renderAnnouncementItem(item);
+        if (item.feedType === 'event') return renderEventItem(item);
+        if (item.feedType === 'notification') return renderNotificationItem(item);
+        return '';
+      }).join('');
+    }
+
+    // ─── Render Functions ───
+    function renderAnnouncementItem(item) {
+      const a = item.data;
+      const isSaved = SavedStore.isSaved('announcement', a.id);
+      const isAcked = AcknowledgementStore.isAcknowledged(a.id);
+      const showAck = a.priority === 'urgent' || a.priority === 'important';
+
+      return `
+        <div class="hub-feed-item hub-item-announcement animate-slide-up" id="hub-ann-${a.id}">
+          <div class="card-priority ${a.priority}"></div>
+          <div style="padding-left:12px;">
+            <div class="hub-type-label type-announcement">📢 ANNOUNCEMENT</div>
+            <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+              ${a.pinned ? '<span class="badge badge-primary">📌 Pinned</span>' : ''}
+              ${UI.priorityBadge(a.priority)}
+              ${UI.categoryBadge(a.category)}
+            </div>
+            <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.title}</h3>
+            <div class="announcement-body">${a.body}</div>
+            <div class="announcement-meta">
+              <span>✍️ ${a.author}</span>
+              <span>📅 ${UI.formatDate(a.date)}</span>
+            </div>
+            <div class="hub-actions">
+              <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" data-save="announcement-${a.id}" onclick="toggleSave('announcement', ${a.id})">
+                ${isSaved ? '✓ Saved' : '🔖 Save'}
+              </button>
+              ${showAck ? `
+              <button class="hub-action-btn ack-btn ${isAcked ? 'active' : ''}" data-ack="${a.id}" onclick="acknowledgeAnn(${a.id})" ${isAcked ? 'disabled' : ''}>
+                ${isAcked ? '✓ Acknowledged' : '✓ Acknowledge'}
+              </button>
+              ` : ''}
+              <button class="hub-action-btn" onclick="readAnnouncement(${a.id})">Read More →</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEventItem(item) {
+      const ev = item.data;
+      const d = new Date(ev.date + 'T00:00:00');
+      const day = d.getDate();
+      const month = d.toLocaleDateString('en-US', { month: 'short' });
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+      const isInterested = EventInterestStore.isInterested(ev.id);
+      const isSaved = SavedStore.isSaved('event', ev.id);
+      const reminder = ReminderStore.getReminder('event', ev.id);
+      const interestedCount = (ev.attendees || 0) + (isInterested ? 1 : 0);
+
+      return `
+        <div class="hub-feed-item hub-item-event animate-slide-up" id="hub-ev-${ev.id}">
+          <div class="hub-type-label type-event">📅 EVENT</div>
+          <div class="hub-event-layout">
+            <div class="event-date-badge" style="width:52px; height:58px;">
+              <span class="day" style="font-size:1.2rem;">${day}</span>
+              <span class="month" style="font-size:0.6rem;">${month}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+                <span class="tag">${ev.category}</span>
+                <span class="text-muted text-sm">${dayName}</span>
+              </div>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readEvent(${ev.id})">${ev.title}</h3>
+              <p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${ev.description}</p>
+              <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
+                <span class="text-muted text-sm">📍 ${ev.location}</span>
+                <span class="text-muted text-sm">🕐 ${ev.time}</span>
+                <span class="text-muted text-sm" id="interest-count-${ev.id}">👥 ${interestedCount.toLocaleString()} interested</span>
+              </div>
+            </div>
+          </div>
+          <div class="hub-actions">
+            <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" data-interest="${ev.id}" onclick="toggleInterest(${ev.id})">
+              ${isInterested ? '✓ Interested' : '👍 Interested'}
+            </button>
+            <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" data-save="event-${ev.id}" onclick="toggleSave('event', ${ev.id})">
+              ${isSaved ? '✓ Saved' : '🔖 Save'}
+            </button>
+            <button class="hub-action-btn" onclick="addToCalendar(${ev.id})">📅 Add to Calendar</button>
+            <div class="reminder-wrapper">
+              <button class="hub-action-btn reminder-btn ${reminder ? 'active' : ''}" data-reminder="event-${ev.id}" onclick="toggleReminderMenu(this, 'event', ${ev.id})">
+                ${reminder ? '🔔 ' + ReminderStore.getTimingLabel(reminder.timing) : '🔔 Remind Me'}
+              </button>
+              <div class="reminder-menu" id="reminder-menu-event-${ev.id}">
+                <div class="reminder-option" onclick="setReminder('event', ${ev.id}, '10min')">⏰ 10 minutes before</div>
+                <div class="reminder-option" onclick="setReminder('event', ${ev.id}, '1hour')">⏰ 1 hour before</div>
+                <div class="reminder-option" onclick="setReminder('event', ${ev.id}, '1day')">⏰ 1 day before</div>
+                ${reminder ? '<div class="reminder-option remove" onclick="removeReminder(\'event\', ' + ev.id + ')">❌ Remove Reminder</div>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderNotificationItem(item) {
+      const n = item.data;
+      const isUnread = !n.read;
+
+      let actionHtml = '';
+      if (n.actionType === 'announcement') {
+        actionHtml = `<button class="hub-action-btn" onclick="readAnnouncement(${n.actionId})">View Announcement →</button>`;
+      } else if (n.actionType === 'event') {
+        actionHtml = `<button class="hub-action-btn" onclick="readEvent(${n.actionId})">View Event →</button>`;
+      }
+
+      const hasActions = actionHtml || isUnread;
+
+      return `
+        <div class="hub-feed-item hub-item-notification ${isUnread ? 'hub-item-unread' : ''} animate-slide-up" id="hub-notif-${n.id}">
+          <div class="hub-type-label type-notification">🔔 NOTIFICATION</div>
+          <div class="flex items-center gap-md">
+            <div class="notification-dot ${n.type}">${n.icon}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="font-semibold text-sm" style="margin-bottom:2px;">${n.title}</div>
+              <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px;">${n.message}</div>
+              <div class="text-muted" style="font-size:0.75rem;">${n.time}</div>
+            </div>
+            ${isUnread ? '<div class="notif-unread-dot"></div>' : ''}
+          </div>
+          ${hasActions ? `
+          <div class="hub-actions">
+            ${actionHtml}
+            ${isUnread ? `<button class="hub-action-btn" onclick="markNotifRead(${n.id})">✓ Mark as Read</button>` : ''}
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // ─── Interaction Handlers ───
+    function toggleSave(type, id) {
+      const isSaved = SavedStore.isSaved(type, id);
+      if (isSaved) { SavedStore.remove(type, id); } else { SavedStore.add(type, id); }
+      const nowSaved = !isSaved;
+
+      document.querySelectorAll('[data-save="' + type + '-' + id + '"]').forEach(btn => {
+        btn.innerHTML = nowSaved ? '✓ Saved' : '🔖 Save';
+        btn.classList.toggle('active', nowSaved);
+      });
+
+      UI.toast(nowSaved ? 'Saved to My Activity!' : 'Removed from saved.', nowSaved ? 'success' : 'info');
+    }
+
+    function toggleInterest(eventId) {
+      const result = EventInterestStore.toggle(eventId);
+
+      document.querySelectorAll('[data-interest="' + eventId + '"]').forEach(btn => {
+        btn.innerHTML = result.interested ? '✓ Interested' : '👍 Interested';
+        btn.classList.toggle('active', result.interested);
+      });
+
+      const ev = EventsStore.getById(eventId);
+      if (ev) {
+        const count = (ev.attendees || 0) + (result.interested ? 1 : 0);
+        const countEl = document.getElementById('interest-count-' + eventId);
+        if (countEl) countEl.textContent = '👥 ' + count.toLocaleString() + ' interested';
+      }
+
+      UI.toast(result.interested ? 'Marked as interested!' : 'Removed interest.', result.interested ? 'success' : 'info');
+    }
+
+    function acknowledgeAnn(annId) {
+      if (AcknowledgementStore.isAcknowledged(annId)) return;
+      AcknowledgementStore.acknowledge(annId);
+
+      const btn = document.querySelector('[data-ack="' + annId + '"]');
+      if (btn) {
+        btn.innerHTML = '✓ Acknowledged';
+        btn.classList.add('active');
+        btn.disabled = true;
+      }
+
+      UI.toast('Announcement acknowledged!', 'success');
+    }
+
+    function markNotifRead(notifId) {
+      NotificationsStore.markAsRead(notifId);
+
+      const item = document.getElementById('hub-notif-' + notifId);
+      if (item) {
+        item.classList.remove('hub-item-unread');
+        const dot = item.querySelector('.notif-unread-dot');
+        if (dot) dot.remove();
+        const readBtn = item.querySelector('[onclick="markNotifRead(' + notifId + ')"]');
+        if (readBtn) readBtn.remove();
+      }
+
+      NotificationsStore.updateSidebarBadge();
+      UI.toast('Notification marked as read.', 'success');
+    }
+
+    // ─── Modals ───
+    function readAnnouncement(id) {
+      const a = AnnouncementsStore.getById(id);
+      if (!a) return;
+      document.getElementById('readAnnPriority').innerHTML = UI.priorityBadge(a.priority);
+      document.getElementById('readAnnCategory').innerHTML = UI.categoryBadge(a.category);
+      document.getElementById('readAnnTitle').textContent = a.title;
+      document.getElementById('readAnnAuthor').textContent = '✍️ ' + a.author;
+      document.getElementById('readAnnDate').textContent = '📅 ' + UI.formatDate(a.date);
+      document.getElementById('readAnnBody').textContent = a.body;
+
+      const isSaved = SavedStore.isSaved('announcement', id);
+      const isAcked = AcknowledgementStore.isAcknowledged(id);
+      const showAck = a.priority === 'urgent' || a.priority === 'important';
+
+      document.getElementById('readAnnFooter').innerHTML = `
+        <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('announcement', ${id}); readAnnouncement(${id});">
+          ${isSaved ? '✓ Saved' : '🔖 Save'}
+        </button>
+        ${showAck ? `
+        <button class="hub-action-btn ack-btn ${isAcked ? 'active' : ''}" onclick="acknowledgeAnn(${id}); readAnnouncement(${id});" ${isAcked ? 'disabled' : ''}>
+          ${isAcked ? '✓ Acknowledged' : '✓ Acknowledge'}
+        </button>
+        ` : ''}
+        <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+      `;
+
+      UI.openModal('readAnnouncementModal');
+    }
+
+    function readEvent(id) {
+      const ev = EventsStore.getById(id);
+      if (!ev) return;
+
+      document.getElementById('readEvCategory').textContent = ev.category;
+      document.getElementById('readEvTitle').textContent = ev.title;
+      document.getElementById('readEvDate').textContent = '📅 ' + UI.formatDate(ev.date);
+      document.getElementById('readEvTime').textContent = '🕐 ' + ev.time;
+      document.getElementById('readEvLocation').textContent = '📍 ' + ev.location;
+
+      const isInterested = EventInterestStore.isInterested(ev.id);
+      const count = (ev.attendees || 0) + (isInterested ? 1 : 0);
+      document.getElementById('readEvInterested').textContent = '👥 ' + count.toLocaleString() + ' interested';
+      document.getElementById('readEvDesc').textContent = ev.description;
+
+      const isSaved = SavedStore.isSaved('event', id);
+
+      document.getElementById('readEvFooter').innerHTML = `
+        <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" onclick="toggleInterest(${id}); readEvent(${id});">
+          ${isInterested ? '✓ Interested' : '👍 Interested'}
+        </button>
+        <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('event', ${id}); readEvent(${id});">
+          ${isSaved ? '✓ Saved' : '🔖 Save'}
+        </button>
+        <button class="hub-action-btn" onclick="addToCalendar(${id})">📅 Add to Calendar</button>
+        <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+      `;
+
+      UI.openModal('readEventModal');
+    }
+
+    // ─── Calendar (.ics) ───
+    function addToCalendar(eventId) {
+      const ev = EventsStore.getById(eventId);
+      if (!ev) return;
+
+      const startDate = new Date(ev.date + 'T00:00:00');
+      const tp = parseTimeString(ev.time);
+      startDate.setHours(tp.hours, tp.minutes, 0, 0);
+      const endDate = new Date(startDate.getTime() + 2 * 3600000);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const fmtDate = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+      const ics = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CampusNotify//EN',
+        'BEGIN:VEVENT',
+        'DTSTART:' + fmtDate(startDate),
+        'DTEND:' + fmtDate(endDate),
+        'SUMMARY:' + ev.title.replace(/,/g, '\\,'),
+        'DESCRIPTION:' + (ev.description || '').replace(/\n/g, '\\n').replace(/,/g, '\\,'),
+        'LOCATION:' + (ev.location || '').replace(/,/g, '\\,'),
+        'END:VEVENT', 'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = ev.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      UI.toast('Calendar event downloaded! Open the .ics file to add it to your calendar.', 'success');
+    }
+
+    function parseTimeString(timeStr) {
+      if (!timeStr) return { hours: 12, minutes: 0 };
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!match) return { hours: 12, minutes: 0 };
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const ampm = match[3];
+      if (ampm) {
+        if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+      }
+      return { hours, minutes };
+    }
+
+    // ─── Reminders ───
+    function toggleReminderMenu(btn, type, id) {
+      const menu = document.getElementById('reminder-menu-' + type + '-' + id);
+      if (!menu) return;
+      document.querySelectorAll('.reminder-menu.open').forEach(m => {
+        if (m !== menu) m.classList.remove('open');
+      });
+      menu.classList.toggle('open');
+    }
+
+    function setReminder(type, id, timing) {
+      ReminderStore.set(type, id, timing);
+
+      const menu = document.getElementById('reminder-menu-' + type + '-' + id);
+      if (menu) menu.classList.remove('open');
+
+      const btn = document.querySelector('[data-reminder="' + type + '-' + id + '"]');
+      if (btn) {
+        btn.innerHTML = '🔔 ' + ReminderStore.getTimingLabel(timing);
+        btn.classList.add('active');
+      }
+
+      if (menu) {
+        menu.innerHTML = `
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '10min')">⏰ 10 minutes before</div>
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '1hour')">⏰ 1 hour before</div>
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '1day')">⏰ 1 day before</div>
+          <div class="reminder-option remove" onclick="removeReminder('${type}', ${id})">❌ Remove Reminder</div>
+        `;
+      }
+
+      UI.toast('🔔 Reminder set: ' + ReminderStore.getTimingLabel(timing), 'success');
+    }
+
+    function removeReminder(type, id) {
+      ReminderStore.remove(type, id);
+
+      const menu = document.getElementById('reminder-menu-' + type + '-' + id);
+      if (menu) menu.classList.remove('open');
+
+      const btn = document.querySelector('[data-reminder="' + type + '-' + id + '"]');
+      if (btn) {
+        btn.innerHTML = '🔔 Remind Me';
+        btn.classList.remove('active');
+      }
+
+      if (menu) {
+        menu.innerHTML = `
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '10min')">⏰ 10 minutes before</div>
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '1hour')">⏰ 1 hour before</div>
+          <div class="reminder-option" onclick="setReminder('${type}', ${id}, '1day')">⏰ 1 day before</div>
+        `;
+      }
+
+      UI.toast('Reminder removed.', 'info');
+    }
+
+    // ─── Filters ───
+    function setTypeFilter(type) {
+      currentTypeFilter = type;
+      document.querySelectorAll('.hub-filter-chip').forEach(c => c.classList.remove('active'));
+      const target = document.querySelector('.hub-filter-chip[data-type="' + type + '"]');
+      if (target) target.classList.add('active');
+      renderFeed();
+    }
+
+    function setCategoryFilter(cat) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('.hub-cat-chip').forEach(c => c.classList.remove('active'));
+      const target = document.querySelector('.hub-cat-chip[data-cat="' + cat + '"]');
+      if (target) target.classList.add('active');
+      renderFeed();
+    }
+
+    // ─── Utility ───
+    function parseRelativeTime(timeStr) {
+      if (!timeStr) return Date.now();
+      const match = timeStr.match(/(\d+)\s*(minute|hour|day|week|month)/i);
+      if (!match) return Date.now();
+      const num = parseInt(match[1]);
+      const unit = match[2].toLowerCase();
+      const offsets = { minute: 60000, hour: 3600000, day: 86400000, week: 604800000, month: 2592000000 };
+      return Date.now() - (num * (offsets[unit] || 0));
+    }
+  </script>
+</body>
+
+</html>

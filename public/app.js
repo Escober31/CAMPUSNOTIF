@@ -140,12 +140,12 @@ const EVENTS = [
   }
 ];
 
-const NOTIFICATIONS = [
-  { id: 1, type: 'info', icon: '📢', title: 'New Announcement Posted', message: 'Fall 2026 Semester Registration is now open.', time: '2 minutes ago', read: false },
+const DEFAULT_NOTIFICATIONS = [
+  { id: 1, type: 'info', icon: '📢', title: 'New Announcement Posted', message: 'Fall 2026 Semester Registration is now open.', time: '2 minutes ago', read: false, actionType: 'announcement', actionId: 1 },
   { id: 2, type: 'success', icon: '✅', title: 'Assignment Submitted', message: 'Your CS301 assignment has been submitted successfully.', time: '1 hour ago', read: false },
   { id: 3, type: 'warning', icon: '⚠️', title: 'Payment Reminder', message: 'Tuition payment for Fall semester is due October 1st.', time: '3 hours ago', read: false },
   { id: 4, type: 'alert', icon: '🔴', title: 'Emergency Drill', message: 'Campus-wide emergency drill scheduled for Oct 3rd at 10 AM.', time: '5 hours ago', read: true },
-  { id: 5, type: 'info', icon: '📅', title: 'Event Reminder', message: 'Guest Lecture: AI in Education starts tomorrow at 2 PM.', time: '1 day ago', read: true },
+  { id: 5, type: 'info', icon: '📅', title: 'Event Reminder', message: 'Guest Lecture: AI in Education starts tomorrow at 2 PM.', time: '1 day ago', read: true, actionType: 'event', actionId: 2 },
   { id: 6, type: 'success', icon: '🎉', title: 'Scholarship Awarded', message: 'Congratulations! You\'ve been awarded the Dean\'s Merit Scholarship.', time: '2 days ago', read: true },
 ];
 
@@ -514,6 +514,116 @@ const EventsStore = {
   }
 };
 
+// ─── Notifications Store ───
+const NotificationsStore = {
+  _baseKey: 'campusnotify_notifications',
+
+  _getKey() {
+    const user = Auth.getUser();
+    return user && user.id ? `${this._baseKey}_${user.id}` : this._baseKey;
+  },
+
+  getAll() {
+    const key = this._getKey();
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+    }
+    // Also check global fallback if user-specific key is not set yet
+    const fallback = localStorage.getItem(this._baseKey);
+    if (fallback) {
+      try {
+        const parsed = JSON.parse(fallback);
+        if (Array.isArray(parsed)) {
+          this.save(parsed);
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    const initial = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
+    this.save(initial);
+    return initial;
+  },
+
+  save(notifications) {
+    const key = this._getKey();
+    localStorage.setItem(key, JSON.stringify(notifications));
+  },
+
+  getUnreadCount() {
+    return this.getAll().filter(n => !n.read).length;
+  },
+
+  markAsRead(id) {
+    const all = this.getAll();
+    const notif = all.find(n => n.id === id);
+    if (notif) {
+      notif.read = true;
+      this.save(all);
+    }
+    return all;
+  },
+
+  markAllAsRead() {
+    const all = this.getAll();
+    all.forEach(n => { n.read = true; });
+    this.save(all);
+    return all;
+  },
+
+  add(notif) {
+    const all = this.getAll();
+    const item = {
+      id: Date.now(),
+      type: notif.type || 'info',
+      icon: notif.icon || '📢',
+      title: notif.title || 'Notification',
+      message: notif.message || '',
+      time: notif.time || 'Just now',
+      read: false
+    };
+    all.unshift(item);
+    this.save(all);
+    return item;
+  },
+
+  updateSidebarBadge() {
+    const navTarget = document.getElementById('nav-campus-hub') || document.getElementById('nav-events');
+    if (!navTarget) return;
+    const unread = this.getUnreadCount();
+    let badge = navTarget.querySelector('.nav-badge');
+    if (unread > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        navTarget.appendChild(badge);
+      }
+      badge.textContent = unread;
+      badge.style.display = 'inline-flex';
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+};
+
+// Global NOTIFICATIONS and NotificationsStore compatibility
+if (typeof window !== 'undefined') {
+  window.NotificationsStore = NotificationsStore;
+  try {
+    Object.defineProperty(window, 'NOTIFICATIONS', {
+      get() {
+        return NotificationsStore.getAll();
+      },
+      configurable: true
+    });
+  } catch (e) {
+    window.NOTIFICATIONS = DEFAULT_NOTIFICATIONS;
+  }
+}
+
 // ─── UI Utilities ───
 const UI = {
   // Toast notification
@@ -589,7 +699,7 @@ function renderSidebar(activePage) {
   const role = Auth.getRole();
   if (!user) return '';
 
-  const unreadCount = NOTIFICATIONS.filter(n => !n.read).length;
+  const unreadCount = NotificationsStore.getUnreadCount();
 
   return `
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">☰</button>
@@ -610,6 +720,7 @@ function renderSidebar(activePage) {
             <span class="nav-icon">📊</span>
             Dashboard
           </a>
+          ${role === 'admin' ? `
           <a href="announcements.html" class="nav-item ${activePage === 'announcements' ? 'active' : ''}" id="nav-announcements">
             <span class="nav-icon">📢</span>
             Announcements
@@ -619,6 +730,17 @@ function renderSidebar(activePage) {
             Events & Alerts
             ${unreadCount > 0 ? `<span class="nav-badge">${unreadCount}</span>` : ''}
           </a>
+          ` : `
+          <a href="campus-hub.html" class="nav-item ${activePage === 'campus-hub' ? 'active' : ''}" id="nav-campus-hub">
+            <span class="nav-icon">📢</span>
+            Campus Hub
+            ${unreadCount > 0 ? `<span class="nav-badge">${unreadCount}</span>` : ''}
+          </a>
+          <a href="my-activity.html" class="nav-item ${activePage === 'my-activity' ? 'active' : ''}" id="nav-my-activity">
+            <span class="nav-icon">⭐</span>
+            My Activity
+          </a>
+          `}
         </div>
 
         ${role === 'admin' ? `

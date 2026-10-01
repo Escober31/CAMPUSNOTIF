@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify My Activity — Track your saved items, interested events, reminders, and acknowledgements.">
+  <title>My Activity — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>⭐ <span class="text-gradient">My Activity</span></h1>
+            <p class="page-subtitle">Track your bookmarked notices, interested events, active reminders, and acknowledgements.</p>
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search your activity..." id="activitySearch">
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Summary Stats -->
+      <div class="stats-grid stagger" id="activityStats">
+        <div class="stat-card animate-scale-in" style="cursor:pointer;" onclick="switchActivityTab('saved')" id="cardStatSaved">
+          <div class="stat-icon indigo">🔖</div>
+          <div class="stat-value" id="statSavedCount">0</div>
+          <div class="stat-label">Saved Items</div>
+        </div>
+        <div class="stat-card animate-scale-in" style="cursor:pointer;" onclick="switchActivityTab('interested')" id="cardStatInterested">
+          <div class="stat-icon cyan">👍</div>
+          <div class="stat-value" id="statInterestedCount">0</div>
+          <div class="stat-label">Interested Events</div>
+        </div>
+        <div class="stat-card animate-scale-in" style="cursor:pointer;" onclick="switchActivityTab('reminders')" id="cardStatReminders">
+          <div class="stat-icon amber">🔔</div>
+          <div class="stat-value" id="statRemindersCount">0</div>
+          <div class="stat-label">Active Reminders</div>
+        </div>
+        <div class="stat-card animate-scale-in" style="cursor:pointer;" onclick="switchActivityTab('acknowledged')" id="cardStatAcknowledged">
+          <div class="stat-icon emerald">✓</div>
+          <div class="stat-value" id="statAcknowledgedCount">0</div>
+          <div class="stat-label">Acknowledged</div>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav animate-fade-in" style="margin-bottom:var(--space-xl);">
+        <button class="tab-btn active" data-tab="all" onclick="switchActivityTab('all')">
+          📋 All Activity <span class="tab-count" id="badgeAll">0</span>
+        </button>
+        <button class="tab-btn" data-tab="saved" onclick="switchActivityTab('saved')">
+          🔖 Saved <span class="tab-count" id="badgeSaved">0</span>
+        </button>
+        <button class="tab-btn" data-tab="interested" onclick="switchActivityTab('interested')">
+          👍 Interested Events <span class="tab-count" id="badgeInterested">0</span>
+        </button>
+        <button class="tab-btn" data-tab="reminders" onclick="switchActivityTab('reminders')">
+          🔔 Reminders <span class="tab-count" id="badgeReminders">0</span>
+        </button>
+        <button class="tab-btn" data-tab="acknowledged" onclick="switchActivityTab('acknowledged')">
+          ✓ Acknowledged <span class="tab-count" id="badgeAcknowledged">0</span>
+        </button>
+      </div>
+
+      <!-- Activity Feed / List -->
+      <div id="activityFeed" class="hub-feed stagger"></div>
+
+      <!-- Empty State -->
+      <div id="activityEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon" id="emptyIcon">📭</div>
+        <h3 id="emptyTitle">No activity yet</h3>
+        <p id="emptyMessage">Explore the Campus Hub to discover announcements and events.</p>
+        <div style="margin-top:var(--space-lg);">
+          <a href="campus-hub.html" class="btn btn-primary">Go to Campus Hub →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Read Announcement Modal -->
+  <div class="modal-overlay" id="readAnnouncementModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span id="readAnnPriority"></span>
+          <span id="readAnnCategory"></span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readAnnouncementModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readAnnTitle" style="margin-bottom:var(--space-md);"></h2>
+        <div class="announcement-meta" style="margin-bottom:var(--space-lg); padding-bottom:var(--space-md); border-bottom:1px solid var(--border-subtle);">
+          <span id="readAnnAuthor"></span>
+          <span id="readAnnDate"></span>
+        </div>
+        <div id="readAnnBody" class="text-secondary" style="font-size:0.95rem; line-height:1.8; white-space:pre-wrap;"></div>
+      </div>
+      <div class="modal-footer" id="readAnnFooter">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read Event Modal -->
+  <div class="modal-overlay" id="readEventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="tag" id="readEvCategory"></span>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readEventModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <h2 id="readEvTitle" style="margin-bottom:var(--space-md);"></h2>
+        <div style="background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-md); margin-bottom:var(--space-lg); display:flex; flex-wrap:wrap; gap:var(--space-md);">
+          <span class="text-sm text-secondary" id="readEvDate">📅 Date</span>
+          <span class="text-sm text-secondary" id="readEvTime">🕐 Time</span>
+          <span class="text-sm text-secondary" id="readEvLocation">📍 Location</span>
+          <span class="text-sm text-secondary" id="readEvInterested">👥 Interested</span>
+        </div>
+        <div class="text-secondary" id="readEvDesc" style="line-height:1.7; font-size:0.95rem; white-space:pre-wrap;"></div>
+      </div>
+      <div class="modal-footer" id="readEvFooter">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+  <script src="stores.js"></script>
+  <script>
+    let activeTab = 'all';
+    let searchQuery = '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('my-activity')) return;
+
+      // Handle tab parameter in URL
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['all', 'saved', 'interested', 'reminders', 'acknowledged'].includes(tabParam)) {
+        activeTab = tabParam;
+      }
+
+      // Search input
+      const searchInput = document.getElementById('activitySearch');
+      searchInput.addEventListener('input', function() {
+        searchQuery = this.value.trim().toLowerCase();
+        renderActivity();
+      });
+
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          this.value = '';
+          searchQuery = '';
+          renderActivity();
+          this.blur();
+        }
+      });
+
+      // Close modals on overlay backdrop click or Escape
+      document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.remove('active');
+        });
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.active').forEach(modal => modal.classList.remove('active'));
+        }
+      });
+
+      updateStatsAndBadges();
+      updateTabButtons();
+      renderActivity();
+    });
+
+    function switchActivityTab(tab) {
+      activeTab = tab;
+      updateTabButtons();
+      renderActivity();
+    }
+
+    function updateTabButtons() {
+      document.querySelectorAll('.tabs-nav .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === activeTab);
+      });
+    }
+
+    function updateStatsAndBadges() {
+      const savedCount = SavedStore.count();
+      const interestedCount = EventInterestStore.count();
+      const remindersCount = ReminderStore.count();
+      const ackCount = AcknowledgementStore.count();
+      const totalCount = savedCount + interestedCount + remindersCount + ackCount;
+
+      document.getElementById('statSavedCount').textContent = savedCount;
+      document.getElementById('statInterestedCount').textContent = interestedCount;
+      document.getElementById('statRemindersCount').textContent = remindersCount;
+      document.getElementById('statAcknowledgedCount').textContent = ackCount;
+
+      document.getElementById('badgeAll').textContent = totalCount;
+      document.getElementById('badgeSaved').textContent = savedCount;
+      document.getElementById('badgeInterested').textContent = interestedCount;
+      document.getElementById('badgeReminders').textContent = remindersCount;
+      document.getElementById('badgeAcknowledged').textContent = ackCount;
+    }
+
+    function buildActivityList() {
+      const list = [];
+      const announcements = AnnouncementsStore.getAll();
+      const events = EventsStore.getAll();
+
+      // 1. Saved Items
+      const savedItems = SavedStore.getAll();
+      savedItems.forEach(item => {
+        if (item.type === 'announcement') {
+          const ann = announcements.find(a => a.id === item.id);
+          if (ann) {
+            list.push({
+              itemType: 'saved',
+              targetType: 'announcement',
+              id: ann.id,
+              title: ann.title,
+              body: ann.body,
+              date: ann.date,
+              category: ann.category,
+              priority: ann.priority,
+              author: ann.author,
+              timestamp: item.savedAt,
+              timestampLabel: 'Saved',
+              data: ann
+            });
+          }
+        } else if (item.type === 'event') {
+          const ev = events.find(e => e.id === item.id);
+          if (ev) {
+            list.push({
+              itemType: 'saved',
+              targetType: 'event',
+              id: ev.id,
+              title: ev.title,
+              body: ev.description,
+              date: ev.date,
+              time: ev.time,
+              location: ev.location,
+              category: ev.category,
+              attendees: ev.attendees || 0,
+              timestamp: item.savedAt,
+              timestampLabel: 'Saved',
+              data: ev
+            });
+          }
+        }
+      });
+
+      // 2. Interested Events
+      const interestedList = EventInterestStore.getAll();
+      interestedList.forEach(item => {
+        const ev = events.find(e => e.id === item.eventId);
+        if (ev) {
+          list.push({
+            itemType: 'interested',
+            targetType: 'event',
+            id: ev.id,
+            title: ev.title,
+            body: ev.description,
+            date: ev.date,
+            time: ev.time,
+            location: ev.location,
+            category: ev.category,
+            attendees: ev.attendees || 0,
+            timestamp: item.interestedAt,
+            timestampLabel: 'Marked Interested',
+            data: ev
+          });
+        }
+      });
+
+      // 3. Reminders
+      const reminders = ReminderStore.getAll();
+      reminders.forEach(item => {
+        if (item.type === 'event') {
+          const ev = events.find(e => e.id === item.id);
+          if (ev) {
+            list.push({
+              itemType: 'reminders',
+              targetType: 'event',
+              id: ev.id,
+              title: ev.title,
+              body: ev.description,
+              date: ev.date,
+              time: ev.time,
+              location: ev.location,
+              category: ev.category,
+              reminderTiming: item.timing,
+              timestamp: item.setAt,
+              timestampLabel: 'Reminder Set',
+              data: ev
+            });
+          }
+        } else if (item.type === 'announcement') {
+          const ann = announcements.find(a => a.id === item.id);
+          if (ann) {
+            list.push({
+              itemType: 'reminders',
+              targetType: 'announcement',
+              id: ann.id,
+              title: ann.title,
+              body: ann.body,
+              date: ann.date,
+              category: ann.category,
+              priority: ann.priority,
+              author: ann.author,
+              reminderTiming: item.timing,
+              timestamp: item.setAt,
+              timestampLabel: 'Reminder Set',
+              data: ann
+            });
+          }
+        }
+      });
+
+      // 4. Acknowledged Announcements
+      const acks = AcknowledgementStore.getAll();
+      acks.forEach(item => {
+        const ann = announcements.find(a => a.id === item.announcementId);
+        if (ann) {
+          list.push({
+            itemType: 'acknowledged',
+            targetType: 'announcement',
+            id: ann.id,
+            title: ann.title,
+            body: ann.body,
+            date: ann.date,
+            category: ann.category,
+            priority: ann.priority,
+            author: ann.author,
+            timestamp: item.acknowledgedAt,
+            timestampLabel: 'Acknowledged',
+            data: ann
+          });
+        }
+      });
+
+      return list;
+    }
+
+    function renderActivity() {
+      const allItems = buildActivityList();
+      let filtered = allItems;
+
+      if (activeTab !== 'all') {
+        filtered = filtered.filter(item => item.itemType === activeTab);
+      }
+
+      if (searchQuery) {
+        filtered = filtered.filter(item => {
+          const text = [item.title, item.body, item.category, item.author, item.location].filter(Boolean).join(' ').toLowerCase();
+          return text.includes(searchQuery);
+        });
+      }
+
+      const container = document.getElementById('activityFeed');
+      const empty = document.getElementById('activityEmpty');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+
+        const titles = {
+          all: 'No activity found',
+          saved: 'No saved items yet',
+          interested: 'No interested events yet',
+          reminders: 'No active reminders',
+          acknowledged: 'No acknowledged announcements'
+        };
+        const icons = {
+          all: '📭',
+          saved: '🔖',
+          interested: '👍',
+          reminders: '🔔',
+          acknowledged: '✓'
+        };
+        const msgs = {
+          all: searchQuery ? 'Try adjusting your search terms.' : 'Explore Campus Hub to bookmark announcements and RSVP to events.',
+          saved: 'Save announcements and events in Campus Hub to view them quickly here.',
+          interested: 'Click "Interested" on campus events to keep track of them.',
+          reminders: 'Set event or announcement reminders in Campus Hub to stay informed.',
+          acknowledged: 'Acknowledge urgent announcements to keep a record of notices you have confirmed.'
+        };
+
+        document.getElementById('emptyTitle').textContent = titles[activeTab] || 'No activity found';
+        document.getElementById('emptyIcon').textContent = icons[activeTab] || '📭';
+        document.getElementById('emptyMessage').textContent = msgs[activeTab] || 'Check back later.';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      container.innerHTML = filtered.map(item => {
+        if (item.targetType === 'announcement') {
+          return renderAnnouncementCard(item);
+        } else if (item.targetType === 'event') {
+          return renderEventCard(item);
+        }
+        return '';
+      }).join('');
+    }
+
+    function renderAnnouncementCard(item) {
+      const a = item.data;
+      const isSaved = SavedStore.isSaved('announcement', a.id);
+      const timeAgo = formatTimeAgo(item.timestamp);
+
+      let actionBadges = '';
+      if (item.itemType === 'saved') {
+        actionBadges = `<span class="badge badge-primary">🔖 Saved</span>`;
+      } else if (item.itemType === 'acknowledged') {
+        actionBadges = `<span class="badge badge-success">✓ Confirmed</span>`;
+      } else if (item.itemType === 'reminders') {
+        actionBadges = `<span class="badge badge-warning">🔔 Reminder: ${ReminderStore.getTimingLabel(item.reminderTiming)}</span>`;
+      }
+
+      return `
+        <div class="hub-feed-item hub-item-announcement animate-slide-up" id="act-ann-${item.itemType}-${a.id}">
+          <div class="card-priority ${a.priority}"></div>
+          <div style="padding-left:12px;">
+            <div class="flex items-center justify-between" style="margin-bottom:var(--space-xs);">
+              <div class="hub-type-label type-announcement">📢 ANNOUNCEMENT</div>
+              <span class="text-muted text-xs">${item.timestampLabel} ${timeAgo}</span>
+            </div>
+            <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+              ${actionBadges}
+              ${UI.priorityBadge(a.priority)}
+              ${UI.categoryBadge(a.category)}
+            </div>
+            <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.title}</h3>
+            <div class="announcement-body">${a.body}</div>
+            <div class="announcement-meta">
+              <span>✍️ ${a.author}</span>
+              <span>📅 ${UI.formatDate(a.date)}</span>
+            </div>
+            <div class="hub-actions">
+              ${item.itemType === 'saved' ? `
+                <button class="hub-action-btn active" onclick="removeSaved('announcement', ${a.id})">❌ Remove Bookmark</button>
+              ` : `
+                <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('announcement', ${a.id})">
+                  ${isSaved ? '✓ Saved' : '🔖 Save'}
+                </button>
+              `}
+              ${item.itemType === 'reminders' ? `
+                <button class="hub-action-btn active" onclick="removeReminderAction('announcement', ${a.id})">❌ Cancel Reminder</button>
+              ` : ''}
+              <button class="hub-action-btn" onclick="readAnnouncement(${a.id})">Read More →</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEventCard(item) {
+      const ev = item.data;
+      const d = new Date(ev.date + 'T00:00:00');
+      const day = d.getDate();
+      const month = d.toLocaleDateString('en-US', { month: 'short' });
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+      const isInterested = EventInterestStore.isInterested(ev.id);
+      const isSaved = SavedStore.isSaved('event', ev.id);
+      const reminder = ReminderStore.getReminder('event', ev.id);
+      const interestedCount = (ev.attendees || 0) + (isInterested ? 1 : 0);
+      const timeAgo = formatTimeAgo(item.timestamp);
+
+      let actionBadge = '';
+      if (item.itemType === 'saved') {
+        actionBadge = `<span class="badge badge-primary">🔖 Saved</span>`;
+      } else if (item.itemType === 'interested') {
+        actionBadge = `<span class="badge badge-cyan">👍 Interested</span>`;
+      } else if (item.itemType === 'reminders') {
+        actionBadge = `<span class="badge badge-warning">🔔 Reminder: ${ReminderStore.getTimingLabel(item.reminderTiming)}</span>`;
+      }
+
+      return `
+        <div class="hub-feed-item hub-item-event animate-slide-up" id="act-ev-${item.itemType}-${ev.id}">
+          <div class="flex items-center justify-between" style="margin-bottom:var(--space-xs);">
+            <div class="hub-type-label type-event">📅 EVENT</div>
+            <span class="text-muted text-xs">${item.timestampLabel} ${timeAgo}</span>
+          </div>
+          <div class="hub-event-layout">
+            <div class="event-date-badge" style="width:52px; height:58px;">
+              <span class="day" style="font-size:1.2rem;">${day}</span>
+              <span class="month" style="font-size:0.6rem;">${month}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+                ${actionBadge}
+                <span class="tag">${ev.category}</span>
+                <span class="text-muted text-sm">${dayName}</span>
+              </div>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readEvent(${ev.id})">${ev.title}</h3>
+              <p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${ev.description}</p>
+              <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
+                <span class="text-muted text-sm">📍 ${ev.location}</span>
+                <span class="text-muted text-sm">🕐 ${ev.time}</span>
+                <span class="text-muted text-sm">👥 ${interestedCount.toLocaleString()} interested</span>
+              </div>
+            </div>
+          </div>
+          <div class="hub-actions">
+            ${item.itemType === 'interested' ? `
+              <button class="hub-action-btn active" onclick="toggleInterestAction(${ev.id})">❌ Remove Interest</button>
+            ` : `
+              <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" onclick="toggleInterestAction(${ev.id})">
+                ${isInterested ? '✓ Interested' : '👍 Interested'}
+              </button>
+            `}
+            ${item.itemType === 'saved' ? `
+              <button class="hub-action-btn active" onclick="removeSaved('event', ${ev.id})">❌ Remove Bookmark</button>
+            ` : `
+              <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('event', ${ev.id})">
+                ${isSaved ? '✓ Saved' : '🔖 Save'}
+              </button>
+            `}
+            ${item.itemType === 'reminders' ? `
+              <button class="hub-action-btn active" onclick="removeReminderAction('event', ${ev.id})">❌ Cancel Reminder</button>
+            ` : ''}
+            <button class="hub-action-btn" onclick="addToCalendar(${ev.id})">📅 Add to Calendar</button>
+            <button class="hub-action-btn" onclick="readEvent(${ev.id})">View Details →</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── Actions ───
+    function removeSaved(type, id) {
+      SavedStore.remove(type, id);
+      updateStatsAndBadges();
+      renderActivity();
+      UI.toast('Bookmark removed.', 'info');
+    }
+
+    function toggleSave(type, id) {
+      const isSaved = SavedStore.isSaved(type, id);
+      if (isSaved) {
+        SavedStore.remove(type, id);
+      } else {
+        SavedStore.add(type, id);
+      }
+      updateStatsAndBadges();
+      renderActivity();
+      UI.toast(isSaved ? 'Bookmark removed.' : 'Item bookmarked!', isSaved ? 'info' : 'success');
+    }
+
+    function toggleInterestAction(eventId) {
+      const res = EventInterestStore.toggle(eventId);
+      updateStatsAndBadges();
+      renderActivity();
+      UI.toast(res.interested ? 'Marked as interested!' : 'Removed interest.', res.interested ? 'success' : 'info');
+    }
+
+    function removeReminderAction(type, id) {
+      ReminderStore.remove(type, id);
+      updateStatsAndBadges();
+      renderActivity();
+      UI.toast('Reminder cancelled.', 'info');
+    }
+
+    // ─── Calendar (.ics) ───
+    function addToCalendar(eventId) {
+      const ev = EventsStore.getById(eventId);
+      if (!ev) return;
+
+      const startDate = new Date(ev.date + 'T00:00:00');
+      const tp = parseTimeString(ev.time);
+      startDate.setHours(tp.hours, tp.minutes, 0, 0);
+      const endDate = new Date(startDate.getTime() + 2 * 3600000);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const fmtDate = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+      const ics = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CampusNotify//EN',
+        'BEGIN:VEVENT',
+        'DTSTART:' + fmtDate(startDate),
+        'DTEND:' + fmtDate(endDate),
+        'SUMMARY:' + ev.title.replace(/,/g, '\\,'),
+        'DESCRIPTION:' + (ev.description || '').replace(/\n/g, '\\n').replace(/,/g, '\\,'),
+        'LOCATION:' + (ev.location || '').replace(/,/g, '\\,'),
+        'END:VEVENT', 'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = ev.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      UI.toast('Calendar event downloaded! Open the .ics file to add it.', 'success');
+    }
+
+    function parseTimeString(timeStr) {
+      if (!timeStr) return { hours: 12, minutes: 0 };
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!match) return { hours: 12, minutes: 0 };
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const ampm = match[3];
+      if (ampm) {
+        if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+      }
+      return { hours, minutes };
+    }
+
+    // ─── Modals ───
+    function readAnnouncement(id) {
+      const a = AnnouncementsStore.getById(id);
+      if (!a) return;
+      document.getElementById('readAnnPriority').innerHTML = UI.priorityBadge(a.priority);
+      document.getElementById('readAnnCategory').innerHTML = UI.categoryBadge(a.category);
+      document.getElementById('readAnnTitle').textContent = a.title;
+      document.getElementById('readAnnAuthor').textContent = '✍️ ' + a.author;
+      document.getElementById('readAnnDate').textContent = '📅 ' + UI.formatDate(a.date);
+      document.getElementById('readAnnBody').textContent = a.body;
+
+      const isSaved = SavedStore.isSaved('announcement', id);
+      document.getElementById('readAnnFooter').innerHTML = `
+        <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('announcement', ${id}); readAnnouncement(${id});">
+          ${isSaved ? '✓ Saved' : '🔖 Save'}
+        </button>
+        <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+      `;
+
+      UI.openModal('readAnnouncementModal');
+    }
+
+    function readEvent(id) {
+      const ev = EventsStore.getById(id);
+      if (!ev) return;
+
+      document.getElementById('readEvCategory').textContent = ev.category;
+      document.getElementById('readEvTitle').textContent = ev.title;
+      document.getElementById('readEvDate').textContent = '📅 ' + UI.formatDate(ev.date);
+      document.getElementById('readEvTime').textContent = '🕐 ' + ev.time;
+      document.getElementById('readEvLocation').textContent = '📍 ' + ev.location;
+
+      const isInterested = EventInterestStore.isInterested(ev.id);
+      const count = (ev.attendees || 0) + (isInterested ? 1 : 0);
+      document.getElementById('readEvInterested').textContent = '👥 ' + count.toLocaleString() + ' interested';
+      document.getElementById('readEvDesc').textContent = ev.description;
+
+      const isSaved = SavedStore.isSaved('event', id);
+
+      document.getElementById('readEvFooter').innerHTML = `
+        <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" onclick="toggleInterestAction(${id}); readEvent(${id});">
+          ${isInterested ? '✓ Interested' : '👍 Interested'}
+        </button>
+        <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="toggleSave('event', ${id}); readEvent(${id});">
+          ${isSaved ? '✓ Saved' : '🔖 Save'}
+        </button>
+        <button class="hub-action-btn" onclick="addToCalendar(${id})">📅 Add to Calendar</button>
+        <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+      `;
+
+      UI.openModal('readEventModal');
+    }
+
+    function formatTimeAgo(isoString) {
+      if (!isoString) return '';
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays === 1) return 'yesterday';
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <title>Announcements — CampusNotify</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="app-layout">
     <div id="app-sidebar"></div>
@@ -102,14 +104,16 @@
           <div class="form-group">
             <div class="form-checkbox-group">
               <input type="checkbox" id="annPinned" class="form-checkbox">
-              <label for="annPinned" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">📌 Pin this announcement</label>
+              <label for="annPinned" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">📌 Pin this
+                announcement</label>
             </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('announcementModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="document.getElementById('announcementForm').requestSubmit()" id="modalSubmitBtn">Publish</button>
+        <button class="btn btn-primary" onclick="document.getElementById('announcementForm').requestSubmit()"
+          id="modalSubmitBtn">Publish</button>
       </div>
     </div>
   </div>
@@ -141,11 +145,13 @@
       </div>
       <div class="modal-body">
         <h2 id="readAnnTitle" style="margin-bottom:var(--space-md);"></h2>
-        <div class="announcement-meta" style="margin-bottom:var(--space-lg); padding-bottom:var(--space-md); border-bottom:1px solid var(--border-subtle);">
+        <div class="announcement-meta"
+          style="margin-bottom:var(--space-lg); padding-bottom:var(--space-md); border-bottom:1px solid var(--border-subtle);">
           <span id="readAnnAuthor"></span>
           <span id="readAnnDate"></span>
         </div>
-        <div id="readAnnBody" class="text-secondary" style="font-size:0.95rem; line-height:1.8; white-space:pre-wrap;"></div>
+        <div id="readAnnBody" class="text-secondary" style="font-size:0.95rem; line-height:1.8; white-space:pre-wrap;">
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
@@ -154,6 +160,7 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="stores.js"></script>
   <script>
     let deleteTargetId = null;
 
@@ -327,4 +334,5 @@
     }
   </script>
 </body>
+
 </html>

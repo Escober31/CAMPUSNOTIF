@@ -177,9 +177,10 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="stores.js"></script>
   <script>
     let deleteTargetEventId = null;
-    let notificationsData = [...NOTIFICATIONS];
+    let notificationsData = NotificationsStore.getAll();
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!initPage('events')) return;
@@ -187,8 +188,14 @@
       renderNotifications();
       updateNotifBadge();
 
-      // Handle highlight from dashboard search
+      // Handle tab selection from query params (e.g., ?tab=notifications)
       const params = new URLSearchParams(window.location.search);
+      const targetTab = params.get('tab');
+      if (targetTab === 'notifications' || targetTab === 'events') {
+        switchTab(targetTab);
+      }
+
+      // Handle highlight from dashboard search
       const highlightId = params.get('highlight');
       if (highlightId) {
         setTimeout(() => {
@@ -399,21 +406,20 @@
     }
 
     function markRead(id) {
-      const notif = notificationsData.find(n => n.id === id);
-      if (notif && !notif.read) {
-        notif.read = true;
-        renderNotifications();
-      }
+      notificationsData = NotificationsStore.markAsRead(id);
+      renderNotifications();
+      updateNotifBadge();
     }
 
     function markAllRead() {
-      notificationsData.forEach(n => n.read = true);
+      notificationsData = NotificationsStore.markAllAsRead();
       renderNotifications();
+      updateNotifBadge();
       UI.toast('All notifications marked as read.', 'success');
     }
 
     function updateNotifBadge() {
-      const unread = notificationsData.filter(n => !n.read).length;
+      const unread = NotificationsStore.getUnreadCount();
       document.getElementById('unreadCount').textContent = unread;
       const badge = document.getElementById('notifBadge');
       if (unread > 0) {
@@ -422,6 +428,7 @@
       } else {
         badge.style.display = 'none';
       }
+      NotificationsStore.updateSidebarBadge();
     }
   </script>
 </body>
