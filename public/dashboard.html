@@ -75,35 +75,33 @@
         </div>
       </div>
 
-      <!-- Student For You Section (Non-admin only) -->
-      <div id="studentForYouBlock" class="card mt-xl" style="display:none; transform:none; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(49, 46, 129, 0.25)); border-color: rgba(99, 102, 241, 0.25);">
-        <div class="flex items-center justify-between mb-md" style="flex-wrap:wrap; gap:var(--space-sm);">
-          <div>
-            <h3 style="display:inline-flex; align-items:center; gap:0.5rem;">✨ <span class="text-gradient">For You</span></h3>
-            <p class="text-secondary text-sm" style="margin-top:2px;">Quick access to your unified campus stream and personal activity.</p>
+      <!-- ✨ For You — Personalized Feed (students only) -->
+      <div id="forYouSection" class="foryou-section mt-xl" style="display:none;">
+        <div class="foryou-header">
+          <div class="foryou-title-row">
+            <div>
+              <h2 class="foryou-title">✨ <span class="text-gradient">For You</span></h2>
+              <p class="foryou-subtitle" id="forYouSubtitle">Content curated for your department and year level.</p>
+            </div>
+            <div class="foryou-header-actions">
+              <div class="foryou-profile-badge" id="forYouBadge">
+                <span class="foryou-badge-icon">🎓</span>
+                <span class="foryou-badge-text" id="forYouBadgeText">Computer Science · 3rd Year</span>
+              </div>
+            </div>
           </div>
-          <div class="flex gap-sm">
-            <a href="campus-hub.html" class="btn btn-primary btn-sm">Explore Campus Hub →</a>
-            <a href="my-activity.html" class="btn btn-secondary btn-sm">My Activity ⭐</a>
+          <div class="foryou-filters" id="forYouFilters">
+            <button class="foryou-chip active" data-fy-type="all">All</button>
+            <button class="foryou-chip" data-fy-type="announcement">📢 Announcements</button>
+            <button class="foryou-chip" data-fy-type="event">📅 Events</button>
+            <button class="foryou-chip" data-fy-type="notification">🔔 Notifications</button>
           </div>
         </div>
-        <div class="grid-4" id="studentActivitySummary" style="margin-top:var(--space-md); gap:var(--space-md);">
-          <div class="stat-card" style="padding:var(--space-md); cursor:pointer;" onclick="window.location.href='my-activity.html?tab=saved'">
-            <div class="text-xs text-muted">Bookmarked</div>
-            <div class="font-bold text-lg" id="quickStatSaved">0</div>
-          </div>
-          <div class="stat-card" style="padding:var(--space-md); cursor:pointer;" onclick="window.location.href='my-activity.html?tab=interested'">
-            <div class="text-xs text-muted">Interested Events</div>
-            <div class="font-bold text-lg" id="quickStatInterested">0</div>
-          </div>
-          <div class="stat-card" style="padding:var(--space-md); cursor:pointer;" onclick="window.location.href='my-activity.html?tab=reminders'">
-            <div class="text-xs text-muted">Active Reminders</div>
-            <div class="font-bold text-lg" id="quickStatReminders">0</div>
-          </div>
-          <div class="stat-card" style="padding:var(--space-md); cursor:pointer;" onclick="window.location.href='campus-hub.html?type=notification'">
-            <div class="text-xs text-muted">Unread Alerts</div>
-            <div class="font-bold text-lg" id="quickStatUnread">0</div>
-          </div>
+        <div id="forYouFeed" class="foryou-feed"></div>
+        <div id="forYouEmpty" class="foryou-empty" style="display:none;">
+          <div class="foryou-empty-icon">🎯</div>
+          <h3>All caught up!</h3>
+          <p>No personalized content for your profile right now. Check the <a href="campus-hub.html">Campus Hub</a> for campus-wide updates.</p>
         </div>
       </div>
 
@@ -184,24 +182,175 @@
         };
       }
 
-      // Student "For You" Section
-      const studentBlock = document.getElementById('studentForYouBlock');
-      if (studentBlock) {
-        if (role !== 'admin') {
-          studentBlock.style.display = 'block';
-          if (typeof SavedStore !== 'undefined') {
-            document.getElementById('quickStatSaved').textContent = SavedStore.count();
-          }
-          if (typeof EventInterestStore !== 'undefined') {
-            document.getElementById('quickStatInterested').textContent = EventInterestStore.count();
-          }
-          if (typeof ReminderStore !== 'undefined') {
-            document.getElementById('quickStatReminders').textContent = ReminderStore.count();
-          }
-          document.getElementById('quickStatUnread').textContent = NotificationsStore.getUnreadCount();
-        } else {
-          studentBlock.style.display = 'none';
+      // ✨ For You Feed
+      const forYouSection = document.getElementById('forYouSection');
+      if (forYouSection && role !== 'admin') {
+        forYouSection.style.display = 'block';
+
+        // Set profile badge
+        const badgeText = document.getElementById('forYouBadgeText');
+        if (badgeText) {
+          const parts = [];
+          if (user.department) parts.push(user.department);
+          if (user.year) parts.push(user.year);
+          badgeText.textContent = parts.join(' · ') || 'Student';
         }
+
+        const subtitle = document.getElementById('forYouSubtitle');
+        if (subtitle) {
+          subtitle.textContent = `Announcements, events & alerts targeted to ${user.department || 'your department'} ${user.year ? '— ' + user.year : ''}.`;
+        }
+
+        // Filter chips
+        let fyTypeFilter = 'all';
+        document.querySelectorAll('.foryou-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            document.querySelectorAll('.foryou-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            fyTypeFilter = chip.dataset.fyType;
+            renderForYouFeed(fyTypeFilter);
+          });
+        });
+
+        renderForYouFeed('all');
+
+        function renderForYouFeed(typeFilter) {
+          const feed = ForYouFeed.buildFeed(user);
+          const filtered = typeFilter === 'all' ? feed : feed.filter(f => f.feedType === typeFilter);
+          const container = document.getElementById('forYouFeed');
+          const empty = document.getElementById('forYouEmpty');
+
+          if (filtered.length === 0) {
+            container.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+          }
+
+          empty.style.display = 'none';
+          container.innerHTML = filtered.map(item => renderForYouItem(item)).join('');
+        }
+
+        function renderForYouItem(item) {
+          const targetLabel = ForYouFeed.getTargetLabel(item);
+          const targetBadge = targetLabel ? `<span class="foryou-target-badge">🎯 ${targetLabel}</span>` : '';
+
+          if (item.feedType === 'announcement') {
+            const a = item.data;
+            const isSaved = typeof SavedStore !== 'undefined' && SavedStore.isSaved('announcement', a.id);
+
+            return `
+              <div class="foryou-item foryou-item-announcement animate-slide-up">
+                <div class="foryou-item-stripe stripe-announcement"></div>
+                <div class="foryou-item-content">
+                  <div class="foryou-item-header">
+                    <span class="foryou-type-label type-announcement">📢 ANNOUNCEMENT</span>
+                    ${targetBadge}
+                    ${a.pinned ? '<span class="badge badge-primary" style="font-size:0.7rem;">📌 Pinned</span>' : ''}
+                  </div>
+                  <h3 class="foryou-item-title">${a.title}</h3>
+                  <p class="foryou-item-body">${a.body}</p>
+                  <div class="foryou-item-meta">
+                    <span>✍️ ${a.author}</span>
+                    <span>📅 ${UI.formatDate(a.date)}</span>
+                    ${UI.priorityBadge(a.priority)}
+                    ${UI.categoryBadge(a.category)}
+                  </div>
+                  <div class="foryou-item-actions">
+                    <button class="hub-action-btn" onclick="window.location.href='campus-hub.html?highlight=ann-${a.id}'">Read More →</button>
+                    <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="fyToggleSave('announcement', ${a.id}, this)">
+                      ${isSaved ? '✓ Saved' : '🔖 Save'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          if (item.feedType === 'event') {
+            const ev = item.data;
+            const d = new Date(ev.date + 'T00:00:00');
+            const day = d.getDate();
+            const month = d.toLocaleDateString('en-US', { month: 'short' });
+            const isInterested = typeof EventInterestStore !== 'undefined' && EventInterestStore.isInterested(ev.id);
+            const isSaved = typeof SavedStore !== 'undefined' && SavedStore.isSaved('event', ev.id);
+            const reminder = typeof ReminderStore !== 'undefined' ? ReminderStore.getReminder('event', ev.id) : null;
+
+            return `
+              <div class="foryou-item foryou-item-event animate-slide-up">
+                <div class="foryou-item-stripe stripe-event"></div>
+                <div class="foryou-item-content">
+                  <div class="foryou-item-header">
+                    <span class="foryou-type-label type-event">📅 EVENT</span>
+                    ${targetBadge}
+                  </div>
+                  <div class="foryou-event-layout">
+                    <div class="event-date-badge" style="width:48px; height:54px; flex-shrink:0;">
+                      <span class="day" style="font-size:1.1rem;">${day}</span>
+                      <span class="month" style="font-size:0.6rem;">${month}</span>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                      <h3 class="foryou-item-title" style="margin-bottom:4px;">${ev.title}</h3>
+                      <p class="foryou-item-body">${ev.description}</p>
+                      <div class="foryou-item-meta" style="margin-top:var(--space-sm);">
+                        <span>📍 ${ev.location}</span>
+                        <span>🕐 ${ev.time}</span>
+                        <span class="tag">${ev.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="foryou-item-actions">
+                    <button class="hub-action-btn" onclick="window.location.href='campus-hub.html?highlight=ev-${ev.id}'">Read More →</button>
+                    <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" onclick="fyToggleInterest(${ev.id}, this)">
+                      ${isInterested ? '✓ Interested' : '👍 Interested'}
+                    </button>
+                    <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="fyToggleSave('event', ${ev.id}, this)">
+                      ${isSaved ? '✓ Saved' : '🔖 Save'}
+                    </button>
+                    <div class="reminder-wrapper">
+                      <button class="hub-action-btn reminder-btn ${reminder ? 'active' : ''}" onclick="fyToggleReminderMenu(this, 'event', ${ev.id})">
+                        ${reminder ? '🔔 ' + ReminderStore.getTimingLabel(reminder.timing) : '🔔 Remind Me'}
+                      </button>
+                      <div class="reminder-menu" id="fy-reminder-menu-event-${ev.id}">
+                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '10min')">⏰ 10 minutes before</div>
+                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '1hour')">⏰ 1 hour before</div>
+                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '1day')">⏰ 1 day before</div>
+                        ${reminder ? '<div class="reminder-option remove" onclick="fyRemoveReminder(\'event\', ' + ev.id + ')">❌ Remove Reminder</div>' : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          if (item.feedType === 'notification') {
+            const n = item.data;
+            return `
+              <div class="foryou-item foryou-item-notification ${!n.read ? 'foryou-item-unread' : ''} animate-slide-up">
+                <div class="foryou-item-stripe stripe-notification"></div>
+                <div class="foryou-item-content">
+                  <div class="foryou-item-header">
+                    <span class="foryou-type-label type-notification">🔔 NOTIFICATION</span>
+                    ${targetBadge}
+                    ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
+                  </div>
+                  <div class="flex items-center gap-md">
+                    <div class="notification-dot ${n.type}">${n.icon}</div>
+                    <div style="flex:1; min-width:0;">
+                      <div class="font-semibold text-sm">${n.title}</div>
+                      <div class="text-secondary" style="font-size:0.83rem; margin-top:2px;">${n.message}</div>
+                      <div class="text-muted" style="font-size:0.75rem; margin-top:4px;">${n.time}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          return '';
+        }
+      } else if (forYouSection) {
+        forYouSection.style.display = 'none';
       }
 
       // Recent Announcements (top 4)
@@ -400,6 +549,69 @@
         </div>
       `).join('');
     }
+
+    // ─── For You Action Handlers ───
+    function fyToggleSave(type, id, btn) {
+      if (typeof SavedStore === 'undefined') return;
+      const isSaved = SavedStore.isSaved(type, id);
+      if (isSaved) { SavedStore.remove(type, id); } else { SavedStore.add(type, id); }
+      const nowSaved = !isSaved;
+      if (btn) {
+        btn.innerHTML = nowSaved ? '✓ Saved' : '🔖 Save';
+        btn.classList.toggle('active', nowSaved);
+      }
+      UI.toast(nowSaved ? 'Saved to My Activity!' : 'Removed from saved.', nowSaved ? 'success' : 'info');
+    }
+
+    function fyToggleInterest(eventId, btn) {
+      if (typeof EventInterestStore === 'undefined') return;
+      const result = EventInterestStore.toggle(eventId);
+      if (btn) {
+        btn.innerHTML = result.interested ? '✓ Interested' : '👍 Interested';
+        btn.classList.toggle('active', result.interested);
+      }
+      UI.toast(result.interested ? 'Marked as interested!' : 'Removed interest.', result.interested ? 'success' : 'info');
+    }
+
+    function fyToggleReminderMenu(btn, type, id) {
+      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
+      if (!menu) return;
+      document.querySelectorAll('.reminder-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+      menu.classList.toggle('open');
+    }
+
+    function fySetReminder(type, id, timing) {
+      if (typeof ReminderStore === 'undefined') return;
+      ReminderStore.set(type, id, timing);
+      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
+      if (menu) menu.classList.remove('open');
+      const btn = menu?.previousElementSibling;
+      if (btn) {
+        btn.innerHTML = '🔔 ' + ReminderStore.getTimingLabel(timing);
+        btn.classList.add('active');
+      }
+      UI.toast('🔔 Reminder set: ' + ReminderStore.getTimingLabel(timing), 'success');
+    }
+
+    function fyRemoveReminder(type, id) {
+      if (typeof ReminderStore === 'undefined') return;
+      ReminderStore.remove(type, id);
+      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
+      if (menu) menu.classList.remove('open');
+      const btn = menu?.previousElementSibling;
+      if (btn) {
+        btn.innerHTML = '🔔 Remind Me';
+        btn.classList.remove('active');
+      }
+      UI.toast('Reminder removed.', 'info');
+    }
+
+    // Close reminder menus on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.reminder-wrapper')) {
+        document.querySelectorAll('.reminder-menu.open').forEach(m => m.classList.remove('open'));
+      }
+    });
   </script>
 </body>
 </html>

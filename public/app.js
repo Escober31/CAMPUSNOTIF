@@ -33,7 +33,9 @@ const ANNOUNCEMENTS = [
     category: 'Academic',
     author: 'Office of the Registrar',
     date: '2026-09-28',
-    pinned: true
+    pinned: true,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 2,
@@ -43,7 +45,9 @@ const ANNOUNCEMENTS = [
     category: 'Facility',
     author: 'IT Services',
     date: '2026-09-27',
-    pinned: false
+    pinned: false,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 3,
@@ -53,7 +57,9 @@ const ANNOUNCEMENTS = [
     category: 'Academic',
     author: 'Dept. of Sciences',
     date: '2026-09-26',
-    pinned: false
+    pinned: false,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 4,
@@ -63,7 +69,9 @@ const ANNOUNCEMENTS = [
     category: 'Facility',
     author: 'University Library',
     date: '2026-09-25',
-    pinned: false
+    pinned: false,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 5,
@@ -73,7 +81,9 @@ const ANNOUNCEMENTS = [
     category: 'Student Life',
     author: 'Student Wellness Center',
     date: '2026-09-24',
-    pinned: true
+    pinned: true,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 6,
@@ -83,7 +93,69 @@ const ANNOUNCEMENTS = [
     category: 'Facility',
     author: 'Campus Facilities',
     date: '2026-09-23',
-    pinned: false
+    pinned: false,
+    targetDepartment: 'all',
+    targetYear: 'all'
+  },
+  {
+    id: 7,
+    title: 'CS Department: Capstone Project Proposals Due',
+    body: 'All Computer Science students in their 3rd and 4th year must submit their capstone project proposals by October 18th. Templates are available on the CS portal. Proposals will be reviewed by faculty advisors.',
+    priority: 'urgent',
+    category: 'Academic',
+    author: 'Dept. of Computer Science',
+    date: '2026-09-30',
+    pinned: true,
+    targetDepartment: 'Computer Science',
+    targetYear: '3rd Year'
+  },
+  {
+    id: 8,
+    title: 'Engineering Lab Safety Recertification',
+    body: 'All Engineering students must complete mandatory lab safety recertification by October 12th. Online modules and in-person practical sessions are available. Failure to recertify will result in restricted lab access.',
+    priority: 'important',
+    category: 'Academic',
+    author: 'Dept. of Engineering',
+    date: '2026-09-29',
+    pinned: false,
+    targetDepartment: 'Engineering',
+    targetYear: 'all'
+  },
+  {
+    id: 9,
+    title: 'Business Pitch Competition — $5,000 Prize',
+    body: 'The annual Business Pitch Competition is accepting entries. First-year Business students are especially encouraged to participate. Form teams of 2-4 and register by October 25th.',
+    priority: 'normal',
+    category: 'Academic',
+    author: 'Dept. of Business',
+    date: '2026-09-28',
+    pinned: false,
+    targetDepartment: 'Business',
+    targetYear: '1st Year'
+  },
+  {
+    id: 10,
+    title: 'CS Hackathon: Build for Good — Oct 18-19',
+    body: 'Join the 48-hour hackathon organized by the CS department! Build solutions for social impact. Open to all CS students. Meals, mentorship, and prizes included.',
+    priority: 'important',
+    category: 'Academic',
+    author: 'CS Student Association',
+    date: '2026-10-01',
+    pinned: false,
+    targetDepartment: 'Computer Science',
+    targetYear: 'all'
+  },
+  {
+    id: 11,
+    title: '3rd Year Internship Prep Workshop',
+    body: 'Career Services is hosting an internship prep workshop specifically for 3rd year students. Topics include resume building, interview skills, and networking strategies. Seats are limited.',
+    priority: 'normal',
+    category: 'Career',
+    author: 'Career Services',
+    date: '2026-09-27',
+    pinned: false,
+    targetDepartment: 'all',
+    targetYear: '3rd Year'
   }
 ];
 
@@ -96,7 +168,9 @@ const EVENTS = [
     time: '5:00 PM',
     location: 'Eagle Stadium',
     category: 'Sports',
-    attendees: 1240
+    attendees: 1240,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 2,
@@ -106,7 +180,9 @@ const EVENTS = [
     time: '2:00 PM',
     location: 'Auditorium A, Building 3',
     category: 'Academic',
-    attendees: 320
+    attendees: 320,
+    targetDepartment: 'Computer Science',
+    targetYear: 'all'
   },
   {
     id: 3,
@@ -116,7 +192,9 @@ const EVENTS = [
     time: '10:00 AM – 4:00 PM',
     location: 'Student Center Grand Hall',
     category: 'Career',
-    attendees: 890
+    attendees: 890,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 4,
@@ -126,7 +204,9 @@ const EVENTS = [
     time: '6:00 PM',
     location: 'Campus Green',
     category: 'Student Life',
-    attendees: 560
+    attendees: 560,
+    targetDepartment: 'all',
+    targetYear: 'all'
   },
   {
     id: 5,
@@ -136,7 +216,57 @@ const EVENTS = [
     time: '8:00 PM – 6:00 AM',
     location: 'University Library',
     category: 'Academic',
-    attendees: 210
+    attendees: 210,
+    targetDepartment: 'all',
+    targetYear: 'all'
+  },
+  {
+    id: 6,
+    title: 'CS Senior Project Showcase',
+    description: 'Computer Science 3rd and 4th year students present their capstone projects. Come see cutting-edge demos in AI, web dev, cybersecurity, and more!',
+    date: '2026-11-05',
+    time: '1:00 PM – 5:00 PM',
+    location: 'CS Building, Room 301',
+    category: 'Academic',
+    attendees: 145,
+    targetDepartment: 'Computer Science',
+    targetYear: '3rd Year'
+  },
+  {
+    id: 7,
+    title: 'Engineering Design Sprint',
+    description: 'A 2-day rapid prototyping event for Engineering students. Work in teams to solve real-world engineering challenges.',
+    date: '2026-10-25',
+    time: '9:00 AM – 5:00 PM',
+    location: 'Engineering Lab Complex',
+    category: 'Academic',
+    attendees: 85,
+    targetDepartment: 'Engineering',
+    targetYear: 'all'
+  },
+  {
+    id: 8,
+    title: 'First Year Orientation Social',
+    description: 'A fun mixer event for all first-year students to meet classmates, join clubs, and explore campus resources.',
+    date: '2026-10-08',
+    time: '4:00 PM – 7:00 PM',
+    location: 'Student Center Lounge',
+    category: 'Student Life',
+    attendees: 320,
+    targetDepartment: 'all',
+    targetYear: '1st Year'
+  },
+  {
+    id: 9,
+    title: 'Tech Industry Panel: Careers in CS',
+    description: 'Hear from industry leaders at Google, Microsoft, and startups about career paths in Computer Science. Q&A session included.',
+    date: '2026-10-12',
+    time: '3:00 PM – 5:00 PM',
+    location: 'Auditorium B, CS Building',
+    category: 'Career',
+    attendees: 210,
+    targetDepartment: 'Computer Science',
+    targetYear: '3rd Year'
   }
 ];
 
@@ -1074,3 +1204,123 @@ function initPage(activePage) {
   return true;
 }
 
+// ─── For You Feed Utility ───
+const ForYouFeed = {
+  /**
+   * Check if an item is relevant to the given student's department and year.
+   * An item matches if:
+   *   - Its targetDepartment matches the student's department OR is 'all'/empty
+   *   - AND its targetYear matches the student's year OR is 'all'/empty
+   * BUT: items where BOTH targetDepartment and targetYear are 'all' are campus-wide
+   *       and belong in Campus Hub, NOT For You.
+   * For You only shows items that are specifically targeted (at least one field is not 'all').
+   */
+  isForYou(item, user) {
+    if (!user || user.role === 'admin') return false;
+
+    const dept = (item.targetDepartment || 'all').toLowerCase();
+    const year = (item.targetYear || 'all').toLowerCase();
+
+    // Both 'all' = campus-wide, not personalized
+    if (dept === 'all' && year === 'all') return false;
+
+    const userDept = (user.department || '').toLowerCase();
+    const userYear = (user.year || '').toLowerCase();
+
+    const deptMatch = dept === 'all' || dept === userDept;
+    const yearMatch = year === 'all' || year === userYear;
+
+    return deptMatch && yearMatch;
+  },
+
+  /**
+   * Check if item is campus-wide (for Campus Hub general feed).
+   */
+  isCampusWide(item) {
+    const dept = (item.targetDepartment || 'all').toLowerCase();
+    const year = (item.targetYear || 'all').toLowerCase();
+    return dept === 'all' && year === 'all';
+  },
+
+  /**
+   * Build the For You feed items from announcements, events, and notifications.
+   */
+  buildFeed(user) {
+    if (!user || user.role === 'admin') return [];
+
+    const announcements = AnnouncementsStore.getAll();
+    const events = EventsStore.getAll();
+    const notifications = NotificationsStore.getAll();
+    const feed = [];
+
+    announcements.forEach(a => {
+      if (this.isForYou(a, user)) {
+        feed.push({
+          feedType: 'announcement', id: a.id, title: a.title, body: a.body,
+          category: a.category, priority: a.priority, pinned: a.pinned,
+          author: a.author, date: a.date,
+          targetDepartment: a.targetDepartment, targetYear: a.targetYear,
+          sortDate: new Date(a.date + 'T00:00:00').getTime(),
+          sortPriority: a.pinned ? 0 : 1,
+          data: a
+        });
+      }
+    });
+
+    events.forEach(e => {
+      if (this.isForYou(e, user)) {
+        feed.push({
+          feedType: 'event', id: e.id, title: e.title, body: e.description,
+          category: e.category, date: e.date, time: e.time,
+          location: e.location, attendees: e.attendees || 0,
+          targetDepartment: e.targetDepartment, targetYear: e.targetYear,
+          sortDate: new Date(e.date + 'T00:00:00').getTime(),
+          sortPriority: 1,
+          data: e
+        });
+      }
+    });
+
+    // Notifications that are targeted to this user's department/year
+    notifications.forEach(n => {
+      const targeting = {
+        targetDepartment: n.department || 'all',
+        targetYear: n.year || 'all'
+      };
+      if (this.isForYou(targeting, user)) {
+        feed.push({
+          feedType: 'notification', id: n.id, title: n.title, body: n.message,
+          category: null, notifType: n.type, icon: n.icon,
+          time: n.time, read: n.read,
+          sortDate: Date.now(),
+          sortPriority: n.read ? 2 : 0,
+          data: n
+        });
+      }
+    });
+
+    // Sort: pinned/unread first, then by date
+    feed.sort((a, b) => {
+      if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
+      return b.sortDate - a.sortDate;
+    });
+
+    return feed;
+  },
+
+  /**
+   * Get a targeting label for display (e.g., "Computer Science · 3rd Year")
+   */
+  getTargetLabel(item) {
+    const parts = [];
+    const dept = item.targetDepartment || item.data?.targetDepartment || 'all';
+    const year = item.targetYear || item.data?.targetYear || 'all';
+    if (dept && dept.toLowerCase() !== 'all') parts.push(dept);
+    if (year && year.toLowerCase() !== 'all') parts.push(year);
+    return parts.join(' · ');
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.ForYouFeed = ForYouFeed;
+}
