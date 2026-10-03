@@ -148,6 +148,15 @@
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.classList.add('hub-highlighted');
             setTimeout(() => el.classList.remove('hub-highlighted'), 3000);
+          } else {
+            // Fallback: item not in Hub feed (e.g. For You item), open in popup modal
+            if (highlightParam.startsWith('ann-')) {
+              const id = highlightParam.substring(4);
+              readAnnouncement(id);
+            } else if (highlightParam.startsWith('ev-')) {
+              const id = highlightParam.substring(3);
+              readEvent(id);
+            }
           }
         }, 400);
       }
@@ -197,9 +206,9 @@
 
     // ─── Feed Building ───
     function buildFeed() {
-      const announcements = AnnouncementsStore.getAll();
-      const events = EventsStore.getAll();
-      const notifications = NotificationsStore.getAll();
+      const announcements = AnnouncementsStore.getForHub();
+      const events = EventsStore.getForHub();
+      const notifications = NotificationsStore.getForHub();
       const feed = [];
 
       announcements.forEach(a => {

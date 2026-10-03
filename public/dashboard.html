@@ -140,7 +140,7 @@
 
       const user = Auth.getUser();
       const role = Auth.getRole();
-      const announcements = AnnouncementsStore.getAll();
+      const announcements = (role === 'admin') ? AnnouncementsStore.getAll() : AnnouncementsStore.getForHub();
 
       // Greeting
       const hour = new Date().getHours();
@@ -156,12 +156,14 @@
       document.getElementById('userName').textContent = displayGreetingName;
 
       // Events
-      const allEvents = EventsStore.getAll();
+      const allEvents = (role === 'admin') ? EventsStore.getAll() : EventsStore.getForHub();
       document.getElementById('statEvents').textContent = allEvents.length;
 
       // Stats
       document.getElementById('statAnnouncements').textContent = announcements.length;
-      document.getElementById('statNotifications').textContent = NotificationsStore.getUnreadCount();
+      document.getElementById('statNotifications').textContent = (role === 'admin')
+        ? NotificationsStore.getUnreadCount()
+        : NotificationsStore.getForHub().filter(n => !n.read).length;
       document.getElementById('statPinned').textContent = announcements.filter(a => a.pinned).length;
 
       // Role-aware navigation links
@@ -428,8 +430,34 @@
           return;
         }
 
-        const announcements = AnnouncementsStore.getAll();
-        const events = EventsStore.getAll();
+        const isStudent = Auth.getRole() !== 'admin';
+        const user = Auth.getUser();
+
+        let announcements, events;
+        if (isStudent) {
+          // For students: search hub items + ForYouFeed items (no duplicates)
+          const hubAnnouncements = AnnouncementsStore.getForHub();
+          const hubEvents = EventsStore.getForHub();
+          const allAnnouncements = AnnouncementsStore.getAll();
+          const allEvents = EventsStore.getAll();
+
+          const hubAnnIds = new Set(hubAnnouncements.map(a => String(a.id)));
+          const hubEvIds = new Set(hubEvents.map(e => String(e.id)));
+
+          // Add ForYou items that aren't already in hub
+          const forYouAnnouncements = allAnnouncements.filter(a =>
+            !hubAnnIds.has(String(a.id)) && typeof ForYouFeed !== 'undefined' && ForYouFeed.isForYou && ForYouFeed.isForYou(a, user)
+          );
+          const forYouEvents = allEvents.filter(e =>
+            !hubEvIds.has(String(e.id)) && typeof ForYouFeed !== 'undefined' && ForYouFeed.isForYou && ForYouFeed.isForYou(e, user)
+          );
+
+          announcements = [...hubAnnouncements, ...forYouAnnouncements];
+          events = [...hubEvents, ...forYouEvents];
+        } else {
+          announcements = AnnouncementsStore.getAll();
+          events = EventsStore.getAll();
+        }
 
         const matchedAnnouncements = announcements.filter(a =>
           a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query)
@@ -445,8 +473,6 @@
         }
 
         let html = '';
-
-        const isStudent = Auth.getRole() !== 'admin';
 
         if (matchedAnnouncements.length > 0) {
           html += `<div class="search-section-title">📢 Announcements</div>`;

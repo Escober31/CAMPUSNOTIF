@@ -233,6 +233,7 @@
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="UI.toast('Marked as interested! You will be reminded.', 'success'); UI.closeModal('readEventModal');">Interested 👍</button>
         <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
+        <button class="btn btn-danger admin-only" id="btnDeleteEventFromReadModal" onclick="deleteEventFromReadModal()">🗑️ Delete</button>
       </div>
     </div>
   </div>
@@ -385,6 +386,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('readNotifModal')">Close</button>
+        <button class="btn btn-danger" id="btnDeleteNotifFromReadModal" onclick="deleteNotifFromReadModal()">🗑️ Delete</button>
       </div>
     </div>
   </div>
@@ -495,14 +497,14 @@
                 </div>
                 ${isAdmin ? `
                   <div class="flex gap-sm">
-                    <button class="btn btn-ghost btn-icon sm" onclick="openEditEventModal(${ev.id})" title="Edit Event">✏️</button>
-                    <button class="btn btn-ghost btn-icon sm" onclick="openDeleteEventModal(${ev.id})" title="Delete Event">🗑️</button>
+                    <button class="btn btn-ghost btn-icon sm" onclick="openEditEventModal('${ev.id}')" title="Edit Event">✏️</button>
+                    <button class="btn btn-ghost btn-icon sm" onclick="openDeleteEventModal('${ev.id}')" title="Delete Event">🗑️</button>
                   </div>
                 ` : `
-                  <button class="btn btn-ghost btn-sm" onclick="readEvent(${ev.id})" style="color:var(--primary-400);">Read Details →</button>
+                  <button class="btn btn-ghost btn-sm" onclick="readEvent('${ev.id}')" style="color:var(--primary-400);">Read Details →</button>
                 `}
               </div>
-              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readEvent(${ev.id})">${ev.title}</h3>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readEvent('${ev.id}')">${ev.title}</h3>
               <p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${ev.description}</p>
               <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
                 <span class="text-muted text-sm">📍 ${ev.location}</span>
@@ -533,8 +535,11 @@
       renderEvents(events);
     }
 
+    let currentViewingEventId = null;
+
     // Read full event details (available to student and admin)
     function readEvent(id) {
+      currentViewingEventId = id;
       const ev = EventsStore.getById(id);
       if (!ev) return;
       document.getElementById('readEventCategory').textContent = ev.category;
@@ -544,6 +549,14 @@
       document.getElementById('readEventLocation').textContent = '📍 ' + ev.location;
       document.getElementById('readEventDesc').textContent = ev.description;
       UI.openModal('readEventModal');
+    }
+
+    function deleteEventFromReadModal() {
+      if (currentViewingEventId !== null && currentViewingEventId !== undefined) {
+        const id = currentViewingEventId;
+        UI.closeModal('readEventModal');
+        openDeleteEventModal(id);
+      }
     }
 
     // Admin: Open Create Modal
@@ -614,12 +627,12 @@
     }
 
     function confirmDeleteEvent() {
-      if (deleteTargetEventId) {
+      if (deleteTargetEventId !== null && deleteTargetEventId !== undefined) {
         EventsStore.delete(deleteTargetEventId);
         UI.toast('Event deleted successfully.', 'warning');
         deleteTargetEventId = null;
         UI.closeModal('deleteEventModal');
-        renderEvents();
+        filterEvents();
       }
     }
 
@@ -647,18 +660,16 @@
           : (n.target === 'students' && n.department ? `<span class="badge" style="font-size:0.68rem; background:rgba(99,102,241,0.15); color:var(--primary-300);">🎓 ${n.department}</span>` : '');
 
         return `
-          <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="readNotif(${n.id})" style="cursor:pointer;">
+          <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="readNotif('${n.id}')" style="cursor:pointer;">
             <div class="notification-dot ${n.type || 'info'}">
               ${n.icon || '🔔'}
             </div>
             <div style="flex:1; min-width:0;">
               <div class="flex items-center justify-between" style="margin-bottom:2px;">
                 <div class="font-semibold text-sm">${n.title}</div>
-                ${isAdmin ? `
-                  <div class="flex gap-xs" onclick="event.stopPropagation();">
-                    <button class="btn btn-ghost btn-icon sm" onclick="openDeleteNotifModal(${n.id})" title="Delete Notification">🗑️</button>
-                  </div>
-                ` : ''}
+                <div class="flex gap-xs" onclick="event.stopPropagation();">
+                  <button class="btn btn-ghost btn-icon sm" onclick="openDeleteNotifModal('${n.id}')" title="${isAdmin ? 'Delete Notification' : 'Remove Notification'}">🗑️</button>
+                </div>
               </div>
               <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px; line-height:1.5;">${n.message}</div>
               <div class="flex items-center gap-md" style="flex-wrap:wrap;">
@@ -675,7 +686,10 @@
       updateNotifBadge();
     }
 
+    let currentViewingNotifId = null;
+
     function readNotif(id) {
+      currentViewingNotifId = id;
       notificationsData = NotificationsStore.markAsRead(id);
       renderNotifications();
       updateNotifBadge();
@@ -706,6 +720,14 @@
       if (msgEl) msgEl.textContent = n.message;
 
       UI.openModal('readNotifModal');
+    }
+
+    function deleteNotifFromReadModal() {
+      if (currentViewingNotifId !== null && currentViewingNotifId !== undefined) {
+        const id = currentViewingNotifId;
+        UI.closeModal('readNotifModal');
+        openDeleteNotifModal(id);
+      }
     }
 
     function markRead(id) {
@@ -1132,21 +1154,29 @@
       updateNotifBadge();
     }
 
-    // Admin: Open Delete Notification Modal
+    // Open Delete Notification Modal
     function openDeleteNotifModal(id) {
       deleteTargetNotifId = id;
+      const isAdmin = Auth.getRole() === 'admin';
+      const titleEl = document.querySelector('#deleteNotifModal h3');
+      const descEl = document.querySelector('#deleteNotifModal p');
+      const btnEl = document.getElementById('confirmDeleteNotifBtn');
+      if (titleEl) titleEl.textContent = isAdmin ? 'Delete Notification?' : 'Remove Notification?';
+      if (descEl) descEl.textContent = isAdmin ? 'This action cannot be undone. The notification will be removed permanently.' : 'This notification will be removed from your notifications.';
+      if (btnEl) btnEl.textContent = isAdmin ? 'Delete' : 'Remove';
       UI.openModal('deleteNotifModal');
     }
 
-    // Admin: Confirm Delete Notification
+    // Confirm Delete Notification
     function confirmDeleteNotif() {
-      if (deleteTargetNotifId) {
+      if (deleteTargetNotifId !== null && deleteTargetNotifId !== undefined) {
+        const isAdmin = Auth.getRole() === 'admin';
         NotificationsStore.delete(deleteTargetNotifId);
         notificationsData = NotificationsStore.getAll();
-        UI.toast('Notification deleted successfully.', 'warning');
+        UI.toast(isAdmin ? 'Notification deleted successfully.' : 'Notification removed.', 'warning');
         deleteTargetNotifId = null;
         UI.closeModal('deleteNotifModal');
-        renderNotifications();
+        filterNotifications();
         updateNotifBadge();
       }
     }

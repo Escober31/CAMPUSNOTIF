@@ -195,6 +195,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('readAnnouncementModal')">Close</button>
+        <button class="btn btn-danger admin-only" id="btnDeleteFromReadModal" onclick="deleteFromReadModal()">🗑️ Delete</button>
       </div>
     </div>
   </div>
@@ -260,18 +261,18 @@
                 ${UI.priorityBadge(a.priority)}
                 ${UI.categoryBadge(a.category)}
               </div>
-              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.title}</h3>
-              <div class="announcement-body" style="cursor:pointer;" onclick="readAnnouncement(${a.id})">${a.body}</div>
+              <h3 style="margin-bottom:var(--space-sm); cursor:pointer;" onclick="readAnnouncement('${a.id}')">${a.title}</h3>
+              <div class="announcement-body" style="cursor:pointer;" onclick="readAnnouncement('${a.id}')">${a.body}</div>
               <div class="announcement-meta">
                 <span>✍️ ${a.author}</span>
                 <span>📅 ${UI.formatDate(a.date)}</span>
-                ${!isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="readAnnouncement(${a.id})" style="color:var(--primary-400); padding:2px 8px; font-size:0.75rem;">Read More →</button>` : ''}
+                ${!isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="readAnnouncement('${a.id}')" style="color:var(--primary-400); padding:2px 8px; font-size:0.75rem;">Read More →</button>` : ''}
               </div>
             </div>
             ${isAdmin ? `
               <div class="announcement-actions">
-                <button class="btn btn-ghost btn-icon sm" onclick="openEditModal(${a.id})" title="Edit">✏️</button>
-                <button class="btn btn-ghost btn-icon sm" onclick="openDeleteModal(${a.id})" title="Delete">🗑️</button>
+                <button class="btn btn-ghost btn-icon sm" onclick="openEditModal('${a.id}')" title="Edit">✏️</button>
+                <button class="btn btn-ghost btn-icon sm" onclick="openDeleteModal('${a.id}')" title="Delete">🗑️</button>
               </div>
             ` : ''}
           </div>
@@ -279,7 +280,10 @@
       `).join('');
     }
 
+    let currentViewingAnnId = null;
+
     function readAnnouncement(id) {
+      currentViewingAnnId = id;
       const a = AnnouncementsStore.getById(id);
       if (!a) return;
       document.getElementById('readAnnPriority').innerHTML = UI.priorityBadge(a.priority);
@@ -289,6 +293,14 @@
       document.getElementById('readAnnDate').textContent = '📅 ' + UI.formatDate(a.date);
       document.getElementById('readAnnBody').textContent = a.body;
       UI.openModal('readAnnouncementModal');
+    }
+
+    function deleteFromReadModal() {
+      if (currentViewingAnnId !== null && currentViewingAnnId !== undefined) {
+        const idToDelete = currentViewingAnnId;
+        UI.closeModal('readAnnouncementModal');
+        openDeleteModal(idToDelete);
+      }
     }
 
     function filterAnnouncements() {
@@ -376,12 +388,12 @@
     }
 
     function confirmDelete() {
-      if (deleteTargetId) {
+      if (deleteTargetId !== null && deleteTargetId !== undefined) {
         AnnouncementsStore.delete(deleteTargetId);
         UI.toast('Announcement deleted.', 'warning');
         deleteTargetId = null;
         UI.closeModal('deleteModal');
-        renderAnnouncements();
+        filterAnnouncements();
       }
     }
 
