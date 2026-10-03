@@ -171,6 +171,34 @@ const Auth = {
         createdAt: '2026-08-15'
       },
       {
+        id: 'STU-2024-1201',
+        name: 'Jordan Miles',
+        email: 'jordan.miles@campus.edu',
+        password: 'password123',
+        role: 'student',
+        department: 'Engineering',
+        year: '2nd Year',
+        avatar: 'JM',
+        phone: '+1 (555) 234-1201',
+        bio: 'Engineering student focused on robotics and campus events.',
+        lastLogin: new Date(Date.now() - 3600000 * 5).toISOString(),
+        createdAt: '2026-08-20'
+      },
+      {
+        id: 'STU-2024-1288',
+        name: 'Priya Shah',
+        email: 'priya.shah@campus.edu',
+        password: 'password123',
+        role: 'student',
+        department: 'Business',
+        year: '1st Year',
+        avatar: 'PS',
+        phone: '+1 (555) 234-1288',
+        bio: 'Business student exploring internships and campus life.',
+        lastLogin: new Date(Date.now() - 3600000 * 8).toISOString(),
+        createdAt: '2026-08-22'
+      },
+      {
         id: 'ADM-2024-0003',
         name: 'Dr. Sarah Chen',
         email: 'sarah.chen@campus.edu',
@@ -188,14 +216,25 @@ const Auth = {
   },
 
   getRegisteredUsers() {
+    const initial = this._getInitialUsers();
     const stored = localStorage.getItem(this._usersKey);
     if (stored) {
       try {
         const users = JSON.parse(stored);
-        if (Array.isArray(users) && users.length > 0) return users;
+        if (Array.isArray(users) && users.length > 0) {
+          let changed = false;
+          initial.forEach(seed => {
+            const exists = users.some(u => u.id === seed.id || (u.email && u.email.toLowerCase() === seed.email.toLowerCase()));
+            if (!exists) {
+              users.push(seed);
+              changed = true;
+            }
+          });
+          if (changed) this.saveRegisteredUsers(users);
+          return users;
+        }
       } catch (e) {}
     }
-    const initial = this._getInitialUsers();
     this.saveRegisteredUsers(initial);
     return initial;
   },
@@ -204,12 +243,8 @@ const Auth = {
     localStorage.setItem(this._usersKey, JSON.stringify(users));
   },
 
-  getLoginLogs() {
-    const stored = localStorage.getItem(this._logsKey);
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    const initialLogs = [
+  _getInitialLogs() {
+    return [
       {
         id: 1,
         userId: 'ADM-2024-0003',
@@ -229,8 +264,49 @@ const Auth = {
         userAvatar: 'AR',
         timestamp: new Date(Date.now() - 7200000).toISOString(),
         device: 'macOS / Safari'
+      },
+      {
+        id: 3,
+        userId: 'STU-2024-1201',
+        userName: 'Jordan Miles',
+        userEmail: 'jordan.miles@campus.edu',
+        userRole: 'student',
+        userAvatar: 'JM',
+        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+        device: 'Windows / Chrome'
+      },
+      {
+        id: 4,
+        userId: 'STU-2024-1288',
+        userName: 'Priya Shah',
+        userEmail: 'priya.shah@campus.edu',
+        userRole: 'student',
+        userAvatar: 'PS',
+        timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
+        device: 'Android / Chrome'
       }
     ];
+  },
+
+  getLoginLogs() {
+    const initialLogs = this._getInitialLogs();
+    const stored = localStorage.getItem(this._logsKey);
+    if (stored) {
+      try {
+        const logs = JSON.parse(stored);
+        if (Array.isArray(logs)) {
+          let changed = false;
+          initialLogs.forEach(seed => {
+            if (!logs.some(l => l.userId === seed.userId)) {
+              logs.push(seed);
+              changed = true;
+            }
+          });
+          if (changed) this.saveLoginLogs(logs);
+          return logs;
+        }
+      } catch (e) {}
+    }
     this.saveLoginLogs(initialLogs);
     return initialLogs;
   },
@@ -523,7 +599,7 @@ const NotificationsStore = {
     return user && user.id ? `${this._baseKey}_${user.id}` : this._baseKey;
   },
 
-  getAll() {
+  _readAll() {
     const key = this._getKey();
     const stored = localStorage.getItem(key);
     if (stored) {
@@ -532,7 +608,6 @@ const NotificationsStore = {
         if (Array.isArray(parsed)) return parsed;
       } catch (e) {}
     }
-    // Also check global fallback if user-specific key is not set yet
     const fallback = localStorage.getItem(this._baseKey);
     if (fallback) {
       try {
@@ -546,6 +621,10 @@ const NotificationsStore = {
     const initial = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
     this.save(initial);
     return initial;
+  },
+
+  getAll() {
+    return this._readAll().filter(item => this._isVisibleToCurrentUser(item));
   },
 
   save(notifications) {
@@ -562,24 +641,64 @@ const NotificationsStore = {
   },
 
   markAsRead(id) {
-    const all = this.getAll();
+    const all = this._readAll();
     const notif = all.find(n => n.id === id);
     if (notif) {
       notif.read = true;
       this.save(all);
     }
-    return all;
+    return this.getAll();
   },
 
   markAllAsRead() {
-    const all = this.getAll();
+    const all = this._readAll();
     all.forEach(n => { n.read = true; });
     this.save(all);
-    return all;
+    return this.getAll();
+  },
+
+  _targetingFrom(notif) {
+    return {
+      target: notif.target || 'all',
+      department: notif.department || '',
+      year: notif.year || 'all',
+      studentIds: Array.isArray(notif.studentIds) ? notif.studentIds : []
+    };
+  },
+
+  _matchesTarget(user, targeting) {
+    if (!user) return false;
+    const ids = targeting.studentIds || [];
+    if (ids.length > 0) {
+      return ids.includes(user.id);
+    }
+    const target = targeting.target || 'all';
+    if (target === 'all') return true;
+    if (target === 'faculty') return user.role === 'admin';
+    if (target === 'students') {
+      if (user.role !== 'student') return false;
+      const dept = targeting.department || '';
+      const year = targeting.year || 'all';
+      if (dept && String(user.department || '').toLowerCase() !== String(dept).toLowerCase()) {
+        return false;
+      }
+      if (year && year !== 'all' && String(user.year || '') !== year) {
+        return false;
+      }
+      return true;
+    }
+    return true;
+  },
+
+  _isVisibleToCurrentUser(item) {
+    const user = Auth.getUser();
+    if (!user) return true;
+    if (user.role === 'admin') return true;
+    return this._matchesTarget(user, this._targetingFrom(item));
   },
 
   add(notif) {
-    const all = this.getAll();
+    const targeting = this._targetingFrom(notif);
     const item = {
       id: Date.now(),
       type: notif.type || 'info',
@@ -587,38 +706,71 @@ const NotificationsStore = {
       title: notif.title || 'Notification',
       message: notif.message || '',
       time: notif.time || 'Just now',
-      read: false
+      read: false,
+      target: targeting.target,
+      department: targeting.department,
+      year: targeting.year,
+      studentIds: targeting.studentIds
     };
+
+    const all = this._readAll();
     all.unshift(item);
     this.save(all);
 
-    // Sync to base key and other user stores so students and campus hub receive it
+    const current = Auth.getUser();
+    const users = typeof Auth.getRegisteredUsers === 'function' ? Auth.getRegisteredUsers() : [];
+    const recipientIds = new Set(
+      users.filter(u => this._matchesTarget(u, targeting)).map(u => u.id)
+    );
+    const broadcastAll = targeting.studentIds.length === 0 && targeting.target === 'all';
+
     try {
-      const baseRaw = localStorage.getItem(this._baseKey);
-      let baseList = baseRaw ? JSON.parse(baseRaw) : [];
-      if (Array.isArray(baseList)) {
-        baseList = baseList.filter(n => n.id !== item.id);
-        baseList.unshift({ ...item });
-        localStorage.setItem(this._baseKey, JSON.stringify(baseList));
-      }
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(this._baseKey + '_') && k !== this._getKey()) {
-          let userNotifs = JSON.parse(localStorage.getItem(k) || '[]');
-          if (Array.isArray(userNotifs)) {
-            userNotifs = userNotifs.filter(n => n.id !== item.id);
-            userNotifs.unshift({ ...item, read: false });
-            localStorage.setItem(k, JSON.stringify(userNotifs));
-          }
+      if (broadcastAll) {
+        const baseRaw = localStorage.getItem(this._baseKey);
+        let baseList = baseRaw ? JSON.parse(baseRaw) : [];
+        if (Array.isArray(baseList)) {
+          baseList = baseList.filter(n => n.id !== item.id);
+          baseList.unshift({ ...item });
+          localStorage.setItem(this._baseKey, JSON.stringify(baseList));
         }
       }
+
+      const prefix = this._baseKey + '_';
+      const currentKey = this._getKey();
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix) && k !== currentKey) keys.push(k);
+      }
+
+      keys.forEach(k => {
+        const uid = k.slice(prefix.length);
+        const user = users.find(u => u.id === uid);
+        if (!this._matchesTarget(user, targeting)) return;
+        let userNotifs = JSON.parse(localStorage.getItem(k) || '[]');
+        if (Array.isArray(userNotifs)) {
+          userNotifs = userNotifs.filter(n => n.id !== item.id);
+          userNotifs.unshift({ ...item, read: false });
+          localStorage.setItem(k, JSON.stringify(userNotifs));
+        }
+      });
+
+      recipientIds.forEach(id => {
+        if (current && id === current.id) return;
+        const key = prefix + id;
+        if (keys.includes(key)) return;
+        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+        const list = Array.isArray(existing) ? existing.filter(n => n.id !== item.id) : [];
+        list.unshift({ ...item, read: false });
+        localStorage.setItem(key, JSON.stringify(list));
+      });
     } catch (e) {}
 
     return item;
   },
 
   delete(id) {
-    const all = this.getAll().filter(n => n.id !== id);
+    const all = this._readAll().filter(n => n.id !== id);
     this.save(all);
     try {
       const baseRaw = localStorage.getItem(this._baseKey);

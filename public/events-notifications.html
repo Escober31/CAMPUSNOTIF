@@ -245,11 +245,60 @@
 
           <div class="form-group">
             <label class="form-label" for="notifTarget">Audience Target</label>
-            <select id="notifTarget" class="form-select">
+            <select id="notifTarget" class="form-select" onchange="handleNotifTargetChange()">
               <option value="all">👥 All Campus (Students & Staff)</option>
               <option value="students">🎓 Students Only</option>
               <option value="faculty">👨‍🏫 Faculty & Staff</option>
             </select>
+          </div>
+
+          <div class="grid-2" id="notifAudienceFilters">
+            <div class="form-group" id="groupNotifDepartment">
+              <label class="form-label" for="notifDepartment">
+                Department
+                <span id="notifDeptDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="notifDepartment" class="form-select">
+                <option value="Computer Science">Computer Science</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Business">Business</option>
+                <option value="Art and Science">Art and Science</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Law">Law</option>
+              </select>
+            </div>
+            <div class="form-group" id="groupNotifYear">
+              <label class="form-label" for="notifYear">
+                Academic Year
+                <span id="notifYearDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="notifYear" class="form-select">
+                <option value="all">All Year Level</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="flex items-center justify-between" style="margin-bottom:var(--space-sm);">
+              <label class="form-label" for="notifStudentIdSearch" style="margin-bottom:0;">Student ID <span class="text-muted" style="font-size:0.75rem; font-weight:normal;">(Optional)</span></label>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnResetStudentIds" onclick="resetStudentIdPicker()" style="padding:2px 8px; font-size:0.75rem; height:auto; display:none;">Clear to None</button>
+            </div>
+            <div class="student-id-picker" id="notifStudentIdPicker">
+              <div class="student-id-control" id="notifStudentIdControl">
+                <div class="student-id-chips" id="notifStudentIdChips">
+                  <span class="student-id-none" id="notifStudentIdNone">None</span>
+                </div>
+                <input type="text" id="notifStudentIdSearch" class="student-id-search" placeholder="Type number (e.g. 12) or ID..." autocomplete="off" aria-autocomplete="list" aria-controls="notifStudentIdDropdown">
+                <button type="button" class="student-id-toggle-btn" id="notifStudentIdToggleBtn" title="Toggle student ID drop box" aria-label="Toggle student ID drop box">▼</button>
+              </div>
+              <div class="student-id-dropdown" id="notifStudentIdDropdown" hidden></div>
+            </div>
+            <p class="form-hint" id="notifStudentIdHint">Optional. Leave as None to send by audience, department, and year. Selecting IDs sends the notification to those students even if they are in a different department or year.</p>
           </div>
         </form>
       </div>
@@ -318,6 +367,9 @@
       if (targetTab === 'notifications' || targetTab === 'events') {
         switchTab(targetTab);
       }
+      initStudentIdPicker();
+      handleNotifTargetChange();
+
       if (params.get('create') === '1' || params.get('createNotif') === '1') {
         if (targetTab === 'notifications') {
           setTimeout(openCreateNotifModal, 250);
@@ -537,6 +589,11 @@
       empty.style.display = 'none';
       list.innerHTML = items.map(n => {
         const badgeClass = n.type === 'alert' ? 'badge-danger' : n.type === 'warning' ? 'badge-warning' : n.type === 'success' ? 'badge-success' : 'badge-primary';
+        const hasDirectIds = Array.isArray(n.studentIds) && n.studentIds.length > 0;
+        const targetBadge = hasDirectIds 
+          ? `<span class="badge badge-info" style="font-size:0.68rem;" title="Direct to: ${n.studentIds.join(', ')}">🎯 ${n.studentIds.length === 1 ? n.studentIds[0] : `${n.studentIds.length} Students`}</span>`
+          : (n.target === 'students' && n.department ? `<span class="badge" style="font-size:0.68rem; background:rgba(99,102,241,0.15); color:var(--primary-300);">🎓 ${n.department}</span>` : '');
+
         return `
           <div class="notification-item ${!n.read ? 'unread' : ''}" id="notif-${n.id}" onclick="readNotif(${n.id})" style="cursor:pointer;">
             <div class="notification-dot ${n.type || 'info'}">
@@ -552,9 +609,10 @@
                 ` : ''}
               </div>
               <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px; line-height:1.5;">${n.message}</div>
-              <div class="flex items-center gap-md">
+              <div class="flex items-center gap-md" style="flex-wrap:wrap;">
                 <span class="text-muted" style="font-size:0.75rem;">${n.time}</span>
                 <span class="badge ${badgeClass}" style="font-size:0.68rem;">${n.type || 'info'}</span>
+                ${targetBadge}
               </div>
             </div>
             ${!n.read ? '<div style="width:8px; height:8px; border-radius:50%; background:var(--primary-500); flex-shrink:0;"></div>' : ''}
@@ -625,12 +683,317 @@
       NotificationsStore.updateSidebarBadge();
     }
 
-    // Admin: Open Create Notification Modal
+    let selectedStudentIds = [];
+
+    // Retrieve all student accounts that have logged in
+    function getLoggedInStudents() {
+      const logs = (typeof Auth !== 'undefined' && typeof Auth.getLoginLogs === 'function') ? Auth.getLoginLogs() : [];
+      const users = (typeof Auth !== 'undefined' && typeof Auth.getRegisteredUsers === 'function') ? Auth.getRegisteredUsers() : [];
+      const seen = new Set();
+      const students = [];
+
+      // 1. Collect all students from login logs
+      logs.forEach(log => {
+        const user = users.find(u => u.id === log.userId) ||
+          users.find(u => u.email && log.userEmail && u.email.toLowerCase() === String(log.userEmail).toLowerCase());
+        if (user) {
+          if (user.role === 'student' && !seen.has(user.id)) {
+            seen.add(user.id);
+            students.push(user);
+          }
+        } else if (log.userRole === 'student' && log.userId && !seen.has(log.userId)) {
+          seen.add(log.userId);
+          students.push({
+            id: log.userId,
+            name: log.userName || log.userId,
+            email: log.userEmail || '',
+            role: 'student',
+            department: log.userDepartment || 'Student',
+            year: log.userYear || ''
+          });
+        }
+      });
+
+      // 2. Also check if the current active session user is a student
+      const currentUser = (typeof Auth !== 'undefined' && typeof Auth.getUser === 'function') ? Auth.getUser() : null;
+      if (currentUser && currentUser.role === 'student' && !seen.has(currentUser.id)) {
+        seen.add(currentUser.id);
+        students.push(currentUser);
+      }
+
+      // 3. Fallback: registered students with recorded lastLogin
+      if (students.length === 0) {
+        users.filter(u => u.role === 'student' && u.lastLogin).forEach(u => {
+          if (!seen.has(u.id)) {
+            seen.add(u.id);
+            students.push(u);
+          }
+        });
+      }
+
+      return students.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    }
+
+    // Matches if student ID or any number in the ID begins with the typed query (e.g. typing 12 matches STU-2024-1201)
+    function studentIdMatchesQuery(id, query) {
+      const q = String(query || '').trim().toLowerCase();
+      if (!q) return true;
+      const idLower = String(id || '').toLowerCase();
+
+      // 1. Direct ID prefix match (e.g. typing "12" on "1201" or "stu" on "STU-2024-1201")
+      if (idLower.startsWith(q)) return true;
+
+      // 2. Separated segments prefix match (e.g. "12" matches segment "1201" in "STU-2024-1201")
+      const segments = idLower.split(/[-_\s./]+/).filter(Boolean);
+      if (segments.some(seg => seg.startsWith(q))) return true;
+
+      // 3. Number-specific prefix match (e.g. typing digits like "12" matches numerical parts ["2024", "1201", "1288"])
+      const numbers = idLower.match(/\d+/g) || [];
+      if (numbers.some(num => num.startsWith(q))) return true;
+
+      // 4. Normalized digits match without leading zeros
+      const qDigits = q.replace(/\D/g, '');
+      if (qDigits && numbers.some(num => num.replace(/^0+/, '').startsWith(qDigits.replace(/^0+/, '')))) {
+        return true;
+      }
+
+      // 5. Query without punctuation (e.g. "202412")
+      const cleanId = idLower.replace(/[^a-z0-9]/g, '');
+      const cleanQ = q.replace(/[^a-z0-9]/g, '');
+      if (cleanQ && cleanId.includes(cleanQ)) return true;
+
+      return false;
+    }
+
+    // Highlight query match in dropdown ID
+    function highlightQueryMatch(text, query) {
+      const q = String(query || '').trim();
+      if (!q) return text;
+      const idx = text.toLowerCase().indexOf(q.toLowerCase());
+      if (idx !== -1) {
+        return text.substring(0, idx) + '<mark>' + text.substring(idx, idx + q.length) + '</mark>' + text.substring(idx + q.length);
+      }
+      return text;
+    }
+
+    function renderStudentIdChips() {
+      const chips = document.getElementById('notifStudentIdChips');
+      const noneEl = document.getElementById('notifStudentIdNone');
+      const clearBtn = document.getElementById('btnResetStudentIds');
+      const hint = document.getElementById('notifStudentIdHint');
+      if (!chips) return;
+
+      chips.querySelectorAll('.student-id-chip').forEach(el => el.remove());
+
+      if (selectedStudentIds.length === 0) {
+        if (noneEl) noneEl.style.display = 'inline-flex';
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (hint) {
+          hint.innerHTML = 'Optional. Leave as <b>None</b> to send by audience, department, and year. Selecting IDs sends the notification to those students even if they are in a different department or year.';
+          hint.style.color = 'var(--text-muted)';
+        }
+      } else {
+        if (noneEl) noneEl.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'inline-flex';
+        if (hint) {
+          hint.innerHTML = `🎯 <b>${selectedStudentIds.length} student(s) selected:</b> Notification will be delivered directly to <code>${selectedStudentIds.join(', ')}</code> regardless of their department or year.`;
+          hint.style.color = 'var(--accent-cyan)';
+        }
+
+        selectedStudentIds.forEach(id => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'student-id-chip';
+          chip.innerHTML = '<span>' + id + '</span><span class="chip-remove" aria-hidden="true">✕</span>';
+          chip.title = 'Click to remove ' + id;
+          chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectedStudentIds = selectedStudentIds.filter(item => item !== id);
+            renderStudentIdChips();
+            renderStudentIdDropdown();
+          });
+          chips.appendChild(chip);
+        });
+      }
+    }
+
+    function renderStudentIdDropdown() {
+      const dropdown = document.getElementById('notifStudentIdDropdown');
+      const searchInput = document.getElementById('notifStudentIdSearch');
+      if (!dropdown || !searchInput) return;
+
+      const query = searchInput.value;
+      const allStudents = getLoggedInStudents();
+      const matchedStudents = allStudents.filter(s => studentIdMatchesQuery(s.id, query));
+
+      let html = '';
+
+      // Header with logged-in count and active selection summary
+      html += '<div class="student-id-dropdown-header">';
+      html += '<span>Logged-in Students (' + matchedStudents.length + ' of ' + allStudents.length + ')</span>';
+      if (selectedStudentIds.length > 0) {
+        html += '<span style="color:var(--primary-400);">' + selectedStudentIds.length + ' selected</span>';
+      }
+      html += '</div>';
+
+      // Explicit "None" option allowing admin to clear/reset selection
+      const isNoneSelected = selectedStudentIds.length === 0;
+      html += '<button type="button" class="student-id-option none-option' + (isNoneSelected ? ' selected' : '') + '" data-id="__NONE__">';
+      html += '<div class="student-id-option-main">';
+      html += '<span class="student-id-option-id">🔘 None</span>';
+      html += '<span class="student-id-option-meta">Send to target audience (All Campus, Students by Dept/Year, or Faculty)</span>';
+      html += '</div>';
+      html += '<div class="student-id-option-check">' + (isNoneSelected ? '✓' : '') + '</div>';
+      html += '</button>';
+
+      if (matchedStudents.length === 0) {
+        html += '<div class="student-id-empty">No logged-in student IDs match "<b>' + (typeof UI !== 'undefined' ? UI.escapeHtml(query) : query) + '</b>"</div>';
+      } else {
+        html += matchedStudents.map(s => {
+          const selected = selectedStudentIds.includes(s.id);
+          const highlightedId = highlightQueryMatch(s.id, query);
+          return '<button type="button" class="student-id-option' + (selected ? ' selected' : '') + '" data-id="' + s.id + '">' +
+            '<div class="student-id-option-main">' +
+              '<span class="student-id-option-id">' + highlightedId + '</span>' +
+              '<span class="student-id-option-meta">' + s.name + ' · ' + (s.department || 'Student') + (s.year ? ' (' + s.year + ')' : '') + '</span>' +
+            '</div>' +
+            '<div class="student-id-option-check">' + (selected ? '✓' : '') + '</div>' +
+          '</button>';
+        }).join('');
+      }
+
+      dropdown.innerHTML = html;
+
+      // Handle item click
+      dropdown.querySelectorAll('.student-id-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          if (id === '__NONE__') {
+            selectedStudentIds = [];
+          } else if (selectedStudentIds.includes(id)) {
+            selectedStudentIds = selectedStudentIds.filter(item => item !== id);
+          } else {
+            selectedStudentIds.push(id);
+          }
+          renderStudentIdChips();
+          renderStudentIdDropdown();
+          searchInput.focus();
+        });
+      });
+    }
+
+    function openStudentIdDropdown() {
+      const dropdown = document.getElementById('notifStudentIdDropdown');
+      const control = document.getElementById('notifStudentIdControl');
+      if (!dropdown) return;
+      dropdown.hidden = false;
+      if (control) control.classList.add('is-open');
+      renderStudentIdDropdown();
+    }
+
+    function closeStudentIdDropdown() {
+      const dropdown = document.getElementById('notifStudentIdDropdown');
+      const control = document.getElementById('notifStudentIdControl');
+      if (dropdown) dropdown.hidden = true;
+      if (control) control.classList.remove('is-open');
+    }
+
+    function toggleStudentIdDropdown() {
+      const dropdown = document.getElementById('notifStudentIdDropdown');
+      if (!dropdown) return;
+      if (dropdown.hidden) {
+        openStudentIdDropdown();
+      } else {
+        closeStudentIdDropdown();
+      }
+    }
+
+    function initStudentIdPicker() {
+      const searchInput = document.getElementById('notifStudentIdSearch');
+      const control = document.getElementById('notifStudentIdControl');
+      const picker = document.getElementById('notifStudentIdPicker');
+      const toggleBtn = document.getElementById('notifStudentIdToggleBtn');
+      if (!searchInput || !control || !picker) return;
+
+      control.addEventListener('click', (e) => {
+        if (e.target.closest('.student-id-chip') || e.target.closest('#notifStudentIdToggleBtn')) return;
+        searchInput.focus();
+        openStudentIdDropdown();
+      });
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleStudentIdDropdown();
+        });
+      }
+
+      searchInput.addEventListener('focus', openStudentIdDropdown);
+      searchInput.addEventListener('input', () => {
+        openStudentIdDropdown();
+        renderStudentIdDropdown();
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const first = document.querySelector('#notifStudentIdDropdown .student-id-option:not(.none-option)');
+          if (first) {
+            first.click();
+          } else {
+            const noneOpt = document.querySelector('#notifStudentIdDropdown .none-option');
+            if (noneOpt) noneOpt.click();
+          }
+        }
+        if (e.key === 'Escape') closeStudentIdDropdown();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!picker.contains(e.target)) closeStudentIdDropdown();
+      });
+    }
+
+    function resetStudentIdPicker() {
+      selectedStudentIds = [];
+      const searchInput = document.getElementById('notifStudentIdSearch');
+      if (searchInput) searchInput.value = '';
+      renderStudentIdChips();
+      closeStudentIdDropdown();
+    }
+
+    // Disables Department and Academic Year if target audience is All Campus or Faculty & Staff
+    function handleNotifTargetChange() {
+      const target = document.getElementById('notifTarget')?.value || 'all';
+      const disableFilters = (target === 'all' || target === 'faculty');
+
+      const dept = document.getElementById('notifDepartment');
+      const year = document.getElementById('notifYear');
+      const groupDept = document.getElementById('groupNotifDepartment');
+      const groupYear = document.getElementById('groupNotifYear');
+      const deptTag = document.getElementById('notifDeptDisabledTag');
+      const yearTag = document.getElementById('notifYearDisabledTag');
+
+      if (dept) dept.disabled = disableFilters;
+      if (year) year.disabled = disableFilters;
+
+      if (groupDept) groupDept.classList.toggle('is-disabled', disableFilters);
+      if (groupYear) groupYear.classList.toggle('is-disabled', disableFilters);
+
+      if (deptTag) deptTag.style.display = disableFilters ? 'inline' : 'none';
+      if (yearTag) yearTag.style.display = disableFilters ? 'inline' : 'none';
+    }
+
     function openCreateNotifModal() {
       document.getElementById('notifModalTitle').textContent = '✚ Create New Notification';
       document.getElementById('notifSubmitBtn').textContent = 'Publish Notification';
       document.getElementById('notifForm').reset();
       handleNotifTypeChange();
+      handleNotifTargetChange();
+      resetStudentIdPicker();
       UI.openModal('notifModal');
     }
 
@@ -656,6 +1019,9 @@
       const message = document.getElementById('notifMessage').value.trim();
       const type = document.getElementById('notifType').value;
       const icon = document.getElementById('notifIcon').value;
+      const target = document.getElementById('notifTarget')?.value || 'all';
+      const department = document.getElementById('notifDepartment')?.value || '';
+      const year = document.getElementById('notifYear')?.value || 'all';
 
       if (!title || !message) {
         UI.toast('Please fill in all required fields.', 'warning');
@@ -667,14 +1033,27 @@
         message,
         type,
         icon,
-        time: 'Just now'
+        time: 'Just now',
+        target,
+        department: (target === 'students') ? department : '',
+        year: (target === 'students') ? year : 'all',
+        studentIds: [...selectedStudentIds]
       };
 
       NotificationsStore.add(newNotif);
       notificationsData = NotificationsStore.getAll();
-      UI.toast('Notification published successfully!', 'success');
+
+      const studentCount = selectedStudentIds.length;
+      if (studentCount > 0) {
+        UI.toast(`Notification sent directly to ${studentCount} student(s)!`, 'success');
+      } else {
+        UI.toast('Notification published successfully!', 'success');
+      }
+
       UI.closeModal('notifModal');
       document.getElementById('notifForm').reset();
+      resetStudentIdPicker();
+      handleNotifTargetChange();
       renderNotifications();
       updateNotifBadge();
     }
