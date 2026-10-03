@@ -148,6 +148,46 @@
               <input type="text" id="evLocation" class="form-input" placeholder="e.g. Auditorium A, Building 3" required>
             </div>
           </div>
+
+          <div class="form-group">
+            <label class="form-label" for="evTarget">Audience Target</label>
+            <select id="evTarget" class="form-select" onchange="handleEvTargetChange()">
+              <option value="all">👥 All Campus (Students & Staff)</option>
+              <option value="students">🎓 Students Only</option>
+              <option value="faculty">👨‍🏫 Faculty & Staff</option>
+            </select>
+          </div>
+
+          <div class="grid-2" id="evAudienceFilters">
+            <div class="form-group" id="groupEvDepartment">
+              <label class="form-label" for="evDepartment">
+                Department
+                <span id="evDeptDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="evDepartment" class="form-select">
+                <option value="Computer Science">Computer Science</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Business">Business</option>
+                <option value="Art and Science">Art and Science</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Law">Law</option>
+              </select>
+            </div>
+            <div class="form-group" id="groupEvYear">
+              <label class="form-label" for="evYear">
+                Academic Year
+                <span id="evYearDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="evYear" class="form-select">
+                <option value="all">All Year Level</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -369,6 +409,7 @@
       }
       initStudentIdPicker();
       handleNotifTargetChange();
+      handleEvTargetChange();
 
       if (params.get('create') === '1' || params.get('createNotif') === '1') {
         if (targetTab === 'notifications') {
@@ -511,6 +552,7 @@
       document.getElementById('eventSubmitBtn').textContent = 'Publish Event';
       document.getElementById('eventForm').reset();
       document.getElementById('editEventId').value = '';
+      handleEvTargetChange();
       UI.openModal('eventModal');
     }
 
@@ -527,6 +569,10 @@
       document.getElementById('evDate').value = ev.date;
       document.getElementById('evTime').value = ev.time;
       document.getElementById('evLocation').value = ev.location;
+      document.getElementById('evTarget').value = ev.target || 'all';
+      document.getElementById('evDepartment').value = ev.department || 'Computer Science';
+      document.getElementById('evYear').value = ev.year || 'all';
+      handleEvTargetChange();
       UI.openModal('eventModal');
     }
 
@@ -534,13 +580,19 @@
     function saveEvent(e) {
       e.preventDefault();
       const editId = document.getElementById('editEventId').value;
+      const evTarget = document.getElementById('evTarget')?.value || 'all';
+      const evDepartment = document.getElementById('evDepartment')?.value || '';
+      const evYear = document.getElementById('evYear')?.value || 'all';
       const data = {
         title: document.getElementById('evTitle').value.trim(),
         description: document.getElementById('evDesc').value.trim(),
         category: document.getElementById('evCategory').value,
         date: document.getElementById('evDate').value,
         time: document.getElementById('evTime').value.trim(),
-        location: document.getElementById('evLocation').value.trim()
+        location: document.getElementById('evLocation').value.trim(),
+        target: evTarget,
+        department: (evTarget === 'students') ? evDepartment : '',
+        year: (evTarget === 'students') ? evYear : 'all'
       };
 
       if (editId) {
@@ -976,6 +1028,28 @@
       const groupYear = document.getElementById('groupNotifYear');
       const deptTag = document.getElementById('notifDeptDisabledTag');
       const yearTag = document.getElementById('notifYearDisabledTag');
+
+      if (dept) dept.disabled = disableFilters;
+      if (year) year.disabled = disableFilters;
+
+      if (groupDept) groupDept.classList.toggle('is-disabled', disableFilters);
+      if (groupYear) groupYear.classList.toggle('is-disabled', disableFilters);
+
+      if (deptTag) deptTag.style.display = disableFilters ? 'inline' : 'none';
+      if (yearTag) yearTag.style.display = disableFilters ? 'inline' : 'none';
+    }
+
+    // Disables Event Department and Academic Year if target audience is All Campus or Faculty & Staff
+    function handleEvTargetChange() {
+      const target = document.getElementById('evTarget')?.value || 'all';
+      const disableFilters = (target === 'all' || target === 'faculty');
+
+      const dept = document.getElementById('evDepartment');
+      const year = document.getElementById('evYear');
+      const groupDept = document.getElementById('groupEvDepartment');
+      const groupYear = document.getElementById('groupEvYear');
+      const deptTag = document.getElementById('evDeptDisabledTag');
+      const yearTag = document.getElementById('evYearDisabledTag');
 
       if (dept) dept.disabled = disableFilters;
       if (year) year.disabled = disableFilters;

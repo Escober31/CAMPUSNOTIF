@@ -102,6 +102,46 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label" for="annTarget">Audience Target</label>
+            <select id="annTarget" class="form-select" onchange="handleAnnTargetChange()">
+              <option value="all">👥 All Campus (Students & Staff)</option>
+              <option value="students">🎓 Students Only</option>
+              <option value="faculty">👨‍🏫 Faculty & Staff</option>
+            </select>
+          </div>
+
+          <div class="grid-2" id="annAudienceFilters">
+            <div class="form-group" id="groupAnnDepartment">
+              <label class="form-label" for="annDepartment">
+                Department
+                <span id="annDeptDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="annDepartment" class="form-select">
+                <option value="Computer Science">Computer Science</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Business">Business</option>
+                <option value="Art and Science">Art and Science</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Law">Law</option>
+              </select>
+            </div>
+            <div class="form-group" id="groupAnnYear">
+              <label class="form-label" for="annYear">
+                Academic Year
+                <span id="annYearDisabledTag" class="text-xs text-muted" style="display:none; font-weight:normal; margin-left:4px;">(Disabled)</span>
+              </label>
+              <select id="annYear" class="form-select">
+                <option value="all">All Year Level</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
             <div class="form-checkbox-group">
               <input type="checkbox" id="annPinned" class="form-checkbox">
               <label for="annPinned" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">📌 Pin this
@@ -167,6 +207,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (!initPage('announcements')) return;
       renderAnnouncements();
+      handleAnnTargetChange();
 
       // Handle highlight from dashboard search
       const params = new URLSearchParams(window.location.search);
@@ -277,6 +318,7 @@
       document.getElementById('modalSubmitBtn').textContent = 'Publish';
       document.getElementById('announcementForm').reset();
       document.getElementById('editId').value = '';
+      handleAnnTargetChange();
       UI.openModal('announcementModal');
     }
 
@@ -292,18 +334,28 @@
       document.getElementById('annCategory').value = a.category;
       document.getElementById('annPriority').value = a.priority;
       document.getElementById('annPinned').checked = a.pinned;
+      document.getElementById('annTarget').value = a.target || 'all';
+      document.getElementById('annDepartment').value = a.department || 'Computer Science';
+      document.getElementById('annYear').value = a.year || 'all';
+      handleAnnTargetChange();
       UI.openModal('announcementModal');
     }
 
     function saveAnnouncement(e) {
       e.preventDefault();
       const editId = document.getElementById('editId').value;
+      const annTarget = document.getElementById('annTarget')?.value || 'all';
+      const annDepartment = document.getElementById('annDepartment')?.value || '';
+      const annYear = document.getElementById('annYear')?.value || 'all';
       const data = {
         title: document.getElementById('annTitle').value,
         body: document.getElementById('annBody').value,
         category: document.getElementById('annCategory').value,
         priority: document.getElementById('annPriority').value,
-        pinned: document.getElementById('annPinned').checked
+        pinned: document.getElementById('annPinned').checked,
+        target: annTarget,
+        department: (annTarget === 'students') ? annDepartment : '',
+        year: (annTarget === 'students') ? annYear : 'all'
       };
 
       if (editId) {
@@ -331,6 +383,28 @@
         UI.closeModal('deleteModal');
         renderAnnouncements();
       }
+    }
+
+    // Disables Announcement Department and Academic Year if target audience is All Campus or Faculty & Staff
+    function handleAnnTargetChange() {
+      const target = document.getElementById('annTarget')?.value || 'all';
+      const disableFilters = (target === 'all' || target === 'faculty');
+
+      const dept = document.getElementById('annDepartment');
+      const year = document.getElementById('annYear');
+      const groupDept = document.getElementById('groupAnnDepartment');
+      const groupYear = document.getElementById('groupAnnYear');
+      const deptTag = document.getElementById('annDeptDisabledTag');
+      const yearTag = document.getElementById('annYearDisabledTag');
+
+      if (dept) dept.disabled = disableFilters;
+      if (year) year.disabled = disableFilters;
+
+      if (groupDept) groupDept.classList.toggle('is-disabled', disableFilters);
+      if (groupYear) groupYear.classList.toggle('is-disabled', disableFilters);
+
+      if (deptTag) deptTag.style.display = disableFilters ? 'inline' : 'none';
+      if (yearTag) yearTag.style.display = disableFilters ? 'inline' : 'none';
     }
   </script>
 </body>
