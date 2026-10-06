@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="CampusNotify — Your school announcements, events, and notifications hub. Login to stay connected.">
+  <meta name="description"
+    content="CampusNotify — Your school announcements, events, and notifications hub. Login to stay connected.">
   <title>CampusNotify — Login</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
   <div class="login-page">
@@ -15,7 +18,8 @@
       <div class="login-hero-content animate-fade-in">
         <div class="hero-logo">🔔</div>
         <h1><span class="text-gradient">CampusNotify</span></h1>
-        <p>Your centralized hub for school announcements, events, and real-time notifications. Stay informed, stay connected.</p>
+        <p>Your centralized hub for school announcements, events, and real-time notifications. Stay informed, stay
+          connected.</p>
 
         <div class="login-features">
           <div class="login-feature">
@@ -51,21 +55,25 @@
 
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
-          <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+          <input type="password" id="password" class="form-input" placeholder="Enter your password" required
+            autocomplete="current-password">
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-xl);">
           <div class="form-checkbox-group">
             <input type="checkbox" id="remember" class="form-checkbox">
-            <label for="remember" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">Remember me</label>
+            <label for="remember" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">Remember
+              me</label>
           </div>
           <a href="#" style="font-size:0.85rem; color:var(--primary-400); font-weight:500;">Forgot password?</a>
         </div>
 
         <!-- Create Account link for both Student & Admin -->
-        <div id="createAccountRow" style="text-align:center; margin-bottom:var(--space-lg); animation: fadeIn 300ms ease;">
+        <div id="createAccountRow"
+          style="text-align:center; margin-bottom:var(--space-lg); animation: fadeIn 300ms ease;">
           <p style="font-size:0.85rem; color:var(--text-secondary);" id="createAccountPrompt">
-            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" style="color:var(--primary-400); font-weight:600;">Create Account</a>
+            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)"
+              style="color:var(--primary-400); font-weight:600;">Create Account</a>
           </p>
         </div>
 
@@ -89,11 +97,23 @@
         </button>
       </form>
 
-      <div style="margin-top:var(--space-xl); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.78rem; color:var(--text-muted); text-align:center;">
+      <div
+        style="margin-top:var(--space-xl); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.78rem; color:var(--text-muted); text-align:center;">
         <span style="color:var(--text-secondary); font-weight:600;">Default Demo Logins:</span><br>
-        🎓 Student: <code style="color:var(--primary-300);">alex.rivera@campus.edu</code> (pwd: <code style="color:var(--text-secondary);">password123</code>)<br>
-        🛡️ Admin: <code style="color:var(--accent-cyan);">sarah.chen@campus.edu</code> (pwd: <code style="color:var(--text-secondary);">password123</code>)<br>
-        <span style="font-size:0.72rem; opacity:0.8;">Or click <b>Create Account</b> to register your own account!</span>
+        🎓 Student: <code style="color:var(--primary-300);">alex.rivera@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300);">jordan.miles@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300);">priya.shah@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300);">marcus.vance@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300);">elena.rostova@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        🛡️ Admin: <code style="color:var(--accent-cyan);">sarah.chen@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary);">password123</code>)<br>
+        <span style="font-size:0.72rem; opacity:0.8;">Or click <b>Create Account</b> to register your own
+          account!</span>
       </div>
     </div>
   </div>
@@ -269,11 +289,12 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('createAccountModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="document.getElementById('createAccountForm').requestSubmit()">Create Account</button>
+        <button class="btn btn-primary" onclick="document.getElementById('createAccountForm').requestSubmit()">Create
+          Account</button>
       </div>
     </div>
   </div>
 
 </body>
-</html>
 
+</html>

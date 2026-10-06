@@ -1478,8 +1478,27 @@ const UI = {
   // Get category badge
   categoryBadge(category) {
     return `<span class="tag">${category}</span>`;
+  },
+
+  // Escape HTML
+  escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
   }
 };
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+if (typeof window !== 'undefined') {
+  window.escapeHtml = escapeHtml;
+}
 
 // ─── Sidebar Component ───
 function renderSidebar(activePage) {

@@ -44,6 +44,7 @@
           <button class="hub-filter-chip" data-type="announcement">📢 Announcements</button>
           <button class="hub-filter-chip" data-type="event">📅 Events</button>
           <button class="hub-filter-chip" data-type="notification">🔔 Notifications</button>
+          <button class="hub-filter-chip" data-type="poll">📊 Polls</button>
         </div>
         <div class="hub-category-filters" id="categoryFilters">
           <button class="hub-cat-chip active" data-cat="all">All</button>
@@ -116,6 +117,33 @@
         <button class="btn btn-secondary" onclick="UI.closeModal('readEventModal')">Close</button>
       </div>
     </div>
+  <!-- Read Poll Results Modal -->
+  <div class="modal-overlay" id="readPollModal">
+    <div class="modal" style="max-width: 600px; width: 95%;">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="poll-section-icon">📊</span>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Poll Results</h2>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('readPollModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: var(--space-lg);">
+          <div class="flex items-center gap-sm mb-sm" style="flex-wrap: wrap;">
+            <span id="hubModalPollCategory" class="tag"></span>
+            <span id="hubModalPollStatus" class="badge"></span>
+            <span id="hubModalPollDate" class="text-sm text-muted"></span>
+          </div>
+          <h3 id="hubModalPollTitle" style="font-size: 1.2rem; margin-bottom: var(--space-xs);"></h3>
+          <p id="hubModalPollTotalVotes" class="text-sm text-secondary"></p>
+        </div>
+
+        <div id="hubModalPollChoices" class="flex flex-col gap-md"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('readPollModal')">Close</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast-container" class="toast-container"></div>
@@ -136,7 +164,7 @@
       // Handle query params
       const params = new URLSearchParams(window.location.search);
       const typeParam = params.get('type');
-      if (typeParam && ['announcement', 'event', 'notification'].includes(typeParam)) {
+      if (typeParam && ['announcement', 'event', 'notification', 'poll'].includes(typeParam)) {
         setTypeFilter(typeParam);
       }
 
@@ -245,6 +273,19 @@
         });
       });
 
+      if (typeof PollsStore !== 'undefined') {
+        const polls = PollsStore.getForHub();
+        polls.forEach(p => {
+          feed.push({
+            feedType: 'poll', id: p.id, title: p.question, body: p.description || '',
+            category: p.category,
+            sortDate: new Date((p.createdAt || '2026-10-01') + 'T00:00:00').getTime(),
+            sortPriority: 0,
+            data: p
+          });
+        });
+      }
+
       feed.sort((a, b) => {
         if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
         return b.sortDate - a.sortDate;
@@ -272,6 +313,9 @@
       if (currentSearch) {
         filtered = filtered.filter(item => {
           const fields = [item.title, item.body, item.category, item.author, item.location].filter(Boolean);
+          if (item.feedType === 'poll' && item.data && Array.isArray(item.data.choices)) {
+            fields.push(...item.data.choices.map(c => c.text));
+          }
           return fields.some(f => f.toLowerCase().includes(currentSearch));
         });
       }
@@ -296,6 +340,7 @@
         if (item.feedType === 'announcement') return renderAnnouncementItem(item);
         if (item.feedType === 'event') return renderEventItem(item);
         if (item.feedType === 'notification') return renderNotificationItem(item);
+        if (item.feedType === 'poll') return renderPollItem(item);
         return '';
       }).join('');
     }
@@ -689,6 +734,226 @@
       const unit = match[2].toLowerCase();
       const offsets = { minute: 60000, hour: 3600000, day: 86400000, week: 604800000, month: 2592000000 };
       return Date.now() - (num * (offsets[unit] || 0));
+    }
+
+    // ─── Poll Item Rendering & Voting (Matches Pic 2 & Pic 3) ───
+    function renderPollItem(item) {
+      const poll = item.data;
+      const user = Auth.getUser();
+      const userId = user ? user.id : null;
+      const hasVoted = PollsStore.hasUserVoted(poll.id, userId);
+      const userVoteId = PollsStore.getUserVote(poll.id, userId);
+      const isClosed = PollsStore.isClosed(poll);
+      const totalVotes = PollsStore.getTotalVotes(poll);
+      const closesLabel = isClosed ? 'Ended' : 'Closes';
+      const statusText = isClosed ? 'Closed' : 'Active';
+      const statusClass = isClosed ? 'closed' : 'active';
+      const formattedDate = UI.formatDate(poll.closingDate);
+
+      let subtext = poll.description;
+      if (!subtext) {
+        if (isClosed) {
+          subtext = 'We already collected all the votes. Here are the results.';
+        } else {
+          subtext = 'Help us decide on the next event for Foundation Week. Choose one option below.';
+        }
+      } else if (isClosed && !hasVoted) {
+        subtext = 'We already collected all the votes. Here are the results.';
+      }
+
+      const showResults = hasVoted || isClosed;
+
+      let choicesHtml = '';
+      if (!showResults) {
+        // Active & Unvoted -> Radio group (Pic 2 top / Pic 3 left)
+        choicesHtml = `
+          <div class="poll-radio-group" id="poll-radios-${poll.id}">
+            ${poll.choices.map(c => `
+              <label class="poll-radio-card" id="lbl-poll-${poll.id}-${c.id}" onclick="selectPollRadio(${poll.id}, '${c.id}')">
+                <input type="radio" name="poll_opt_${poll.id}" value="${c.id}">
+                <span class="poll-radio-dot"></span>
+                <span class="poll-radio-text">${escapeHtml(c.text)}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div class="poll-card-footer">
+            <div class="poll-footer-left">
+              <span class="tag">🎓 ${escapeHtml(poll.category || 'Student Life')}</span>
+              <span class="poll-vote-count-label">👥 ${totalVotes} votes</span>
+            </div>
+            <button class="poll-submit-btn" id="btn-vote-${poll.id}" onclick="submitPollVote(${poll.id})">
+              Vote →
+            </button>
+          </div>
+        `;
+      } else {
+        // Voted or Closed -> Results view with percentages and progress bars (Pic 3 right)
+        const votedChoice = poll.choices.find(c => String(c.id) === String(userVoteId));
+
+        choicesHtml = `
+          <div class="poll-results-group">
+            ${poll.choices.map(c => {
+              const votes = Number(c.votes) || 0;
+              const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+              const isVotedChoice = (userVoteId === c.id);
+
+              return `
+                <div class="poll-result-item ${isVotedChoice ? 'voted-choice' : ''}">
+                  <div class="poll-result-header">
+                    <span class="poll-result-title">${escapeHtml(c.text)}</span>
+                    <div class="poll-result-stats">
+                      ${isVotedChoice ? '<span class="poll-voted-check">✓</span>' : ''}
+                      <span class="poll-result-percent">${pct}%</span>
+                      <span class="poll-result-votes">(${votes} votes)</span>
+                    </div>
+                  </div>
+                  <div class="poll-progress-track">
+                    <div class="poll-progress-bar ${isVotedChoice ? 'voted-bar' : ''}" style="width: ${pct}%;"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          ${hasVoted && votedChoice ? `
+            <div class="poll-voted-notice animate-fade-in">
+              <div class="poll-voted-notice-left">
+                <span class="poll-voted-notice-icon">✓</span>
+                <span>You voted for <strong>${escapeHtml(votedChoice.text)}</strong></span>
+              </div>
+              <span class="poll-voted-notice-arrow">›</span>
+            </div>
+          ` : ''}
+
+          <div class="poll-card-footer">
+            <div class="poll-footer-left">
+              <span class="tag">🎓 ${escapeHtml(poll.category || 'Student Life')}</span>
+              <span class="poll-vote-count-label">👥 ${totalVotes} ${hasVoted ? 'students voted' : 'votes'}</span>
+            </div>
+            ${isClosed && !hasVoted ? `
+              <button class="btn btn-ghost btn-sm" onclick="showResultsDetailModal(${poll.id})">
+                👁 View Results
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="hub-feed-item hub-item-poll animate-slide-up" id="hub-poll-${poll.id}">
+          <div class="poll-card-header">
+            <span class="badge-poll-type">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;">
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+                <line x1="12" y1="20" x2="12" y2="9"></line>
+              </svg>
+              CAMPUS POLL
+            </span>
+            <div class="poll-card-meta">
+              <span class="badge-poll-status ${statusClass}">${statusText}</span>
+              <span class="poll-closing-text">🕒 ${closesLabel} ${formattedDate}</span>
+            </div>
+          </div>
+
+          <div class="poll-body-layout">
+            <div class="poll-big-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+                <line x1="12" y1="20" x2="12" y2="9"></line>
+              </svg>
+            </div>
+            <div class="poll-content-col">
+              <h3 class="poll-question">${escapeHtml(poll.question)}</h3>
+              <p class="poll-subtext">${escapeHtml(subtext)}</p>
+            </div>
+          </div>
+
+          ${choicesHtml}
+        </div>
+      `;
+    }
+
+    function selectPollRadio(pollId, choiceId) {
+      const group = document.getElementById('poll-radios-' + pollId);
+      if (!group) return;
+
+      group.querySelectorAll('.poll-radio-card').forEach(card => card.classList.remove('selected'));
+      const targetCard = document.getElementById('lbl-poll-' + pollId + '-' + choiceId);
+      if (targetCard) {
+        targetCard.classList.add('selected');
+        const radio = targetCard.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      }
+    }
+
+    function submitPollVote(pollId) {
+      const selectedRadio = document.querySelector(`input[name="poll_opt_${pollId}"]:checked`);
+      if (!selectedRadio) {
+        UI.toast('Please select an option before voting.', 'warning');
+        return;
+      }
+
+      const choiceId = selectedRadio.value;
+      const user = Auth.getUser();
+      if (!user) {
+        UI.toast('Please log in to vote.', 'error');
+        return;
+      }
+
+      if (PollsStore.hasUserVoted(pollId, user.id)) {
+        UI.toast('You have already voted on this poll.', 'warning');
+        return;
+      }
+
+      const res = PollsStore.vote(pollId, choiceId, user);
+      if (!res.success) {
+        UI.toast(res.message, 'error');
+        return;
+      }
+
+      UI.toast(`Your vote for "${res.choiceText}" was saved!`, 'success');
+      renderFeed();
+    }
+
+    function showResultsDetailModal(pollId) {
+      const poll = PollsStore.getById(pollId);
+      if (!poll) return;
+
+      const isClosed = PollsStore.isClosed(poll);
+      const totalVotes = PollsStore.getTotalVotes(poll);
+
+      document.getElementById('hubModalPollTitle').textContent = poll.question;
+      document.getElementById('hubModalPollCategory').textContent = '🎓 ' + (poll.category || 'General');
+
+      const statusBadge = document.getElementById('hubModalPollStatus');
+      statusBadge.textContent = isClosed ? 'Closed' : 'Active';
+      statusBadge.className = isClosed ? 'badge badge-warning' : 'badge badge-success';
+
+      document.getElementById('hubModalPollDate').textContent = (isClosed ? 'Ended ' : 'Closes ') + UI.formatDate(poll.closingDate);
+      document.getElementById('hubModalPollTotalVotes').textContent = `Total votes collected: ${totalVotes}`;
+
+      const listContainer = document.getElementById('hubModalPollChoices');
+      listContainer.innerHTML = poll.choices.map(c => {
+        const votes = Number(c.votes) || 0;
+        const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+        return `
+          <div style="background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-md);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+              <span style="font-weight:600; font-size:0.95rem; color:var(--text-primary);">${escapeHtml(c.text)}</span>
+              <span style="font-size:0.88rem; color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);">${pct}%</strong> (${votes} votes)
+              </span>
+            </div>
+            <div class="poll-progress-track">
+              <div class="poll-progress-bar" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      UI.openModal('readPollModal');
     }
   </script>
 </body>

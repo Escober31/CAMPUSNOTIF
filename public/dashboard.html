@@ -105,6 +105,40 @@
         </div>
       </div>
 
+      <!-- Admin Campus Polls Section (matches Pic 1) -->
+      <div class="admin-only-block mt-xl" id="adminPollsSection">
+        <!-- Success Banner -->
+        <div id="pollSuccessBanner" class="poll-success-banner" style="display:none;">
+          <div class="poll-success-banner-content">
+            <div class="poll-success-icon">✓</div>
+            <div>
+              <div class="poll-success-title">Poll created successfully!</div>
+              <div class="poll-success-subtitle">The poll is now visible in the Campus Polls section.</div>
+            </div>
+          </div>
+          <button class="poll-banner-close" onclick="dismissPollSuccessBanner()">✕</button>
+        </div>
+
+        <div class="card" style="transform:none;">
+          <div class="flex items-center justify-between mb-lg">
+            <div class="flex items-center gap-md">
+              <span class="poll-section-icon">📊</span>
+              <h3 style="margin:0;">Campus Polls</h3>
+            </div>
+            <!-- Replaced 'View All ->' with '+ Create Poll' as requested -->
+            <button class="btn btn-primary btn-sm" id="btnCreatePoll" onclick="openCreatePollModal()">
+              + Create Poll
+            </button>
+          </div>
+          <div id="adminPollsList" class="flex flex-col gap-md"></div>
+          <div id="adminPollsEmpty" class="empty-state" style="display:none; padding:var(--space-xl) 0;">
+            <div class="empty-icon">📊</div>
+            <h3>No campus polls yet</h3>
+            <p>Click "+ Create Poll" above to gather feedback from students.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Admin Reports Section -->
       <div class="admin-only-block mt-xl">
         <div class="card" style="transform:none;">
@@ -130,6 +164,152 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- Create Poll Modal (matches Pic 1 Step 2) -->
+  <div class="modal-overlay" id="createPollModal">
+    <div class="modal" style="max-width: 680px; width: 95%;">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="poll-section-icon">📊</span>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Create Poll</h2>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('createPollModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createPollForm" onsubmit="handleCreatePollSubmit(event)">
+          <div class="form-group mb-lg">
+            <label class="form-label" for="pollQuestion">Question <span class="text-danger">*</span></label>
+            <input type="text" id="pollQuestion" class="form-control" placeholder="What activity would you like for Foundation Week?" required>
+          </div>
+
+          <div class="poll-form-grid mb-lg">
+            <div>
+              <label class="form-label">Choices <span class="text-danger">*</span></label>
+              <div id="createPollChoicesList" class="poll-choices-container"></div>
+              <button type="button" class="btn-add-choice" onclick="addChoiceRow('createPollChoicesList')">
+                + Add Choice
+              </button>
+            </div>
+
+            <div>
+              <div class="form-group mb-md">
+                <label class="form-label" for="pollCategory">Category <span class="text-danger">*</span></label>
+                <select id="pollCategory" class="form-control" required>
+                  <option value="Student Life" selected>Student Life</option>
+                  <option value="Academic">Academic</option>
+                  <option value="Facilities">Facilities</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Career">Career</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="pollClosingDate">Closing Date <span class="text-danger">*</span></label>
+                <input type="date" id="pollClosingDate" class="form-control" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding: 0; margin-top: var(--space-xl);">
+            <button type="button" class="btn btn-secondary" onclick="UI.closeModal('createPollModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Poll</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Poll Modal -->
+  <div class="modal-overlay" id="editPollModal">
+    <div class="modal" style="max-width: 680px; width: 95%;">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="poll-section-icon">✏️</span>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Edit Poll</h2>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('editPollModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="editPollForm" onsubmit="handleEditPollSubmit(event)">
+          <input type="hidden" id="editPollId">
+          <div class="form-group mb-lg">
+            <label class="form-label" for="editPollQuestion">Question <span class="text-danger">*</span></label>
+            <input type="text" id="editPollQuestion" class="form-control" required>
+          </div>
+
+          <div class="poll-form-grid mb-lg">
+            <div>
+              <label class="form-label">Choices <span class="text-danger">*</span></label>
+              <div id="editPollChoicesList" class="poll-choices-container"></div>
+              <button type="button" class="btn-add-choice" onclick="addChoiceRow('editPollChoicesList')">
+                + Add Choice
+              </button>
+            </div>
+
+            <div>
+              <div class="form-group mb-md">
+                <label class="form-label" for="editPollCategory">Category <span class="text-danger">*</span></label>
+                <select id="editPollCategory" class="form-control" required>
+                  <option value="Student Life">Student Life</option>
+                  <option value="Academic">Academic</option>
+                  <option value="Facilities">Facilities</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Career">Career</option>
+                </select>
+              </div>
+
+              <div class="form-group mb-md">
+                <label class="form-label" for="editPollClosingDate">Closing Date <span class="text-danger">*</span></label>
+                <input type="date" id="editPollClosingDate" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="editPollStatus">Status</label>
+                <select id="editPollStatus" class="form-control">
+                  <option value="active">Active</option>
+                  <option value="closed">Closed / Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding: 0; margin-top: var(--space-xl);">
+            <button type="button" class="btn btn-secondary" onclick="UI.closeModal('editPollModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin View Results Modal -->
+  <div class="modal-overlay" id="adminViewResultsModal">
+    <div class="modal" style="max-width: 620px; width: 95%;">
+      <div class="modal-header">
+        <div class="flex items-center gap-md">
+          <span class="poll-section-icon">📊</span>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Poll Results</h2>
+        </div>
+        <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('adminViewResultsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: var(--space-lg);">
+          <div class="flex items-center gap-sm mb-sm" style="flex-wrap: wrap;">
+            <span id="viewResultsCategory" class="tag"></span>
+            <span id="viewResultsStatus" class="badge"></span>
+            <span id="viewResultsClosingDate" class="text-sm text-muted"></span>
+          </div>
+          <h3 id="viewResultsTitle" style="font-size: 1.2rem; margin-bottom: var(--space-xs);"></h3>
+          <p id="viewResultsTotalVotes" class="text-sm text-secondary"></p>
+        </div>
+
+        <div id="viewResultsChoicesList" class="flex flex-col gap-md"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="UI.closeModal('adminViewResultsModal')">Close</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
@@ -404,9 +584,10 @@
           </div>`;
       }).join('');
 
-      // Admin Charts
+      // Admin Charts & Polls
       if (Auth.getRole() === 'admin') {
         renderCharts(announcements);
+        renderAdminPolls();
       }
 
       // ─── Dashboard Search ───
@@ -638,6 +819,257 @@
         document.querySelectorAll('.reminder-menu.open').forEach(m => m.classList.remove('open'));
       }
     });
+
+    // ─── Admin Campus Polls Logic ───
+    function renderAdminPolls() {
+      const container = document.getElementById('adminPollsList');
+      const emptyEl = document.getElementById('adminPollsEmpty');
+      if (!container || typeof PollsStore === 'undefined') return;
+
+      const polls = PollsStore.getAll();
+      if (polls.length === 0) {
+        container.innerHTML = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+
+      container.innerHTML = polls.map(poll => {
+        const isClosed = PollsStore.isClosed(poll);
+        const statusText = isClosed ? 'Inactive' : 'Active';
+        const statusClass = isClosed ? 'inactive' : 'active';
+        const totalVotes = PollsStore.getTotalVotes(poll);
+        const closesLabel = isClosed ? 'Closed' : 'Closes';
+        const formattedDate = UI.formatDate(poll.closingDate);
+
+        return `
+          <div class="admin-poll-item" id="admin-poll-${poll.id}">
+            <div class="admin-poll-badge-box ${statusClass}">
+              <span class="admin-poll-badge-icon">📊</span>
+              <span class="admin-poll-badge-text">${statusText}</span>
+            </div>
+            <div class="admin-poll-info">
+              <div class="admin-poll-title">${escapeHtml(poll.question)}</div>
+              <div class="admin-poll-meta">
+                <span>${poll.choices.length} options</span>
+                <span>·</span>
+                <span>${closesLabel} ${formattedDate}</span>
+                <span>·</span>
+                <span>${totalVotes} votes</span>
+              </div>
+            </div>
+            <div class="admin-poll-actions">
+              <button class="btn btn-primary btn-sm" onclick="openAdminViewResultsModal(${poll.id})">
+                View Results
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="openEditPollModal(${poll.id})">
+                Edit
+              </button>
+              <button class="btn btn-ghost btn-icon sm" title="Delete poll" onclick="deletePollConfirm(${poll.id})">
+                🗑
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function dismissPollSuccessBanner() {
+      const banner = document.getElementById('pollSuccessBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    function addChoiceRow(containerId, value = '') {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const row = document.createElement('div');
+      row.className = 'poll-choice-row';
+      row.innerHTML = `
+        <span class="poll-grip-icon" title="Reorder">⠿</span>
+        <input type="text" class="poll-choice-input" placeholder="e.g. Activity name" value="${escapeHtml(value)}" required>
+        <button type="button" class="btn btn-ghost btn-icon sm" title="Remove choice" onclick="removeChoiceRow(this)">🗑</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeChoiceRow(btn) {
+      const container = btn.closest('.poll-choices-container');
+      if (!container) return;
+      const rows = container.querySelectorAll('.poll-choice-row');
+      if (rows.length <= 2) {
+        UI.toast('Poll must have at least 2 choices.', 'warning');
+        return;
+      }
+      btn.closest('.poll-choice-row').remove();
+    }
+
+    function openCreatePollModal() {
+      const form = document.getElementById('createPollForm');
+      if (form) form.reset();
+
+      const choicesList = document.getElementById('createPollChoicesList');
+      if (choicesList) {
+        choicesList.innerHTML = '';
+        // Seed default choices matching Pic 1 Step 2
+        const defaultChoices = ['Concert', 'Sports Tournament', 'Cultural Night', 'Gaming Event'];
+        defaultChoices.forEach(ch => addChoiceRow('createPollChoicesList', ch));
+      }
+
+      const closingDateInput = document.getElementById('pollClosingDate');
+      if (closingDateInput) {
+        // Default to Oct 20, 2026 or 14 days in future
+        closingDateInput.value = '2026-10-20';
+      }
+
+      UI.openModal('createPollModal');
+    }
+
+    function handleCreatePollSubmit(e) {
+      e.preventDefault();
+      const question = document.getElementById('pollQuestion').value.trim();
+      const category = document.getElementById('pollCategory').value;
+      const closingDate = document.getElementById('pollClosingDate').value;
+
+      const choiceInputs = document.querySelectorAll('#createPollChoicesList .poll-choice-input');
+      const choices = Array.from(choiceInputs).map(inp => inp.value.trim()).filter(Boolean);
+
+      if (!question) {
+        UI.toast('Please enter a poll question.', 'warning');
+        return;
+      }
+
+      if (choices.length < 2) {
+        UI.toast('Please provide at least 2 choices.', 'warning');
+        return;
+      }
+
+      if (!closingDate) {
+        UI.toast('Please select a closing date.', 'warning');
+        return;
+      }
+
+      PollsStore.add({
+        question,
+        category,
+        closingDate,
+        choices
+      });
+
+      UI.closeModal('createPollModal');
+      renderAdminPolls();
+
+      // Show success banner matching Pic 1 Step 3
+      const banner = document.getElementById('pollSuccessBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      UI.toast('Poll created successfully!', 'success');
+    }
+
+    function openEditPollModal(pollId) {
+      const poll = PollsStore.getById(pollId);
+      if (!poll) return;
+
+      document.getElementById('editPollId').value = poll.id;
+      document.getElementById('editPollQuestion').value = poll.question;
+      document.getElementById('editPollCategory').value = poll.category || 'Student Life';
+      document.getElementById('editPollClosingDate').value = poll.closingDate || '';
+      document.getElementById('editPollStatus').value = PollsStore.isClosed(poll) ? 'closed' : 'active';
+
+      const choicesList = document.getElementById('editPollChoicesList');
+      choicesList.innerHTML = '';
+      (poll.choices || []).forEach(ch => {
+        addChoiceRow('editPollChoicesList', typeof ch === 'string' ? ch : ch.text);
+      });
+
+      UI.openModal('editPollModal');
+    }
+
+    function handleEditPollSubmit(e) {
+      e.preventDefault();
+      const pollId = document.getElementById('editPollId').value;
+      const question = document.getElementById('editPollQuestion').value.trim();
+      const category = document.getElementById('editPollCategory').value;
+      const closingDate = document.getElementById('editPollClosingDate').value;
+      const status = document.getElementById('editPollStatus').value;
+
+      const choiceInputs = document.querySelectorAll('#editPollChoicesList .poll-choice-input');
+      const choices = Array.from(choiceInputs).map(inp => inp.value.trim()).filter(Boolean);
+
+      if (!question) {
+        UI.toast('Please enter a poll question.', 'warning');
+        return;
+      }
+
+      if (choices.length < 2) {
+        UI.toast('Please provide at least 2 choices.', 'warning');
+        return;
+      }
+
+      PollsStore.update(pollId, {
+        question,
+        category,
+        closingDate,
+        status,
+        choices
+      });
+
+      UI.closeModal('editPollModal');
+      renderAdminPolls();
+      UI.toast('Poll updated successfully!', 'success');
+    }
+
+    function deletePollConfirm(pollId) {
+      if (confirm('Are you sure you want to delete this poll? This action cannot be undone.')) {
+        PollsStore.delete(pollId);
+        renderAdminPolls();
+        UI.toast('Poll deleted successfully.', 'info');
+      }
+    }
+
+    function openAdminViewResultsModal(pollId) {
+      const poll = PollsStore.getById(pollId);
+      if (!poll) return;
+
+      const isClosed = PollsStore.isClosed(poll);
+      const totalVotes = PollsStore.getTotalVotes(poll);
+
+      document.getElementById('viewResultsTitle').textContent = poll.question;
+      document.getElementById('viewResultsCategory').textContent = '🎓 ' + (poll.category || 'General');
+      
+      const statusBadge = document.getElementById('viewResultsStatus');
+      statusBadge.textContent = isClosed ? 'Inactive / Closed' : 'Active';
+      statusBadge.className = isClosed ? 'badge badge-warning' : 'badge badge-success';
+
+      document.getElementById('viewResultsClosingDate').textContent = (isClosed ? 'Ended ' : 'Closes ') + UI.formatDate(poll.closingDate);
+      document.getElementById('viewResultsTotalVotes').textContent = `Total votes collected: ${totalVotes}`;
+
+      const listContainer = document.getElementById('viewResultsChoicesList');
+      listContainer.innerHTML = poll.choices.map(c => {
+        const votes = Number(c.votes) || 0;
+        const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+
+        return `
+          <div style="background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-md);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+              <span style="font-weight:600; font-size:0.95rem; color:var(--text-primary);">${escapeHtml(c.text)}</span>
+              <span style="font-size:0.88rem; color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);">${pct}%</strong> (${votes} votes)
+              </span>
+            </div>
+            <div class="poll-progress-track">
+              <div class="poll-progress-bar" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      UI.openModal('adminViewResultsModal');
+    }
   </script>
 </body>
 </html>
