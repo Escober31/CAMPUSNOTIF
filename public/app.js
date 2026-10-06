@@ -42,352 +42,78 @@ const MOCK_USERS = {
   }
 };
 
-const ANNOUNCEMENTS = [
-  {
-    id: 1,
-    title: 'Fall 2026 Semester Registration Now Open',
-    body: 'Course registration for the Fall 2026 semester is now open. Please review the updated course catalog and meet with your academic advisor before selecting courses. Registration closes on October 15th.',
-    priority: 'urgent',
-    category: 'Academic',
-    author: 'Office of the Registrar',
-    date: '2026-09-28',
-    pinned: true,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 2,
-    title: 'Campus Wi-Fi Maintenance — Oct 2',
-    body: 'The campus wireless network will undergo scheduled maintenance on October 2nd from 2:00 AM to 6:00 AM. Internet access may be intermittent during this period. Please plan accordingly.',
-    priority: 'important',
-    category: 'Facility',
-    author: 'IT Services',
-    date: '2026-09-27',
-    pinned: false,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 3,
-    title: 'Annual Science Fair — Call for Entries',
-    body: 'The annual Campus Science Fair will be held on November 12th. Students from all departments are encouraged to submit their projects by October 20th. Prizes will be awarded in multiple categories.',
-    priority: 'normal',
-    category: 'Academic',
-    author: 'Dept. of Sciences',
-    date: '2026-09-26',
-    pinned: false,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 4,
-    title: 'New Library Hours for Midterm Season',
-    body: 'Starting October 5th, the university library will extend its hours to 24/7 access through the midterm examination period. Student ID is required for after-hours entry.',
-    priority: 'normal',
-    category: 'Facility',
-    author: 'University Library',
-    date: '2026-09-25',
-    pinned: false,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 5,
-    title: 'Mental Health Awareness Week — Oct 6–10',
-    body: 'Join us for Mental Health Awareness Week with free workshops, counseling sessions, and wellness activities. Schedule and sign-up available on the Student Services portal.',
-    priority: 'important',
-    category: 'Student Life',
-    author: 'Student Wellness Center',
-    date: '2026-09-24',
-    pinned: true,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 6,
-    title: 'Parking Lot B Closure for Renovation',
-    body: 'Parking Lot B will be closed from October 1st through October 31st for repaving and expansion. Alternative parking is available at Lot D with a complimentary shuttle service to campus buildings.',
-    priority: 'normal',
-    category: 'Facility',
-    author: 'Campus Facilities',
-    date: '2026-09-23',
-    pinned: false,
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 7,
-    title: 'CS Department: Capstone Project Proposals Due',
-    body: 'All Computer Science students in their 3rd and 4th year must submit their capstone project proposals by October 18th. Templates are available on the CS portal. Proposals will be reviewed by faculty advisors.',
-    priority: 'urgent',
-    category: 'Academic',
-    author: 'Dept. of Computer Science',
-    date: '2026-09-30',
-    pinned: true,
-    targetDepartment: 'Computer Science',
-    targetYear: '3rd Year'
-  },
-  {
-    id: 8,
-    title: 'Engineering Lab Safety Recertification',
-    body: 'All Engineering students must complete mandatory lab safety recertification by October 12th. Online modules and in-person practical sessions are available. Failure to recertify will result in restricted lab access.',
-    priority: 'important',
-    category: 'Academic',
-    author: 'Dept. of Engineering',
-    date: '2026-09-29',
-    pinned: false,
-    targetDepartment: 'Engineering',
-    targetYear: 'all'
-  },
-  {
-    id: 9,
-    title: 'Business Pitch Competition — $5,000 Prize',
-    body: 'The annual Business Pitch Competition is accepting entries. First-year Business students are especially encouraged to participate. Form teams of 2-4 and register by October 25th.',
-    priority: 'normal',
-    category: 'Academic',
-    author: 'Dept. of Business',
-    date: '2026-09-28',
-    pinned: false,
-    targetDepartment: 'Business',
-    targetYear: '1st Year'
-  },
-  {
-    id: 10,
-    title: 'CS Hackathon: Build for Good — Oct 18-19',
-    body: 'Join the 48-hour hackathon organized by the CS department! Build solutions for social impact. Open to all CS students. Meals, mentorship, and prizes included.',
-    priority: 'important',
-    category: 'Academic',
-    author: 'CS Student Association',
-    date: '2026-10-01',
-    pinned: false,
-    targetDepartment: 'Computer Science',
-    targetYear: 'all'
-  },
-  {
-    id: 11,
-    title: '3rd Year Internship Prep Workshop',
-    body: 'Career Services is hosting an internship prep workshop specifically for 3rd year students. Topics include resume building, interview skills, and networking strategies. Seats are limited.',
-    priority: 'normal',
-    category: 'Career',
-    author: 'Career Services',
-    date: '2026-09-27',
-    pinned: false,
-    target: 'students',
-    department: 'all',
-    year: '3rd Year',
-    targetDepartment: 'all',
-    targetYear: '3rd Year'
-  },
-  {
-    id: 12,
-    title: 'Law School Moot Court Registration',
-    body: 'Registration is now open for the Annual Campus Moot Court Competition. All Law students are eligible to form two-person teams. Information sessions will be held this Thursday in Moot Court Room 102.',
-    priority: 'important',
-    category: 'Academic',
-    author: 'Faculty of Law',
-    date: '2026-10-01',
-    pinned: false,
-    target: 'students',
-    department: 'Law',
-    year: 'all',
-    targetDepartment: 'Law',
-    targetYear: 'all'
-  },
-  {
-    id: 13,
-    title: '1st Year Law Case Briefing Workshop',
-    body: 'Mandatory workshop for all 1st Year Law students covering IRAC analysis, case briefing methodologies, and preparing for legal research exams. Led by Senior Law Faculty.',
-    priority: 'urgent',
-    category: 'Academic',
-    author: 'Faculty of Law',
-    date: '2026-10-02',
-    pinned: true,
-    target: 'students',
-    department: 'Law',
-    year: '1st Year',
-    targetDepartment: 'Law',
-    targetYear: '1st Year'
-  }
-];
+const DEMO_TITLES = new Set([
+  'Fall 2026 Semester Registration Now Open',
+  'Campus Wi-Fi Maintenance — Oct 2',
+  'Annual Science Fair — Call for Entries',
+  'New Library Hours for Midterm Season',
+  'Mental Health Awareness Week — Oct 6–10',
+  'Parking Lot B Closure for Renovation',
+  'CS Department: Capstone Project Proposals Due',
+  'Engineering Lab Safety Recertification',
+  'Business Pitch Competition — $5,000 Prize',
+  'CS Hackathon: Build for Good — Oct 18-19',
+  '3rd Year Internship Prep Workshop',
+  'Law School Moot Court Registration',
+  '1st Year Law Case Briefing Workshop',
+  'Homecoming Football Game',
+  'Guest Lecture: AI in Education',
+  'Fall Career Fair 2026',
+  'Cultural Night: Around the World',
+  'Midterm Study Marathon',
+  'CS Senior Project Showcase',
+  'Engineering Design Sprint',
+  'First Year Orientation Social',
+  'Tech Industry Panel: Careers in CS',
+  'Law Review Annual Symposium',
+  '1st Year Law Legal Research Bootcamp',
+  'New Announcement Posted',
+  'Assignment Submitted',
+  'Payment Reminder',
+  'Emergency Drill',
+  'Event Reminder',
+  'Scholarship Awarded',
+  '1st Year Law Briefing Session',
+  'Law Moot Court Notice',
+  'What activity would you like for Foundation Week?'
+]);
 
-const EVENTS = [
-  {
-    id: 1,
-    title: 'Homecoming Football Game',
-    description: 'Cheer on the Eagles at the annual Homecoming game vs. State University. Pre-game tailgate party starts at 3 PM.',
-    date: '2026-10-10',
-    time: '5:00 PM',
-    location: 'Eagle Stadium',
-    category: 'Sports',
-    attendees: 1240,
-    target: 'all',
-    department: 'all',
-    year: 'all',
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 2,
-    title: 'Guest Lecture: AI in Education',
-    description: 'Dr. James Park from MIT discusses the transformative role of artificial intelligence in modern education.',
-    date: '2026-10-05',
-    time: '2:00 PM',
-    location: 'Auditorium A, Building 3',
-    category: 'Academic',
-    attendees: 320,
-    target: 'students',
-    department: 'Computer Science',
-    year: 'all',
-    targetDepartment: 'Computer Science',
-    targetYear: 'all'
-  },
-  {
-    id: 3,
-    title: 'Fall Career Fair 2026',
-    description: 'Over 80 companies will be recruiting for internships and full-time positions. Bring your resume and dress professionally.',
-    date: '2026-10-15',
-    time: '10:00 AM – 4:00 PM',
-    location: 'Student Center Grand Hall',
-    category: 'Career',
-    attendees: 890,
-    target: 'all',
-    department: 'all',
-    year: 'all',
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 4,
-    title: 'Cultural Night: Around the World',
-    description: 'Celebrate diversity with performances, food, and exhibitions from student cultural organizations.',
-    date: '2026-10-20',
-    time: '6:00 PM',
-    location: 'Campus Green',
-    category: 'Student Life',
-    attendees: 560,
-    target: 'all',
-    department: 'all',
-    year: 'all',
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 5,
-    title: 'Midterm Study Marathon',
-    description: 'Join fellow students for an all-night study session with free coffee, snacks, and tutoring support.',
-    date: '2026-10-22',
-    time: '8:00 PM – 6:00 AM',
-    location: 'University Library',
-    category: 'Academic',
-    attendees: 210,
-    target: 'all',
-    department: 'all',
-    year: 'all',
-    targetDepartment: 'all',
-    targetYear: 'all'
-  },
-  {
-    id: 6,
-    title: 'CS Senior Project Showcase',
-    description: 'Computer Science 3rd and 4th year students present their capstone projects. Come see cutting-edge demos in AI, web dev, cybersecurity, and more!',
-    date: '2026-11-05',
-    time: '1:00 PM – 5:00 PM',
-    location: 'CS Building, Room 301',
-    category: 'Academic',
-    attendees: 145,
-    target: 'students',
-    department: 'Computer Science',
-    year: '3rd Year',
-    targetDepartment: 'Computer Science',
-    targetYear: '3rd Year'
-  },
-  {
-    id: 7,
-    title: 'Engineering Design Sprint',
-    description: 'A 2-day rapid prototyping event for Engineering students. Work in teams to solve real-world engineering challenges.',
-    date: '2026-10-25',
-    time: '9:00 AM – 5:00 PM',
-    location: 'Engineering Lab Complex',
-    category: 'Academic',
-    attendees: 85,
-    target: 'students',
-    department: 'Engineering',
-    year: 'all',
-    targetDepartment: 'Engineering',
-    targetYear: 'all'
-  },
-  {
-    id: 8,
-    title: 'First Year Orientation Social',
-    description: 'A fun mixer event for all first-year students to meet classmates, join clubs, and explore campus resources.',
-    date: '2026-10-08',
-    time: '4:00 PM – 7:00 PM',
-    location: 'Student Center Lounge',
-    category: 'Student Life',
-    attendees: 320,
-    target: 'students',
-    department: 'all',
-    year: '1st Year',
-    targetDepartment: 'all',
-    targetYear: '1st Year'
-  },
-  {
-    id: 9,
-    title: 'Tech Industry Panel: Careers in CS',
-    description: 'Hear from industry leaders at Google, Microsoft, and startups about career paths in Computer Science. Q&A session included.',
-    date: '2026-10-12',
-    time: '3:00 PM – 5:00 PM',
-    location: 'Auditorium B, CS Building',
-    category: 'Career',
-    attendees: 210,
-    target: 'students',
-    department: 'Computer Science',
-    year: '3rd Year',
-    targetDepartment: 'Computer Science',
-    targetYear: '3rd Year'
-  },
-  {
-    id: 10,
-    title: 'Law Review Annual Symposium',
-    description: 'Join constitutional law scholars and legal practitioners for a panel discussion on modern data privacy and student digital rights.',
-    date: '2026-10-28',
-    time: '2:00 PM – 5:00 PM',
-    location: 'Law Auditorium, Building 4',
-    category: 'Academic',
-    attendees: 160,
-    target: 'students',
-    department: 'Law',
-    year: 'all',
-    targetDepartment: 'Law',
-    targetYear: 'all'
-  },
-  {
-    id: 11,
-    title: '1st Year Law Legal Research Bootcamp',
-    description: 'Hands-on training session on Westlaw, LexisNexis, and appellate court case research for all 1st Year Law students.',
-    date: '2026-10-18',
-    time: '10:00 AM – 1:00 PM',
-    location: 'Law Library Lab 2',
-    category: 'Academic',
-    attendees: 75,
-    target: 'students',
-    department: 'Law',
-    year: '1st Year',
-    targetDepartment: 'Law',
-    targetYear: '1st Year'
-  }
-];
+function isDemoCard(item) {
+  if (!item) return false;
+  const numId = Number(item.id);
+  // All demo seeds had IDs 1..13. Admin created items have Date.now() timestamp IDs (> 1,000,000)
+  if (!isNaN(numId) && numId > 0 && numId <= 100) return true;
+  if (item.title && DEMO_TITLES.has(item.title)) return true;
+  if (item.question && DEMO_TITLES.has(item.question)) return true;
+  return false;
+}
 
-const DEFAULT_NOTIFICATIONS = [
-  { id: 1, type: 'info', icon: '📢', title: 'New Announcement Posted', message: 'Fall 2026 Semester Registration is now open.', time: '2 minutes ago', read: false, target: 'all', department: 'all', year: 'all', targetDepartment: 'all', targetYear: 'all', actionType: 'announcement', actionId: 1 },
-  { id: 2, type: 'success', icon: '✅', title: 'Assignment Submitted', message: 'Your CS301 assignment has been submitted successfully.', time: '1 hour ago', read: false, target: 'students', department: 'Computer Science', year: '3rd Year', targetDepartment: 'Computer Science', targetYear: '3rd Year' },
-  { id: 3, type: 'warning', icon: '⚠️', title: 'Payment Reminder', message: 'Tuition payment for Fall semester is due October 1st.', time: '3 hours ago', read: false, target: 'all', department: 'all', year: 'all', targetDepartment: 'all', targetYear: 'all' },
-  { id: 4, type: 'alert', icon: '🔴', title: 'Emergency Drill', message: 'Campus-wide emergency drill scheduled for Oct 3rd at 10 AM.', time: '5 hours ago', read: true, target: 'all', department: 'all', year: 'all', targetDepartment: 'all', targetYear: 'all' },
-  { id: 5, type: 'info', icon: '📅', title: 'Event Reminder', message: 'Guest Lecture: AI in Education starts tomorrow at 2 PM.', time: '1 day ago', read: true, target: 'students', department: 'Computer Science', year: 'all', targetDepartment: 'Computer Science', targetYear: 'all', actionType: 'event', actionId: 2 },
-  { id: 6, type: 'success', icon: '🎉', title: 'Scholarship Awarded', message: 'Congratulations! You\'ve been awarded the Dean\'s Merit Scholarship.', time: '2 days ago', read: true, target: 'all', department: 'all', year: 'all', targetDepartment: 'all', targetYear: 'all' },
-  { id: 7, type: 'info', icon: '⚖️', title: '1st Year Law Briefing Session', message: 'Case Briefing Workshop starts tomorrow at 10 AM in Room 102.', time: '1 hour ago', read: false, target: 'students', department: 'Law', year: '1st Year', targetDepartment: 'Law', targetYear: '1st Year', actionType: 'announcement', actionId: 13 },
-  { id: 8, type: 'info', icon: '⚖️', title: 'Law Moot Court Notice', message: 'Moot Court registration forms are now available for all Law students.', time: '3 hours ago', read: false, target: 'students', department: 'Law', year: 'all', targetDepartment: 'Law', targetYear: 'all', actionType: 'announcement', actionId: 12 }
-];
+if (typeof window !== 'undefined') {
+  window.isDemoCard = isDemoCard;
+  window.DEMO_TITLES = DEMO_TITLES;
+}
+
+// Automatic cleanup of legacy demo cards from localStorage on script load
+try {
+  if (typeof localStorage !== 'undefined') {
+    ['campusnotify_announcements', 'campusnotify_events', 'campusnotify_notifications', 'campusnotify_polls'].forEach(key => {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const items = JSON.parse(raw);
+        if (Array.isArray(items)) {
+          const cleaned = items.filter(it => !isDemoCard(it));
+          if (cleaned.length !== items.length) {
+            localStorage.setItem(key, JSON.stringify(cleaned));
+          }
+        }
+      }
+    });
+  }
+} catch (e) {}
+
+const ANNOUNCEMENTS = [];
+const EVENTS = [];
+const DEFAULT_NOTIFICATIONS = [];
 
 // ─── Auth / Session Utilities ───
 const Auth = {
@@ -897,22 +623,15 @@ const AnnouncementsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          parsed = parsed.filter(item => !deletedIds.includes(String(item.id)));
-          let changed = false;
-          ANNOUNCEMENTS.forEach(seed => {
-            if (!deletedIds.includes(String(seed.id)) && !parsed.some(item => String(item.id) === String(seed.id) || item.title === seed.title)) {
-              parsed.push(seed);
-              changed = true;
-            }
-          });
-          if (changed) this.save(parsed);
-          return parsed;
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          if (filtered.length !== parsed.length) {
+            this.save(filtered);
+          }
+          return filtered;
         }
       } catch (e) {}
     }
-    const initial = ANNOUNCEMENTS.filter(seed => !deletedIds.includes(String(seed.id)));
-    this.save(initial);
-    return initial;
+    return [];
   },
 
   save(announcements) {
@@ -1051,22 +770,15 @@ const EventsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          parsed = parsed.filter(item => !deletedIds.includes(String(item.id)));
-          let changed = false;
-          EVENTS.forEach(seed => {
-            if (!deletedIds.includes(String(seed.id)) && !parsed.some(item => String(item.id) === String(seed.id) || item.title === seed.title)) {
-              parsed.push(seed);
-              changed = true;
-            }
-          });
-          if (changed) this.save(parsed);
-          return parsed;
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          if (filtered.length !== parsed.length) {
+            this.save(filtered);
+          }
+          return filtered;
         }
       } catch (e) {}
     }
-    const initial = EVENTS.filter(seed => !deletedIds.includes(String(seed.id)));
-    this.save(initial);
-    return initial;
+    return [];
   },
 
   save(events) {
@@ -1244,22 +956,15 @@ const NotificationsStore = {
       if (stored !== null) {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          parsed = parsed.filter(item => !deletedIds.includes(String(item.id)));
-          let changed = false;
-          DEFAULT_NOTIFICATIONS.forEach(seed => {
-            if (!deletedIds.includes(String(seed.id)) && !parsed.some(item => String(item.id) === String(seed.id) || item.title === seed.title)) {
-              parsed.push(seed);
-              changed = true;
-            }
-          });
-          if (changed) this._saveMaster(parsed);
-          return parsed;
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          if (filtered.length !== parsed.length) {
+            this._saveMaster(filtered);
+          }
+          return filtered;
         }
       }
     } catch (e) {}
-    const initial = DEFAULT_NOTIFICATIONS.filter(seed => !deletedIds.includes(String(seed.id)));
-    this._saveMaster(initial);
-    return initial;
+    return [];
   },
 
   _saveMaster(list) {
@@ -1345,6 +1050,18 @@ const NotificationsStore = {
     this._saveMaster(master);
     this.updateSidebarBadge();
     return item;
+  },
+
+  update(id, data) {
+    const master = this._readMaster();
+    const idx = master.findIndex(n => String(n.id) === String(id));
+    if (idx !== -1) {
+      master[idx] = { ...master[idx], ...data };
+      this._saveMaster(master);
+      this.updateSidebarBadge();
+      return master[idx];
+    }
+    return null;
   },
 
   dismissForUser(id) {

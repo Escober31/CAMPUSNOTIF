@@ -328,9 +328,27 @@
       const filtered = filterFeed(feed);
       const container = document.getElementById('hubFeed');
       const empty = document.getElementById('hubEmpty');
-
       if (filtered.length === 0) {
         container.innerHTML = '';
+        if (currentTypeFilter === 'event' && !currentSearch && currentCategoryFilter === 'all') {
+          empty.innerHTML = `
+            <div class="empty-icon">📅</div>
+            <h3>No events yet</h3>
+            <p>Check back later for updates.</p>
+          `;
+        } else if (currentTypeFilter === 'announcement' && !currentSearch && currentCategoryFilter === 'all') {
+          empty.innerHTML = `
+            <div class="empty-icon">📭</div>
+            <h3>No announcements yet</h3>
+            <p>Check back later for updates.</p>
+          `;
+        } else {
+          empty.innerHTML = `
+            <div class="empty-icon">📭</div>
+            <h3>No updates found</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+          `;
+        }
         empty.style.display = 'block';
         return;
       }

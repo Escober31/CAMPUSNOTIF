@@ -566,23 +566,32 @@
       // Upcoming Events (top 3)
       const eventsContainer = document.getElementById('upcomingEvents');
       const upcomingEvents = allEvents.slice(0, 3);
-      eventsContainer.innerHTML = upcomingEvents.map(ev => {
-        const d = new Date(ev.date + 'T00:00:00');
-        const day = d.getDate();
-        const month = d.toLocaleDateString('en-US', { month: 'short' });
-        const targetUrl = role === 'admin' ? `events-notifications.html?highlight=${ev.id}` : `campus-hub.html?highlight=ev-${ev.id}`;
-        return `
-          <div class="event-card" style="padding:var(--space-lg); cursor:pointer;" onclick="window.location.href='${targetUrl}'">
-            <div class="event-date-badge" style="width:52px; height:58px;">
-              <span class="day" style="font-size:1.2rem;">${day}</span>
-              <span class="month" style="font-size:0.6rem;">${month}</span>
-            </div>
-            <div style="flex:1; min-width:0;">
-              <div class="font-semibold text-sm" style="margin-bottom:4px;">${ev.title}</div>
-              <div class="text-muted" style="font-size:0.78rem;">📍 ${ev.location} · 🕐 ${ev.time}</div>
-            </div>
+      if (upcomingEvents.length === 0) {
+        eventsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <h3>No events yet</h3>
+            <p>Check back later for updates.</p>
           </div>`;
-      }).join('');
+      } else {
+        eventsContainer.innerHTML = upcomingEvents.map(ev => {
+          const d = new Date(ev.date + 'T00:00:00');
+          const day = d.getDate();
+          const month = d.toLocaleDateString('en-US', { month: 'short' });
+          const targetUrl = role === 'admin' ? `events-notifications.html?highlight=${ev.id}` : `campus-hub.html?highlight=ev-${ev.id}`;
+          return `
+            <div class="event-card" style="padding:var(--space-lg); cursor:pointer;" onclick="window.location.href='${targetUrl}'">
+              <div class="event-date-badge" style="width:52px; height:58px;">
+                <span class="day" style="font-size:1.2rem;">${day}</span>
+                <span class="month" style="font-size:0.6rem;">${month}</span>
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div class="font-semibold text-sm" style="margin-bottom:4px;">${ev.title}</div>
+                <div class="text-muted" style="font-size:0.78rem;">📍 ${ev.location} · 🕐 ${ev.time}</div>
+              </div>
+            </div>`;
+        }).join('');
+      }
 
       // Admin Charts & Polls
       if (Auth.getRole() === 'admin') {

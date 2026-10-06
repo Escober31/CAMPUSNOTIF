@@ -244,25 +244,7 @@ const PollsStore = {
   },
 
   _getSeedPolls() {
-    return [
-      {
-        id: 1,
-        question: 'What activity would you like for Foundation Week?',
-        description: 'Help us decide on the next event for Foundation Week. Choose one option below.',
-        category: 'Student Life',
-        closingDate: '2026-10-20',
-        createdAt: '2026-10-01',
-        author: 'Jordan Miles',
-        status: 'active',
-        choices: [
-          { id: 'c1', text: 'Concert', votes: 36 },
-          { id: 'c2', text: 'Sports Tournament', votes: 26 },
-          { id: 'c3', text: 'Cultural Night', votes: 48 },
-          { id: 'c4', text: 'Gaming Event', votes: 16 }
-        ],
-        voters: {}
-      }
-    ];
+    return [];
   },
 
   getAll() {
@@ -272,13 +254,16 @@ const PollsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          return parsed.filter(p => !deletedIds.includes(String(p.id)));
+          const checkDemo = (typeof window !== 'undefined' && window.isDemoCard) ? window.isDemoCard : (p => Number(p.id) === 1);
+          const filtered = parsed.filter(p => !deletedIds.includes(String(p.id)) && !checkDemo(p));
+          if (filtered.length !== parsed.length) {
+            this.save(filtered);
+          }
+          return filtered;
         }
       } catch (e) {}
     }
-    const seeds = this._getSeedPolls().filter(p => !deletedIds.includes(String(p.id)));
-    this.save(seeds);
-    return seeds;
+    return [];
   },
 
   save(polls) {

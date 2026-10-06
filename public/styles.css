@@ -457,7 +457,8 @@ h4 {
 }
 
 /* --- Cards --- */
-.card {
+.card,
+.card-static {
   background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -468,7 +469,8 @@ h4 {
   overflow: hidden;
 }
 
-.card::before {
+.card::before,
+.card-static::before {
   content: '';
   position: absolute;
   top: 0;
@@ -482,10 +484,6 @@ h4 {
   border-color: var(--border-default);
   box-shadow: var(--shadow-lg), var(--shadow-glow);
   transform: translateY(-2px);
-}
-
-.card-static {
-  composes: card;
 }
 
 .card-static:hover {
@@ -3221,6 +3219,7 @@ body.no-animations *::after {
   margin-bottom: var(--space-sm);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
