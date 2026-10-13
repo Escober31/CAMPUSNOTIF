@@ -92,6 +92,16 @@
           </div>
         </div>
 
+        <div id="activeSessionBadge" style="display:none; margin-bottom:var(--space-lg); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--primary-500); border-radius:var(--radius-md); text-align:center;">
+          <p style="font-size:0.85rem; margin-bottom:var(--space-sm); color:var(--text-primary);">
+            Currently signed in as <strong id="activeSessionUser" style="color:var(--primary-300);"></strong>
+          </p>
+          <div style="display:flex; gap:var(--space-sm); justify-content:center;">
+            <a href="dashboard.html" class="btn btn-primary btn-sm">Continue to Dashboard →</a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="handleLogoutAndStay()">Switch Account</button>
+          </div>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-lg w-full" id="loginBtn">
           Sign In
         </button>
@@ -99,19 +109,19 @@
 
       <div
         style="margin-top:var(--space-xl); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.78rem; color:var(--text-muted); text-align:center;">
-        <span style="color:var(--text-secondary); font-weight:600;">Default Demo Logins:</span><br>
-        🎓 Student: <code style="color:var(--primary-300);">alex.rivera@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300);">jordan.miles@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300);">priya.shah@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300);">marcus.vance@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300);">elena.rostova@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
-        🛡️ Admin: <code style="color:var(--accent-cyan);">sarah.chen@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary);">password123</code>)<br>
+        <span style="color:var(--text-secondary); font-weight:600;">Default Demo Logins (click to fill):</span><br>
+        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('alex.rivera@campus.edu', 'password123', 'student')">alex.rivera@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('alex.rivera@campus.edu', 'password123', 'student')">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('jordan.miles@campus.edu', 'password123', 'student')">jordan.miles@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('jordan.miles@campus.edu', 'password123', 'student')">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('priya.shah@campus.edu', 'password123', 'student')">priya.shah@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('priya.shah@campus.edu', 'password123', 'student')">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('marcus.vance@campus.edu', 'password123', 'student')">marcus.vance@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('marcus.vance@campus.edu', 'password123', 'student')">password123</code>)<br>
+        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('elena.rostova@campus.edu', 'password123', 'student')">elena.rostova@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('elena.rostova@campus.edu', 'password123', 'student')">password123</code>)<br>
+        🛡️ Admin: <code style="color:var(--accent-cyan); cursor:pointer;" onclick="fillDemo('sarah.chen@campus.edu', 'password123', 'admin')">sarah.chen@campus.edu</code> (pwd: <code
+          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('sarah.chen@campus.edu', 'password123', 'admin')">password123</code>)<br>
         <span style="font-size:0.72rem; opacity:0.8;">Or click <b>Create Account</b> to register your own
           account!</span>
       </div>
@@ -134,6 +144,23 @@
       } else {
         prompt.innerHTML = `Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" style="color:var(--primary-400); font-weight:600;">Create Account</a>`;
       }
+    }
+
+    function fillDemo(email, pwd, role) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = pwd;
+      selectRole(role);
+      UI.toast(`Filled demo credentials for ${role === 'admin' ? 'Admin' : 'Student'}!`, 'info');
+    }
+
+    function handleLogoutAndStay() {
+      localStorage.removeItem('campusnotify_user');
+      localStorage.removeItem('campusnotify_role');
+      sessionStorage.removeItem('campusnotify_user');
+      sessionStorage.removeItem('campusnotify_role');
+      const badge = document.getElementById('activeSessionBadge');
+      if (badge) badge.style.display = 'none';
+      UI.toast('Signed out. Please enter credentials to sign in.', 'info');
     }
 
     function openCreateAccountModal(e) {
@@ -203,6 +230,7 @@
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember')?.checked ?? true;
       const btn = document.getElementById('loginBtn');
 
       btn.textContent = 'Verifying...';
@@ -210,7 +238,7 @@
 
       setTimeout(() => {
         // Strict credential validation
-        const authResult = Auth.authenticate(email, password, selectedRole);
+        const authResult = Auth.authenticate(email, password, selectedRole, remember);
 
         if (!authResult.success) {
           btn.textContent = 'Sign In';
@@ -226,10 +254,21 @@
       }, 500);
     }
 
-    // Redirect if already logged in
-    if (Auth.isLoggedIn()) {
-      window.location.href = 'dashboard.html';
-    }
+    // Display active session if user is logged in, but DO NOT auto-redirect away
+    // so that opening the website always displays the Login page first.
+    window.addEventListener('DOMContentLoaded', () => {
+      if (Auth.isLoggedIn()) {
+        const user = Auth.getUser();
+        if (user) {
+          const badge = document.getElementById('activeSessionBadge');
+          const userSpan = document.getElementById('activeSessionUser');
+          if (badge && userSpan) {
+            userSpan.textContent = `${user.name} (${user.role === 'admin' ? 'Admin' : 'Student'})`;
+            badge.style.display = 'block';
+          }
+        }
+      }
+    });
   </script>
 
   <!-- Create Account Modal (Adapts to Student or Admin) -->

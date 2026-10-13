@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusNotify Games — Play Campus Chess vs AI, Course Quiz, Memory Match, and Typing Racer.">
+  <title>Games — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>🎮 <span class="text-gradient">Campus Games</span></h1>
+            <p class="page-subtitle">Take a study break — play chess, test your course knowledge, or unwind with casual games.</p>
+          </div>
+          <div class="games-status-pills">
+            <span class="games-pill online">● Online</span>
+            <span class="games-pill">🏆 6 Games</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Stats Bar -->
+      <div class="stats-grid stagger" id="playerStatsBar">
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon indigo">🔥</div>
+          <div class="stat-value" id="statTotalStreak">0</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon cyan">🏅</div>
+          <div class="stat-value" id="statTotalAchievements">0</div>
+          <div class="stat-label">Achievements</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon amber">⭐</div>
+          <div class="stat-value" id="statTotalPoints">0</div>
+          <div class="stat-label">Total Points</div>
+        </div>
+        <div class="stat-card animate-scale-in">
+          <div class="stat-icon emerald">🎮</div>
+          <div class="stat-value" id="statGamesPlayed">0</div>
+          <div class="stat-label">Games Played</div>
+        </div>
+      </div>
+
+      <!-- Achievements Showcase -->
+      <div class="games-box animate-fade-in" style="margin-bottom: var(--space-xl);">
+        <div class="games-box-header" style="cursor:pointer;" onclick="document.getElementById('achievementsBody').classList.toggle('collapsed');">
+          <div class="games-box-title">
+            <span style="font-size:1.6rem;">🏆</span>
+            <div>
+              <h2>Achievements & Rewards</h2>
+              <p>Earn badges by reaching milestones. Click to expand/collapse.</p>
+            </div>
+          </div>
+          <span class="games-pill" id="achievementProgressPill">0 / 12 Unlocked</span>
+        </div>
+        <div id="achievementsBody" class="collapsed">
+          <div class="achievements-grid" id="achievementsGrid"></div>
+        </div>
+      </div>
+
+      <!-- Main Games Box Container -->
+      <div class="games-box animate-fade-in" id="gamesMainBox">
+        <!-- Games Box Header -->
+        <div class="games-box-header" id="gamesBoxHeader">
+          <div class="games-box-title">
+            <span style="font-size: 2rem;">🕹️</span>
+            <div>
+              <h2>Campus Arcade</h2>
+              <p>Hover to preview, click to play. All games are instant browser play.</p>
+            </div>
+          </div>
+          <div class="games-status-pills">
+            <span class="games-pill">Instant Play</span>
+          </div>
+        </div>
+
+        <!-- Selection Grid -->
+        <div class="games-grid" id="gamesSelectionGrid">
+          <!-- Chess Card -->
+          <div class="game-card" id="cardChess" onclick="openGame('chess')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">♟️ Campus Chess (You vs AI)</div>
+              <div class="game-hover-text">Challenge our adaptive chess AI across 4 difficulty levels. Full rule validation, captures, check alerts, move hints in Training.</div>
+              <ul class="game-hover-features">
+                <li><span>🟢</span> <strong>Training:</strong> Hints & takebacks enabled</li>
+                <li><span>🟡</span> <strong>Casual:</strong> Balanced tactical play</li>
+                <li><span>🟠</span> <strong>Advanced:</strong> Club-level positional AI</li>
+                <li><span>🔴</span> <strong>Pro:</strong> Deep minimax with alpha-beta</li>
+              </ul>
+              <div class="game-hover-cta"><span>Click to play →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">♟️</span>
+              <span class="game-card-badge">Strategy • 4 AI Modes</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Campus Chess</h3>
+              <p class="game-tagline">Play head-to-head against intelligent AI. Practice in Training or push your limits in Pro.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>👤 1P vs AI</span>
+              <span>⚡ Training → Pro</span>
+              <span>⏱️ 5-15 min</span>
+            </div>
+          </div>
+
+          <!-- Quiz Card -->
+          <div class="game-card quiz-theme" id="cardQuiz" onclick="openGame('quiz')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">🧠 Course Quiz Sprint</div>
+              <div class="game-hover-text">Trivia tailored to YOUR department! Computer Science, Engineering, Business, Medicine, Law, and Arts & Sciences courses.</div>
+              <ul class="game-hover-features">
+                <li><span>⏱️</span> <strong>3 Timer Modes:</strong> No Timer, 5 Min Total, 10s/Question</li>
+                <li><span>🔥</span> <strong>Streak Combos:</strong> Score multipliers</li>
+                <li><span>🎓</span> <strong>Course-Based:</strong> Questions from your department</li>
+                <li><span>🏆</span> <strong>Ranks:</strong> Freshman → Campus Legend</li>
+              </ul>
+              <div class="game-hover-cta" style="color:#22d3ee;"><span>Click to start →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">🧠</span>
+              <span class="game-card-badge">Trivia • Course-Based</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Course Quiz Sprint</h3>
+              <p class="game-tagline">Rapid-fire trivia tailored to your course. Build your streak, beat the timer, and climb the ranks.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>📚 Your Course</span>
+              <span>🔥 Streaks</span>
+              <span>⏱️ 3 Timer Modes</span>
+            </div>
+          </div>
+
+          <!-- Memory Match Card -->
+          <div class="game-card memory-theme" id="cardMemory" onclick="openGame('memory')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">🃏 Memory Match</div>
+              <div class="game-hover-text">Flip cards and find matching pairs! A relaxing memory game to unwind between study sessions.</div>
+              <ul class="game-hover-features">
+                <li><span>🧘</span> <strong>Relaxing:</strong> No pressure, play at your pace</li>
+                <li><span>🧠</span> <strong>Brain Training:</strong> Boost short-term memory</li>
+                <li><span>📊</span> <strong>Tracked:</strong> Fewest moves & time recorded</li>
+                <li><span>🎨</span> <strong>Emoji Pairs:</strong> Fun campus-themed icons</li>
+              </ul>
+              <div class="game-hover-cta" style="color:#a78bfa;"><span>Click to play →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">🃏</span>
+              <span class="game-card-badge">Casual • Relaxing</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Memory Match</h3>
+              <p class="game-tagline">Flip cards and find matching pairs. A soothing brain trainer perfect for study breaks.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>🧘 Relaxing</span>
+              <span>🧠 16 Cards</span>
+              <span>⏱️ 2-5 min</span>
+            </div>
+          </div>
+
+          <!-- Typing Racer Card -->
+          <div class="game-card typing-theme" id="cardTyping" onclick="openGame('typing')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">⌨️ Typing Racer</div>
+              <div class="game-hover-text">Race against the clock typing passages or rapid random words! Choose timers from 1 to 5 minutes with real-time WPM & accuracy.</div>
+              <ul class="game-hover-features">
+                <li><span>📄</span> <strong>Modes:</strong> Full Paragraph & Random Words</li>
+                <li><span>⏱️</span> <strong>Timers:</strong> 1 min to 5 min customizable</li>
+                <li><span>⚡</span> <strong>Speed & Accuracy:</strong> Live character precision</li>
+                <li><span>🏆</span> <strong>Personal Best:</strong> Auto-tracked record WPM</li>
+              </ul>
+              <div class="game-hover-cta" style="color:#34d399;"><span>Click to race →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">⌨️</span>
+              <span class="game-card-badge">Speed • Skill</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Typing Racer</h3>
+              <p class="game-tagline">Test your typing speed with paragraphs or random words. Customizable 1-5 min timers, live WPM, and accuracy.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>📄 Paragraph / Words</span>
+              <span>⚡ WPM Tracker</span>
+              <span>⏱️ 1-5 min</span>
+            </div>
+          </div>
+
+          <!-- Sudoku Card -->
+          <div class="game-card sudoku-theme" id="cardSudoku" onclick="openGame('sudoku')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">🔢 Campus Sudoku</div>
+              <div class="game-hover-text">Classic 9x9 number puzzles from Training to Pro difficulty! Practice with smart hints or test yourself in tournament mode.</div>
+              <ul class="game-hover-features">
+                <li><span>🟢</span> <strong>Training:</strong> Unlimited hints & auto-conflict check</li>
+                <li><span>🟡</span> <strong>Casual:</strong> 5 hints, standard challenge</li>
+                <li><span>🟠</span> <strong>Advanced:</strong> 2 hints, strict 3-mistakes limit</li>
+                <li><span>🔴</span> <strong>Pro:</strong> No hints, 3 strikes and game over</li>
+              </ul>
+              <div class="game-hover-cta" style="color:#38bdf8;"><span>Click to solve →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">🔢</span>
+              <span class="game-card-badge">Logic • 4 Modes</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Campus Sudoku</h3>
+              <p class="game-tagline">Sharpen your analytical mind with 9x9 number puzzles. 4 modes from Training to Pro with pencil notes and hints.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>🔢 9x9 Grid</span>
+              <span>⚡ Training → Pro</span>
+              <span>💡 Smart Hints</span>
+            </div>
+          </div>
+
+          <!-- Billiards Card -->
+          <div class="game-card billiards-theme" id="cardBilliards" onclick="openGame('billiards')">
+            <div class="game-hover-desc">
+              <div class="game-hover-title">🎱 Campus Billiards</div>
+              <div class="game-hover-text">Realistic 2D physics 8-ball pool table! Practice solo table-clear or challenge adaptive AI bots from Training to Pro.</div>
+              <ul class="game-hover-features">
+                <li><span>🎯</span> <strong>Solo Mode:</strong> Relaxed free practice & table clear</li>
+                <li><span>🟢</span> <strong>Training AI:</strong> Relaxed beginner bot for fun</li>
+                <li><span>🟡</span> <strong>Casual AI:</strong> Balanced intermediate play</li>
+                <li><span>🟠</span> <strong>Advanced AI:</strong> Positional shot calculation</li>
+                <li><span>🔴</span> <strong>Pro AI:</strong> Precision angles & master run-outs</li>
+              </ul>
+              <div class="game-hover-cta" style="color:#10b981;"><span>Click to play →</span></div>
+            </div>
+            <div class="game-card-top">
+              <span class="game-card-icon">🎱</span>
+              <span class="game-card-badge">Physics • Solo & AI</span>
+            </div>
+            <div class="game-card-body">
+              <h3>Campus Billiards</h3>
+              <p class="game-tagline">Authentic 8-ball pool with smooth 2D ball physics. Play solo practice or compete against AI bots from Training to Pro.</p>
+            </div>
+            <div class="game-card-meta">
+              <span>🎱 8-Ball Pool</span>
+              <span>🤖 Solo & 4 AI Modes</span>
+              <span>⚡ Realistic Physics</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ CHESS ARENA ═══════════════ -->
+        <div class="game-arena" id="chessArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="chess-mode-pills" id="chessModePills">
+              <button class="chess-mode-pill active" data-mode="training" onclick="setChessMode('training')">🟢 Training</button>
+              <button class="chess-mode-pill" data-mode="casual" onclick="setChessMode('casual')">🟡 Casual</button>
+              <button class="chess-mode-pill" data-mode="advanced" onclick="setChessMode('advanced')">🟠 Advanced</button>
+              <button class="chess-mode-pill" data-mode="pro" onclick="setChessMode('pro')">🔴 Pro</button>
+            </div>
+          </div>
+          <div class="mode-description-banner" id="modeDescriptionBanner">
+            <span id="modeDescriptionText">🟢 <strong>Training Mode:</strong> Relaxed AI. Hints and undo enabled.</span>
+            <span class="games-pill" id="modeEngineBadge">Engine: Educational</span>
+          </div>
+          <div class="chess-layout">
+            <div class="chess-board-col">
+              <div class="player-strip">
+                <div class="player-strip-left">
+                  <div class="player-avatar">🤖</div>
+                  <div class="player-meta">
+                    <h4 id="aiPlayerName">Campus AI (Training)</h4>
+                    <span id="aiPlayerStatus">Waiting for your turn</span>
+                  </div>
+                </div>
+                <div class="captured-pieces" id="capturedWhite"></div>
+              </div>
+              <div class="chess-board-frame">
+                <div class="chess-board" id="chessBoard"></div>
+              </div>
+              <div class="player-strip">
+                <div class="player-strip-left">
+                  <div class="player-avatar" id="playerAvatar">🎓</div>
+                  <div class="player-meta">
+                    <h4 id="playerName">You (White)</h4>
+                    <span id="playerStatusBadge" style="color:#34d399; font-weight:600;">Your turn</span>
+                  </div>
+                </div>
+                <div class="captured-pieces" id="capturedBlack"></div>
+              </div>
+            </div>
+            <div class="chess-side-panel">
+              <div class="chess-status-card">
+                <div class="chess-status-title">Match Status</div>
+                <div class="chess-status-text" id="matchStatusText"><span>🟢</span> <span>Your turn (White)</span></div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;" id="matchSubStatus">Select a white piece to view legal moves.</div>
+              </div>
+              <div class="chess-actions-grid">
+                <button class="chess-btn btn-accent" onclick="initNewChessGame()"><span>🔄</span> New Match</button>
+                <button class="chess-btn" id="btnUndoMove" onclick="undoChessMove()"><span>↩</span> Undo</button>
+                <button class="chess-btn" id="btnChessHint" onclick="giveChessHint()"><span>💡</span> Hint</button>
+                <button class="chess-btn" onclick="flipChessColor()"><span>🔁</span> Flip</button>
+              </div>
+              <div class="moves-log-box">
+                <div class="moves-log-header"><span>Move History</span><span id="moveCountBadge">0 moves</span></div>
+                <div class="moves-log-list" id="movesLogList">
+                  <div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">Moves recorded here</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ QUIZ ARENA ═══════════════ -->
+        <div class="game-arena" id="quizArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="flex items-center gap-md">
+              <span class="quiz-category-tag" id="quizCategoryTag">📚 Computer Science</span>
+              <span class="quiz-streak-badge" id="quizStreakBadge">🔥 Streak: 0x</span>
+            </div>
+          </div>
+
+          <!-- Quiz Mode Selector (shown before quiz starts) -->
+          <div class="quiz-wrapper" id="quizModeSelector">
+            <div class="quiz-card-box" style="text-align:center;">
+              <div style="font-size:3rem;margin-bottom:0.5rem;">🧠</div>
+              <h2 style="font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:0.3rem;">Course Quiz Sprint</h2>
+              <p style="color:var(--text-secondary);margin-bottom:1rem;" id="quizModeCourseName">Questions tailored to your department</p>
+
+              <div style="margin-bottom:1.5rem;display:inline-flex;align-items:center;gap:0.5rem;background:var(--bg-base);padding:0.4rem 0.8rem;border-radius:var(--radius-md);border:1px solid var(--border-default);">
+                <label for="quizCourseSelect" style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">Course / Department:</label>
+                <select id="quizCourseSelect" class="form-select" style="padding:0.25rem 0.75rem;font-size:0.85rem;background:var(--bg-elevated);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius-sm);" onchange="updateQuizSelectedCourse(this.value)">
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Business">Business</option>
+                  <option value="Arts & Sciences">Arts & Sciences</option>
+                  <option value="Medicine">Medicine</option>
+                  <option value="Law">Law</option>
+                </select>
+              </div>
+
+              <div style="font-size:0.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:0.75rem;">Choose Timer Mode</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-md);margin-bottom:var(--space-xl);">
+                <button class="quiz-opt-btn" onclick="startQuizWithMode('none')" style="justify-content:center;">
+                  <span class="opt-letter">🧘</span>
+                  <span><strong>No Timer</strong> — Relax and think at your own pace</span>
+                </button>
+                <button class="quiz-opt-btn" onclick="startQuizWithMode('total')" style="justify-content:center;">
+                  <span class="opt-letter">⏳</span>
+                  <span><strong>5 Min Total</strong> — Race through all questions before time runs out</span>
+                </button>
+                <button class="quiz-opt-btn" onclick="startQuizWithMode('per')" style="justify-content:center;">
+                  <span class="opt-letter">⚡</span>
+                  <span><strong>10s Per Question</strong> — Lightning-fast, no time to second-guess</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Quiz Content -->
+          <div class="quiz-wrapper" id="quizActiveWrapper" style="display:none;">
+            <div class="quiz-card-box" id="quizBox">
+              <div id="quizActiveContent">
+                <div class="quiz-header-bar">
+                  <span style="font-size:0.9rem;color:var(--text-muted);font-weight:600;" id="quizProgressText">Question 1 of 10</span>
+                  <span style="font-size:0.95rem;font-weight:700;color:#22d3ee;" id="quizScoreText">Score: 0</span>
+                </div>
+                <div class="quiz-timer-container" id="quizTimerContainer">
+                  <div class="quiz-timer-bar" id="quizTimerBar"></div>
+                </div>
+                <div class="quiz-question-text" id="quizQuestionText">Loading question...</div>
+                <div class="quiz-options-grid" id="quizOptionsGrid"></div>
+                <div class="quiz-feedback-box" id="quizFeedbackBox">
+                  <strong id="quizFeedbackTitle">Correct!</strong>
+                  <p id="quizFeedbackExplanation" style="margin:0.35rem 0 0.75rem;"></p>
+                  <button class="btn btn-primary" onclick="nextQuizQuestion()" id="btnNextQuestion" style="padding:0.45rem 1.25rem;font-size:0.85rem;">Next Question →</button>
+                </div>
+              </div>
+              <div id="quizResultsContent" style="display:none;" class="quiz-results-box">
+                <div style="font-size:3rem;margin-bottom:0.5rem;" id="quizResultIcon">🏆</div>
+                <h2 style="font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:0.3rem;" id="quizResultTitle">Sprint Complete!</h2>
+                <p style="color:var(--text-secondary);margin-bottom:1.5rem;" id="quizResultSubtitle">Great run!</p>
+                <div class="quiz-score-badge" id="quizResultScore">0</div>
+                <div style="font-size:1rem;color:#94a3b8;margin-bottom:2rem;" id="quizResultBreakdown">—</div>
+                <div class="flex items-center justify-center gap-md">
+                  <button class="btn btn-primary" onclick="showQuizModeSelector()">🔄 Play Again</button>
+                  <button class="btn btn-secondary" onclick="closeArena()">← Back</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ MEMORY ARENA ═══════════════ -->
+        <div class="game-arena" id="memoryArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="flex items-center gap-md">
+              <span class="games-pill" id="memoryMovesBadge">Moves: 0</span>
+              <span class="games-pill" id="memoryTimeBadge">⏱️ 0:00</span>
+              <span class="games-pill" id="memoryPairsBadge">Pairs: 0/8</span>
+            </div>
+          </div>
+          <div style="max-width:520px;margin:0 auto;">
+            <div class="memory-grid" id="memoryGrid"></div>
+            <div style="text-align:center;margin-top:var(--space-lg);">
+              <button class="chess-btn btn-accent" onclick="initMemoryGame()"><span>🔄</span> New Game</button>
+            </div>
+            <!-- Memory Result -->
+            <div id="memoryResult" style="display:none;text-align:center;padding:var(--space-xl) 0;">
+              <div style="font-size:3rem;">🎉</div>
+              <h2 style="font-size:1.5rem;font-weight:800;color:#fff;margin:0.5rem 0 0.3rem;">All Pairs Found!</h2>
+              <p style="color:var(--text-secondary);margin-bottom:1rem;" id="memoryResultText">—</p>
+              <button class="btn btn-primary" onclick="initMemoryGame()">🔄 Play Again</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ TYPING RACER ARENA ═══════════════ -->
+        <div class="game-arena" id="typingArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="flex items-center gap-md" style="flex-wrap:wrap;">
+              <span class="games-pill" id="typingModeActiveBadge" style="color:#34d399;font-weight:700;">📄 Full Paragraph</span>
+              <span class="games-pill" id="typingWpmBadge">WPM: 0</span>
+              <span class="games-pill" id="typingAccBadge">Accuracy: 100%</span>
+              <span class="games-pill" id="typingTimeBadge">⏱️ 01:00</span>
+            </div>
+          </div>
+          <div style="max-width:820px;margin:0 auto;">
+            <div class="quiz-card-box" id="typingBox">
+              <!-- Pre-start screen -->
+              <div id="typingPreStart" style="text-align:center;padding:var(--space-xl);">
+                <div style="font-size:3.5rem;margin-bottom:0.5rem;">⌨️</div>
+                <h2 style="font-size:1.75rem;font-weight:800;color:#fff;margin-bottom:0.3rem;">Typing Racer</h2>
+                <p style="color:var(--text-secondary);margin-bottom:1.5rem;">Choose your mode and timer duration, then race against the clock!</p>
+
+                <!-- Mode Selection -->
+                <div class="typing-config-group">
+                  <span class="typing-config-label">1. Select Mode</span>
+                  <div class="typing-selector-row" id="typingModeSelector">
+                    <button class="typing-pill-btn active" data-mode="paragraph" onclick="selectTypingMode('paragraph')">
+                      <span>📄</span> Full Paragraph
+                    </button>
+                    <button class="typing-pill-btn" data-mode="random" onclick="selectTypingMode('random')">
+                      <span>🔀</span> Random Words
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Timer Selection -->
+                <div class="typing-config-group">
+                  <span class="typing-config-label">2. Select Timer Duration</span>
+                  <div class="typing-selector-row" id="typingTimerSelector">
+                    <button class="typing-pill-btn active" data-time="60" onclick="selectTypingDuration(60)">⏱️ 1 Min</button>
+                    <button class="typing-pill-btn" data-time="120" onclick="selectTypingDuration(120)">⏱️ 2 Min</button>
+                    <button class="typing-pill-btn" data-time="180" onclick="selectTypingDuration(180)">⏱️ 3 Min</button>
+                    <button class="typing-pill-btn" data-time="240" onclick="selectTypingDuration(240)">⏱️ 4 Min</button>
+                    <button class="typing-pill-btn" data-time="300" onclick="selectTypingDuration(300)">⏱️ 5 Min</button>
+                  </div>
+                </div>
+
+                <div style="margin-top:2rem;">
+                  <button class="btn btn-primary" onclick="startTypingRace()" style="font-size:1.15rem;padding:0.8rem 2.5rem;">🚀 Start Race</button>
+                </div>
+              </div>
+
+              <!-- Active typing -->
+              <div id="typingActiveContent" style="display:none;">
+                <div class="typing-passage" id="typingPassage" style="max-height:220px;overflow-y:auto;"></div>
+                <textarea class="typing-input" id="typingInput" placeholder="Start typing here..." rows="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+                <div style="margin-top:1rem;display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.85rem;color:var(--text-muted);" id="typingProgressInfo">Typed: 0 chars</span>
+                  <button class="btn btn-secondary btn-sm" onclick="showTypingPreStart()">🔄 Change Settings</button>
+                </div>
+              </div>
+
+              <!-- Result -->
+              <div id="typingResult" style="display:none;text-align:center;padding:var(--space-xl);">
+                <div style="font-size:3.5rem;margin-bottom:0.5rem;" id="typingResultIcon">⌨️</div>
+                <h2 style="font-size:1.75rem;font-weight:800;color:#fff;margin-bottom:0.3rem;" id="typingResultTitle">Race Complete!</h2>
+                <div class="quiz-score-badge" id="typingResultWpm">0 WPM</div>
+                <p style="color:var(--text-secondary);margin:0.5rem 0 1.5rem;" id="typingResultDetails">—</p>
+                <div class="flex items-center justify-center gap-md">
+                  <button class="btn btn-primary" onclick="startTypingRace()">🔄 Race Again</button>
+                  <button class="btn btn-secondary" onclick="showTypingPreStart()">⚙️ Change Mode</button>
+                  <button class="btn btn-secondary" onclick="closeArena()">← Exit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ SUDOKU ARENA ═══════════════ -->
+        <div class="game-arena" id="sudokuArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="chess-mode-pills" id="sudokuModePills">
+              <button class="chess-mode-pill active" data-mode="training" onclick="setSudokuMode('training')">🟢 Training</button>
+              <button class="chess-mode-pill" data-mode="casual" onclick="setSudokuMode('casual')">🟡 Casual</button>
+              <button class="chess-mode-pill" data-mode="advanced" onclick="setSudokuMode('advanced')">🟠 Advanced</button>
+              <button class="chess-mode-pill" data-mode="pro" onclick="setSudokuMode('pro')">🔴 Pro</button>
+            </div>
+            <div class="flex items-center gap-md" style="margin-left:auto;">
+              <span class="games-pill" id="sudokuMistakesBadge">Mistakes: 0/3</span>
+              <span class="games-pill" id="sudokuHintsBadge">💡 Hints: Unlimited</span>
+              <span class="games-pill" id="sudokuTimeBadge">⏱️ 00:00</span>
+            </div>
+          </div>
+
+          <div class="mode-description-banner" id="sudokuModeDescriptionBanner">
+            <span id="sudokuModeDescriptionText">🟢 <strong>Training Mode:</strong> Relaxed practice. Instant duplicate check and unlimited hints.</span>
+            <span class="games-pill" id="sudokuDifficultyBadge">Difficulty: Training (48 clues)</span>
+          </div>
+
+          <div class="sudoku-layout">
+            <!-- 9x9 Board Column -->
+            <div class="sudoku-board-frame">
+              <div class="sudoku-grid" id="sudokuGrid"></div>
+            </div>
+
+            <!-- Controls Side Panel -->
+            <div class="chess-side-panel">
+              <div class="chess-status-card">
+                <div class="chess-status-title">Puzzle Status</div>
+                <div class="chess-status-text" id="sudokuStatusText">
+                  <span>🔢</span> <span id="sudokuStatusMsg">Select a cell to enter a number</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;" id="sudokuSubStatus">
+                  Use the numpad or keys 1-9. Press N for notes.
+                </div>
+              </div>
+
+              <!-- Tools: Notes, Hint, Erase, Undo -->
+              <div class="sudoku-toolbar">
+                <button class="sudoku-tool-btn" id="btnSudokuNotes" onclick="toggleSudokuNotes()">
+                  <span style="font-size:1.1rem;">✏️</span>
+                  <span>Notes</span>
+                </button>
+                <button class="sudoku-tool-btn" id="btnSudokuHint" onclick="useSudokuHint()">
+                  <span style="font-size:1.1rem;">💡</span>
+                  <span>Hint</span>
+                </button>
+                <button class="sudoku-tool-btn" onclick="sudokuErase()">
+                  <span style="font-size:1.1rem;">⌫</span>
+                  <span>Erase</span>
+                </button>
+                <button class="sudoku-tool-btn" onclick="sudokuUndo()">
+                  <span style="font-size:1.1rem;">↩</span>
+                  <span>Undo</span>
+                </button>
+              </div>
+
+              <!-- 3x3 Numpad 1 to 9 -->
+              <div class="sudoku-numpad" id="sudokuNumpad">
+                <!-- Buttons 1-9 generated via JS with remaining counters -->
+              </div>
+
+              <div class="chess-actions-grid" style="margin-top:var(--space-md);">
+                <button class="chess-btn btn-accent" onclick="initNewSudokuGame()">
+                  <span>🔄</span> New Puzzle
+                </button>
+                <button class="chess-btn" onclick="checkSudokuBoard()">
+                  <span>✓</span> Check Board
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ BILLIARDS ARENA ═══════════════ -->
+        <div class="game-arena" id="billiardsArena">
+          <div class="arena-topbar">
+            <button class="arena-back-btn" onclick="closeArena()"><span>←</span> Back to Games</button>
+            <div class="chess-mode-pills" id="billiardsModePills">
+              <button class="chess-mode-pill active" data-mode="solo" onclick="setBilliardsMode('solo')">🎯 Solo</button>
+              <button class="chess-mode-pill" data-mode="training" onclick="setBilliardsMode('training')">🟢 Training AI</button>
+              <button class="chess-mode-pill" data-mode="casual" onclick="setBilliardsMode('casual')">🟡 Casual AI</button>
+              <button class="chess-mode-pill" data-mode="advanced" onclick="setBilliardsMode('advanced')">🟠 Advanced AI</button>
+              <button class="chess-mode-pill" data-mode="pro" onclick="setBilliardsMode('pro')">🔴 Pro AI</button>
+            </div>
+            <div class="flex items-center gap-md" style="margin-left:auto;">
+              <span class="games-pill" id="billiardsTurnBadge" style="color:#10b981;font-weight:700;">🟢 Your Turn</span>
+              <span class="games-pill" id="billiardsStrokesBadge">Strokes: 0</span>
+            </div>
+          </div>
+
+          <div class="mode-description-banner" id="billiardsModeBanner">
+            <span id="billiardsModeText">🎯 <strong>Solo Practice:</strong> Free table play! Pot balls in any order and practice bank shots.</span>
+            <span class="games-pill" id="billiardsRulesBadge">8-Ball Physics Table</span>
+          </div>
+
+          <div class="billiards-layout">
+            <!-- Pool Table Column -->
+            <div>
+              <div class="billiards-table-container">
+                <canvas id="billiardsCanvas" width="900" height="480" class="billiards-canvas"></canvas>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.6rem;display:flex;justify-content:space-between;">
+                <span>💡 <strong>Controls:</strong> Aim with mouse. Click & drag backward from cue ball to pull back cue stick, or use power slider.</span>
+                <span id="billiardsBallInHandAlert" style="color:#38bdf8;font-weight:700;display:none;">🎯 Ball in Hand: Click anywhere behind kitchen line</span>
+              </div>
+            </div>
+
+            <!-- Billiards Side Panel -->
+            <div class="chess-side-panel">
+              <div class="chess-status-card">
+                <div class="chess-status-title">Match Status</div>
+                <div class="chess-status-text" id="billiardsStatusText">
+                  <span>🎱</span> <span id="billiardsStatusMain">Open Table</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;" id="billiardsSubStatus">
+                  Aim at the cue ball and strike with desired power.
+                </div>
+              </div>
+
+              <!-- Potted Racks -->
+              <div class="billiards-racks">
+                <div class="billiards-rack-row">
+                  <div>
+                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsPlayerSuitLabel">Player Balls</span>
+                    <div style="font-size:0.7rem;color:var(--text-muted);" id="billiardsPlayerSuitType">Any (Open)</div>
+                  </div>
+                  <div class="billiards-rack-balls" id="billiardsPlayerRack"></div>
+                </div>
+
+                <div class="billiards-rack-row" id="billiardsOpponentRackRow">
+                  <div>
+                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsAiSuitLabel">Opponent Balls</span>
+                    <div style="font-size:0.7rem;color:var(--text-muted);" id="billiardsAiSuitType">Any (Open)</div>
+                  </div>
+                  <div class="billiards-rack-balls" id="billiardsAiRack"></div>
+                </div>
+              </div>
+
+              <!-- Cue Shot Power & Trigger -->
+              <div class="billiards-cue-power-wrap">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);">Shot Power</span>
+                  <span style="font-size:0.8rem;font-weight:700;color:#10b981;" id="billiardsPowerPercent">50%</span>
+                </div>
+                <input type="range" id="billiardsPowerSlider" min="10" max="100" value="50" style="width:100%;margin-top:8px;" oninput="updateBilliardsPowerSlider(this.value)">
+                <div class="billiards-power-bar">
+                  <div class="billiards-power-fill" id="billiardsPowerFill" style="width:50%;"></div>
+                </div>
+                <button class="btn btn-primary" id="btnBilliardsShoot" onclick="billiardsShootWithButton()" style="width:100%;margin-top:12px;font-weight:700;">
+                  🚀 Shoot Cue Ball
+                </button>
+              </div>
+
+              <!-- Actions -->
+              <div class="chess-actions-grid" style="margin-top:var(--space-md);">
+                <button class="chess-btn btn-accent" onclick="initNewBilliardsRack()">
+                  <span>🔄</span> New Rack
+                </button>
+                <button class="chess-btn" onclick="resetCueBallToKitchen()">
+                  <span>⚪</span> Reset Cue Ball
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="stores.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // ══════════════════════════════════════════════
+    // PERSISTENCE LAYER
+    // ══════════════════════════════════════════════
+    const GAMES_KEY = 'campusnotify_games_data';
+
+    function loadGamesData() {
+      try {
+        const d = JSON.parse(localStorage.getItem(GAMES_KEY));
+        if (d) return d;
+      } catch (e) {}
+      return { totalPoints: 0, gamesPlayed: 0, bestStreak: 0, achievements: [], bestWpm: 0, bestMemoryMoves: 999, bestMemoryTime: 9999, chessWins: 0, sudokuWins: 0, sudokuProWins: 0, billiardsWins: 0, typingLongRuns: 0 };
+    }
+
+    function saveGamesData(d) { localStorage.setItem(GAMES_KEY, JSON.stringify(d)); }
+
+    function addPoints(pts) {
+      const d = loadGamesData();
+      d.totalPoints += pts;
+      d.gamesPlayed++;
+      saveGamesData(d);
+      refreshStatsUI();
+    }
+
+    function recordStreak(s) {
+      const d = loadGamesData();
+      if (s > d.bestStreak) d.bestStreak = s;
+      saveGamesData(d);
+      refreshStatsUI();
+    }
+
+    // ──────────────────────────────────────────────
+    // ACHIEVEMENTS SYSTEM
+    // ──────────────────────────────────────────────
+    const ALL_ACHIEVEMENTS = [
+      { id: 'first_game', icon: '🎮', name: 'First Steps', desc: 'Play your first game', condition: d => d.gamesPlayed >= 1 },
+      { id: 'play_5', icon: '🕹️', name: 'Arcade Regular', desc: 'Play 5 games total', condition: d => d.gamesPlayed >= 5 },
+      { id: 'play_20', icon: '🎯', name: 'Dedicated Gamer', desc: 'Play 20 games total', condition: d => d.gamesPlayed >= 20 },
+      { id: 'points_500', icon: '⭐', name: 'Star Earner', desc: 'Earn 500 total points', condition: d => d.totalPoints >= 500 },
+      { id: 'points_2000', icon: '💎', name: 'Diamond Collector', desc: 'Earn 2,000 total points', condition: d => d.totalPoints >= 2000 },
+      { id: 'points_5000', icon: '👑', name: 'Points Royalty', desc: 'Earn 5,000 total points', condition: d => d.totalPoints >= 5000 },
+      { id: 'streak_3', icon: '🔥', name: 'On Fire', desc: 'Get a 3x streak in quiz', condition: d => d.bestStreak >= 3 },
+      { id: 'streak_5', icon: '💥', name: 'Unstoppable', desc: 'Get a 5x streak in quiz', condition: d => d.bestStreak >= 5 },
+      { id: 'streak_10', icon: '🌟', name: 'Streak Legend', desc: 'Get a 10x streak in quiz', condition: d => d.bestStreak >= 10 },
+      { id: 'wpm_40', icon: '⌨️', name: 'Quick Fingers', desc: 'Reach 40 WPM in typing', condition: d => d.bestWpm >= 40 },
+      { id: 'wpm_70', icon: '⚡', name: 'Speed Demon', desc: 'Reach 70 WPM in typing', condition: d => d.bestWpm >= 70 },
+      { id: 'typing_endurance', icon: '⏳', name: 'Marathon Typer', desc: 'Complete a 3+ min typing race', condition: d => (d.typingLongRuns || 0) >= 1 },
+      { id: 'memory_pro', icon: '🧠', name: 'Memory Master', desc: 'Complete Memory Match in ≤20 moves', condition: d => d.bestMemoryMoves <= 20 },
+      { id: 'chess_win', icon: '♟️', name: 'Tactical Mind', desc: 'Defeat the AI in Campus Chess', condition: d => (d.chessWins || 0) >= 1 },
+      { id: 'sudoku_win', icon: '🔢', name: 'Sudoku Solver', desc: 'Solve a Sudoku puzzle', condition: d => (d.sudokuWins || 0) >= 1 },
+      { id: 'sudoku_pro', icon: '🧠', name: 'Sudoku Master', desc: 'Complete an Advanced or Pro Sudoku', condition: d => (d.sudokuProWins || 0) >= 1 },
+      { id: 'billiards_win', icon: '🎱', name: 'Pool Shark', desc: 'Win a Billiards match or clear table', condition: d => (d.billiardsWins || 0) >= 1 },
+    ];
+
+    function checkAchievements() {
+      const d = loadGamesData();
+      let newUnlocks = [];
+      ALL_ACHIEVEMENTS.forEach(a => {
+        if (!d.achievements.includes(a.id) && a.condition(d)) {
+          d.achievements.push(a.id);
+          newUnlocks.push(a);
+        }
+      });
+      if (newUnlocks.length > 0) {
+        saveGamesData(d);
+        newUnlocks.forEach(a => {
+          UI.toast(`🏆 Achievement Unlocked: ${a.icon} ${a.name}!`, 'success');
+        });
+      }
+      renderAchievements();
+      refreshStatsUI();
+    }
+
+    function renderAchievements() {
+      const d = loadGamesData();
+      const grid = document.getElementById('achievementsGrid');
+      grid.innerHTML = ALL_ACHIEVEMENTS.map(a => {
+        const unlocked = d.achievements.includes(a.id);
+        return `
+          <div class="achievement-badge ${unlocked ? 'unlocked' : 'locked'}" title="${a.desc}">
+            <span class="achievement-icon">${a.icon}</span>
+            <span class="achievement-name">${a.name}</span>
+            <span class="achievement-desc">${a.desc}</span>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('achievementProgressPill').textContent = `${d.achievements.length} / ${ALL_ACHIEVEMENTS.length} Unlocked`;
+    }
+
+    function refreshStatsUI() {
+      const d = loadGamesData();
+      document.getElementById('statTotalStreak').textContent = d.bestStreak;
+      document.getElementById('statTotalAchievements').textContent = d.achievements.length;
+      document.getElementById('statTotalPoints').textContent = d.totalPoints.toLocaleString();
+      document.getElementById('statGamesPlayed').textContent = d.gamesPlayed;
+    }
+
+    // ══════════════════════════════════════════════
+    // PAGE INITIALIZATION
+    // ══════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!initPage('games')) return;
+
+      const user = Auth.getUser();
+      if (user) {
+        const pName = document.getElementById('playerName');
+        const pAvatar = document.getElementById('playerAvatar');
+        if (pName) pName.textContent = `${user.name} (White)`;
+        if (pAvatar) pAvatar.textContent = user.avatar || '🎓';
+      }
+
+      refreshStatsUI();
+      renderAchievements();
+    });
+
+    function openGame(type) {
+      document.getElementById('gamesSelectionGrid').style.display = 'none';
+      document.getElementById('gamesBoxHeader').style.display = 'none';
+      ['chessArena', 'quizArena', 'memoryArena', 'typingArena', 'sudokuArena', 'billiardsArena'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+
+      if (type === 'chess') {
+        document.getElementById('chessArena').classList.add('active');
+        initNewChessGame();
+      } else if (type === 'quiz') {
+        document.getElementById('quizArena').classList.add('active');
+        showQuizModeSelector();
+      } else if (type === 'memory') {
+        document.getElementById('memoryArena').classList.add('active');
+        initMemoryGame();
+      } else if (type === 'typing') {
+        document.getElementById('typingArena').classList.add('active');
+        showTypingPreStart();
+      } else if (type === 'sudoku') {
+        document.getElementById('sudokuArena').classList.add('active');
+        initNewSudokuGame();
+      } else if (type === 'billiards') {
+        document.getElementById('billiardsArena').classList.add('active');
+        initBilliardsArena();
+      }
+    }
+
+    function closeArena() {
+      ['chessArena', 'quizArena', 'memoryArena', 'typingArena', 'sudokuArena', 'billiardsArena'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      document.getElementById('gamesSelectionGrid').style.display = 'grid';
+      document.getElementById('gamesBoxHeader').style.display = 'flex';
+      clearInterval(quizTimerInterval);
+      clearInterval(typingTimerInterval);
+      clearInterval(memoryTimerInterval);
+      clearInterval(sudokuTimerInterval);
+      if (billiardsAnimId) {
+        cancelAnimationFrame(billiardsAnimId);
+        billiardsAnimId = null;
+      }
+      checkAchievements();
+    }
+
+    // ══════════════════════════════════════════════
+    // CHESS ENGINE (same logic, kept compact)
+    // ══════════════════════════════════════════════
+    let currentChessMode = 'training';
+    let playerColor = 'w';
+    let currentTurn = 'w';
+    let chessBoard = [];
+    let selectedSquare = null;
+    let legalMovesForSelected = [];
+    let moveHistory = [];
+    let capturedPieces = { w: [], b: [] };
+    let isAITurn = false;
+    let hintMove = null;
+
+    const PIECE_SYMBOLS = {
+      wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙',
+      bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟'
+    };
+    const PIECE_VALUES = { P:100, N:320, B:330, R:500, Q:900, K:20000 };
+
+    const PST = {
+      P:[[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
+      N:[[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],
+      B:[[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],[-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],[-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],
+      R:[[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],
+      Q:[[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],[0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],[-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],
+      K:[[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],[20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]]
+    };
+
+    function setChessMode(mode) {
+      currentChessMode = mode;
+      document.querySelectorAll('.chess-mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      const desc = { training:'🟢 <strong>Training:</strong> Hints & undo enabled.', casual:'🟡 <strong>Casual:</strong> Balanced tactical play.', advanced:'🟠 <strong>Advanced:</strong> Positional calculations.', pro:'🔴 <strong>Pro:</strong> Minimax alpha-beta pruning.' };
+      const eng = { training:'Engine: Educational', casual:'Engine: Tactical', advanced:'Engine: Positional', pro:'Engine: Minimax AB' };
+      document.getElementById('modeDescriptionText').innerHTML = desc[mode];
+      document.getElementById('modeEngineBadge').textContent = eng[mode];
+      document.getElementById('aiPlayerName').textContent = `Campus AI (${mode.charAt(0).toUpperCase()+mode.slice(1)})`;
+      document.getElementById('btnChessHint').style.display = (mode==='training') ? 'inline-flex' : 'none';
+    }
+
+    function initNewChessGame() {
+      chessBoard = [
+        ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+        ['bP','bP','bP','bP','bP','bP','bP','bP'],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        ['wP','wP','wP','wP','wP','wP','wP','wP'],
+        ['wR','wN','wB','wQ','wK','wB','wN','wR']
+      ];
+      currentTurn='w'; selectedSquare=null; legalMovesForSelected=[]; moveHistory=[]; capturedPieces={w:[],b:[]}; isAITurn=false; hintMove=null;
+      updateMovesLogUI(); updateCapturedPiecesUI(); updateStatusUI(); renderChessBoard();
+      if (playerColor==='b') makeAIMove();
+    }
+
+    function flipChessColor() {
+      playerColor = (playerColor==='w') ? 'b' : 'w';
+      const user = Auth.getUser();
+      document.getElementById('playerName').textContent = `${user?user.name:'You'} (${playerColor==='w'?'White':'Black'})`;
+      initNewChessGame();
+    }
+
+    function renderChessBoard() {
+      const el = document.getElementById('chessBoard'); el.innerHTML = '';
+      const kingCheck = isKingInCheck(chessBoard, currentTurn);
+      for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+        const dr = (playerColor==='w')?r:7-r, dc = (playerColor==='w')?c:7-c;
+        const piece = chessBoard[dr][dc], isLight = (dr+dc)%2===0;
+        const sq = document.createElement('div');
+        sq.className = `chess-square ${isLight?'light':'dark'}`;
+        sq.dataset.row=dr; sq.dataset.col=dc;
+        if (selectedSquare && selectedSquare.r===dr && selectedSquare.c===dc) sq.classList.add('selected');
+        if (legalMovesForSelected.some(m=>m.r===dr&&m.c===dc)) sq.classList.add(piece?'valid-capture':'valid-move');
+        if (moveHistory.length>0) { const l=moveHistory[moveHistory.length-1]; if ((l.from.r===dr&&l.from.c===dc)||(l.to.r===dr&&l.to.c===dc)) sq.classList.add('last-move'); }
+        if (kingCheck && piece && piece===currentTurn+'K') sq.classList.add('in-check');
+        if (hintMove) { if (hintMove.from.r===dr&&hintMove.from.c===dc) sq.classList.add('hint-from'); if (hintMove.to.r===dr&&hintMove.to.c===dc) sq.classList.add('hint-to'); }
+        if (piece) { const pe=document.createElement('span'); pe.className=`chess-piece ${piece[0]==='w'?'white':'black'}`; pe.textContent=PIECE_SYMBOLS[piece]; sq.appendChild(pe); }
+        sq.addEventListener('click',()=>onSquareClick(dr,dc));
+        el.appendChild(sq);
+      }
+    }
+
+    function onSquareClick(r,c) {
+      if (isAITurn||currentTurn!==playerColor) return;
+      const clicked=chessBoard[r][c];
+      if (selectedSquare) {
+        const match=legalMovesForSelected.find(m=>m.r===r&&m.c===c);
+        if (match) { executeMove({from:selectedSquare,to:{r,c}}); selectedSquare=null; legalMovesForSelected=[]; hintMove=null; renderChessBoard(); if (!isGameOver()) makeAIMove(); return; }
+      }
+      if (clicked && clicked[0]===playerColor) { selectedSquare={r,c}; legalMovesForSelected=getLegalMovesForPiece(chessBoard,r,c); hintMove=null; }
+      else { selectedSquare=null; legalMovesForSelected=[]; }
+      renderChessBoard();
+    }
+
+    function executeMove(move) {
+      const {from,to}=move; const piece=chessBoard[from.r][from.c]; const target=chessBoard[to.r][to.c];
+      if (target) capturedPieces[target[0]].push(target);
+      let fp=piece;
+      if (piece==='wP'&&to.r===0) fp='wQ'; if (piece==='bP'&&to.r===7) fp='bQ';
+      chessBoard[to.r][to.c]=fp; chessBoard[from.r][from.c]=null;
+      const toCoord=`${String.fromCharCode(97+to.c)}${8-to.r}`;
+      const notation=`${piece[1]==='P'?'':piece[1]}${target?'x':''}${toCoord}`;
+      moveHistory.push({from,to,piece,targetPiece:target,notation,color:piece[0]});
+      currentTurn=(currentTurn==='w')?'b':'w';
+      updateMovesLogUI(); updateCapturedPiecesUI(); updateStatusUI();
+    }
+
+    function undoChessMove() {
+      if (isAITurn||moveHistory.length<2) { UI.toast('No moves to undo.','info'); return; }
+      for (let i=0;i<2;i++) { const l=moveHistory.pop(); if(l){chessBoard[l.from.r][l.from.c]=l.piece;chessBoard[l.to.r][l.to.c]=l.targetPiece;if(l.targetPiece)capturedPieces[l.targetPiece[0]].pop();} }
+      currentTurn=playerColor; selectedSquare=null; legalMovesForSelected=[]; hintMove=null;
+      updateMovesLogUI(); updateCapturedPiecesUI(); updateStatusUI(); renderChessBoard();
+      UI.toast('Move undone.','info');
+    }
+
+    function giveChessHint() {
+      if (isAITurn||currentTurn!==playerColor) return;
+      const moves=getAllLegalMoves(chessBoard,playerColor); if (!moves.length) return;
+      let best=moves[0],bestS=-999999;
+      for (const m of moves) { const bc=cloneBoard(chessBoard); applyMove(bc,m); const s=evaluatePosition(bc,playerColor); if(s>bestS){bestS=s;best=m;} }
+      hintMove=best; selectedSquare={r:best.from.r,c:best.from.c}; legalMovesForSelected=getLegalMovesForPiece(chessBoard,best.from.r,best.from.c); renderChessBoard();
+      UI.toast(`Hint: Try ${String.fromCharCode(97+best.from.c)}${8-best.from.r} → ${String.fromCharCode(97+best.to.c)}${8-best.to.r}`,'success');
+    }
+
+    function isGameOver() {
+      const all=getAllLegalMoves(chessBoard,currentTurn);
+      if (all.length===0) {
+        const ck=isKingInCheck(chessBoard,currentTurn);
+        if (ck) {
+          const winner=(currentTurn==='w')?'Black':'White'; const isP=(winner===(playerColor==='w'?'White':'Black'));
+          document.getElementById('matchStatusText').innerHTML=`🏆 <span>Checkmate! ${winner} Wins!</span>`;
+          document.getElementById('matchSubStatus').textContent=isP?'You defeated the AI!':'AI wins. Try again!';
+          UI.toast(isP?'Checkmate! You won!':'Checkmate!',isP?'success':'warning');
+          if (isP) {
+            addPoints(200);
+            const d = loadGamesData();
+            d.chessWins = (d.chessWins || 0) + 1;
+            saveGamesData(d);
+          }
+        } else {
+          document.getElementById('matchStatusText').innerHTML=`🤝 <span>Stalemate</span>`;
+          document.getElementById('matchSubStatus').textContent='Draw.';
+          addPoints(50);
+        }
+        checkAchievements();
+        return true;
+      }
+      return false;
+    }
+
+    function updateStatusUI() {
+      const ck=isKingInCheck(chessBoard,currentTurn), isP=(currentTurn===playerColor), tn=(currentTurn==='w')?'White':'Black';
+      const st=document.getElementById('matchStatusText'),sub=document.getElementById('matchSubStatus'),ai=document.getElementById('aiPlayerStatus'),pl=document.getElementById('playerStatusBadge');
+      st.innerHTML=ck?`⚠️ <span style="color:#f87171;">Check! ${tn} attacked</span>`:`<span>${isP?'🟢':'⏳'}</span> <span>${isP?'Your turn ('+tn+')':'AI evaluating...'}</span>`;
+      sub.textContent=isP?(ck?'Protect your King!':'Select a piece.'):'Calculating...';
+      ai.textContent=isP?'Waiting':'Thinking... ⏳'; pl.textContent=isP?(ck?'⚠️ In Check!':'Your turn'):'Waiting...'; pl.style.color=isP?(ck?'#f87171':'#34d399'):'#94a3b8';
+    }
+    function updateCapturedPiecesUI() {
+      const w=document.getElementById('capturedWhite'),b=document.getElementById('capturedBlack');
+      if(w) w.textContent=capturedPieces.w.map(p=>PIECE_SYMBOLS[p]).join(' ');
+      if(b) b.textContent=capturedPieces.b.map(p=>PIECE_SYMBOLS[p]).join(' ');
+    }
+    function updateMovesLogUI() {
+      const el=document.getElementById('movesLogList'),badge=document.getElementById('moveCountBadge');
+      badge.textContent=`${moveHistory.length} moves`;
+      if(!moveHistory.length){el.innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">Moves recorded here</div>';return;}
+      let h='';
+      for(let i=0;i<moveHistory.length;i+=2){const n=Math.floor(i/2)+1;h+=`<div class="move-log-row"><span class="move-log-num">${n}.</span><span>${moveHistory[i]?.notation||''}</span><span>${moveHistory[i+1]?.notation||''}</span></div>`;}
+      el.innerHTML=h;el.scrollTop=el.scrollHeight;
+    }
+
+    // AI ENGINE
+    function makeAIMove() {
+      isAITurn=true; updateStatusUI();
+      const aiC=(playerColor==='w')?'b':'w';
+      setTimeout(()=>{
+        const lm=getAllLegalMoves(chessBoard,aiC); if(!lm.length){isAITurn=false;isGameOver();return;}
+        let sel=null;
+        if(currentChessMode==='training'){const cap=lm.filter(m=>chessBoard[m.to.r][m.to.c]);sel=(cap.length&&Math.random()<0.25)?cap[Math.floor(Math.random()*cap.length)]:lm[Math.floor(Math.random()*lm.length)];}
+        else if(currentChessMode==='casual'){let bs=-99999,bm=[];for(const m of lm){const bc=cloneBoard(chessBoard);applyMove(bc,m);const s=evaluatePosition(bc,aiC);if(s>bs){bs=s;bm=[m];}else if(s===bs)bm.push(m);}sel=bm[Math.floor(Math.random()*bm.length)];}
+        else if(currentChessMode==='advanced'){let bs=-999999;for(const m of lm){const bc=cloneBoard(chessBoard);applyMove(bc,m);const s=-minimax(bc,1,-1e6,1e6,playerColor,aiC);if(s>bs){bs=s;sel=m;}}}
+        else{let a=-1e6,bs=-999999;lm.sort((a,b)=>(chessBoard[b.to.r][b.to.c]?1:0)-(chessBoard[a.to.r][a.to.c]?1:0));for(const m of lm){const bc=cloneBoard(chessBoard);applyMove(bc,m);const s=-minimax(bc,2,-1e6,-a,playerColor,aiC);if(s>bs){bs=s;sel=m;}a=Math.max(a,bs);}}
+        if(sel) executeMove(sel);
+        isAITurn=false; renderChessBoard(); isGameOver();
+      }, currentChessMode==='pro'?350:250);
+    }
+
+    function minimax(board,depth,alpha,beta,turnColor,maxColor) {
+      if(!depth) return evaluatePosition(board,maxColor);
+      const lm=getAllLegalMoves(board,turnColor);
+      if(!lm.length) return isKingInCheck(board,turnColor)?-99999+(3-depth)*1000:0;
+      const next=(turnColor==='w')?'b':'w'; let mx=-999999;
+      for(const m of lm){const bc=cloneBoard(board);applyMove(bc,m);const s=-minimax(bc,depth-1,-beta,-alpha,next,maxColor);if(s>mx)mx=s;alpha=Math.max(alpha,s);if(alpha>=beta)break;}
+      return mx;
+    }
+
+    function evaluatePosition(board,pc) {
+      let ws=0,bs=0;
+      for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=board[r][c];if(!p)continue;const co=p[0],t=p[1],v=PIECE_VALUES[t]||0;let ps=PST[t]?(co==='w'?PST[t][r][c]:PST[t][7-r][c]):0;if(co==='w')ws+=v+ps;else bs+=v+ps;}
+      return (pc==='w')?ws-bs:bs-ws;
+    }
+    function applyMove(b,m){const p=b[m.from.r][m.from.c];let f=p;if(p==='wP'&&m.to.r===0)f='wQ';if(p==='bP'&&m.to.r===7)f='bQ';b[m.to.r][m.to.c]=f;b[m.from.r][m.from.c]=null;}
+    function cloneBoard(b){return b.map(r=>[...r]);}
+
+    // MOVE GENERATION
+    function getAllLegalMoves(b,c){const m=[];for(let r=0;r<8;r++)for(let co=0;co<8;co++){const p=b[r][co];if(p&&p[0]===c){const pm=getLegalMovesForPiece(b,r,co);for(const d of pm)m.push({from:{r,c:co},to:d});}}return m;}
+    function getLegalMovesForPiece(b,r,c){const ps=getPseudoLegalMoves(b,r,c),co=b[r][c][0],v=[];for(const d of ps){const cp=cloneBoard(b);applyMove(cp,{from:{r,c},to:d});if(!isKingInCheck(cp,co))v.push(d);}return v;}
+    function getPseudoLegalMoves(b,r,c){const p=b[r][c];if(!p)return[];const co=p[0],t=p[1],en=(co==='w')?'b':'w',m=[];
+      function add(tr,tc){if(tr<0||tr>=8||tc<0||tc>=8)return false;const tg=b[tr][tc];if(!tg){m.push({r:tr,c:tc});return true;}if(tg[0]===en){m.push({r:tr,c:tc});}return false;}
+      function slide(dr,dc){let tr=r+dr,tc=c+dc;while(tr>=0&&tr<8&&tc>=0&&tc<8){const tg=b[tr][tc];if(!tg)m.push({r:tr,c:tc});else{if(tg[0]===en)m.push({r:tr,c:tc});break;}tr+=dr;tc+=dc;}}
+      if(t==='P'){const d=(co==='w')?-1:1,sr=(co==='w')?6:1;if(r+d>=0&&r+d<8&&!b[r+d][c]){m.push({r:r+d,c});if(r===sr&&!b[r+d*2][c])m.push({r:r+d*2,c});}for(const dc of[-1,1]){const tr=r+d,tc=c+dc;if(tr>=0&&tr<8&&tc>=0&&tc<8&&b[tr][tc]&&b[tr][tc][0]===en)m.push({r:tr,c:tc});}}
+      else if(t==='N'){[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>add(r+dr,c+dc));}
+      else if(t==='B'){slide(-1,-1);slide(-1,1);slide(1,-1);slide(1,1);}
+      else if(t==='R'){slide(-1,0);slide(1,0);slide(0,-1);slide(0,1);}
+      else if(t==='Q'){slide(-1,-1);slide(-1,1);slide(1,-1);slide(1,1);slide(-1,0);slide(1,0);slide(0,-1);slide(0,1);}
+      else if(t==='K'){for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)if(dr||dc)add(r+dr,c+dc);}
+      return m;
+    }
+    function isKingInCheck(b,kc){let kr=-1,kco=-1;const tk=kc+'K';for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(b[r][c]===tk){kr=r;kco=c;}if(kr===-1)return false;const en=(kc==='w')?'b':'w';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(p&&p[0]===en&&getPseudoLegalMoves(b,r,c).some(m=>m.r===kr&&m.c===kco))return true;}return false;}
+
+    // ══════════════════════════════════════════════
+    // COURSE QUIZ WITH TIMER MODES
+    // ══════════════════════════════════════════════
+    const QUIZ_BANK = {
+      'Computer Science': [
+        { q:'What does CPU stand for?', o:['Central Processing Unit','Computer Personal Unit','Central Program Utility','Core Processing Unit'], a:0, exp:'CPU = Central Processing Unit, the primary chip that executes instructions.' },
+        { q:'Which data structure uses FIFO ordering?', o:['Stack','Queue','Tree','Graph'], a:1, exp:'Queue follows First-In-First-Out — like a real queue line.' },
+        { q:'What is the time complexity of binary search?', o:['O(n)','O(n²)','O(log n)','O(1)'], a:2, exp:'Binary search halves the search space each step → O(log n).' },
+        { q:'Which language is primarily used for iOS app development?', o:['Java','Kotlin','Swift','C#'], a:2, exp:'Swift is Apple\'s modern language for iOS/macOS development.' },
+        { q:'What does HTML stand for?', o:['Hyper Text Markup Language','High Tech Modern Language','Hyper Transfer Markup Language','Home Tool Markup Language'], a:0, exp:'HTML = HyperText Markup Language, the backbone of web pages.' },
+        { q:'Which sorting algorithm has the best average-case time complexity?', o:['Bubble Sort','Merge Sort','Selection Sort','Insertion Sort'], a:1, exp:'Merge Sort runs in O(n log n) average and worst case.' },
+        { q:'What is the purpose of an API?', o:['To design UI layouts','To connect software components','To compile code','To manage databases'], a:1, exp:'APIs (Application Programming Interfaces) let different software systems communicate.' },
+        { q:'In OOP, what does encapsulation mean?', o:['Inheriting from parent class','Hiding internal state','Multiple inheritance','Compile-time binding'], a:1, exp:'Encapsulation bundles data with methods and restricts direct access to internals.' },
+        { q:'Which protocol secures web traffic with encryption?', o:['HTTP','FTP','HTTPS','SMTP'], a:2, exp:'HTTPS uses TLS encryption to secure communication.' },
+        { q:'What is a primary key in a database?', o:['Any column','A unique identifier for each row','A foreign reference','An index'], a:1, exp:'A primary key uniquely identifies each record in a table.' },
+      ],
+      'Engineering': [
+        { q:'What is Newton\'s second law of motion?', o:['F = ma','E = mc²','V = IR','P = IV'], a:0, exp:'Force equals mass times acceleration.' },
+        { q:'What unit measures electrical resistance?', o:['Volt','Ampere','Ohm','Watt'], a:2, exp:'Resistance is measured in Ohms (Ω).' },
+        { q:'Which material has the highest tensile strength?', o:['Aluminum','Copper','Steel','Lead'], a:2, exp:'Steel has the highest tensile strength among these common materials.' },
+        { q:'What does CAD stand for?', o:['Computer Aided Design','Central Assembly Device','Computer Auto Draft','Core Application Design'], a:0, exp:'CAD = Computer-Aided Design, used for engineering drawings.' },
+        { q:'What is Ohm\'s Law?', o:['V = IR','F = ma','E = mc²','P = Fd'], a:0, exp:'Voltage = Current × Resistance.' },
+        { q:'Which type of stress causes a material to stretch?', o:['Compressive','Tensile','Shear','Torsional'], a:1, exp:'Tensile stress pulls a material apart, causing elongation.' },
+        { q:'What is the SI unit of power?', o:['Joule','Newton','Watt','Pascal'], a:2, exp:'Power is measured in Watts (W) = Joules per second.' },
+        { q:'What does HVAC stand for?', o:['High Voltage Alternating Current','Heating Ventilation and Air Conditioning','Hydraulic Valve Automatic Control','Heat Variable Air Compression'], a:1, exp:'HVAC = Heating, Ventilation, and Air Conditioning.' },
+        { q:'In fluid mechanics, what does Reynolds number indicate?', o:['Temperature','Flow regime (laminar/turbulent)','Pressure','Density'], a:1, exp:'Reynolds number predicts whether flow is laminar or turbulent.' },
+        { q:'What type of bridge uses cables connected to towers?', o:['Beam bridge','Arch bridge','Cable-stayed bridge','Truss bridge'], a:2, exp:'Cable-stayed bridges have cables running directly from towers to the deck.' },
+      ],
+      'Business': [
+        { q:'What does ROI stand for?', o:['Return on Investment','Rate of Interest','Revenue of Income','Risk of Inflation'], a:0, exp:'ROI measures the profitability of an investment.' },
+        { q:'Which financial statement shows a company\'s revenues and expenses?', o:['Balance Sheet','Income Statement','Cash Flow Statement','Equity Statement'], a:1, exp:'The Income Statement (P&L) shows revenues minus expenses.' },
+        { q:'What is the 4 Ps of marketing?', o:['Price, Place, Product, Promotion','People, Process, Plan, Profit','Production, Pricing, Placement, Planning','Performance, Profit, Product, Price'], a:0, exp:'The Marketing Mix: Product, Price, Place, Promotion.' },
+        { q:'SWOT analysis stands for?', o:['Strengths, Weaknesses, Opportunities, Threats','Sales, Wholesale, Operations, Trade','Strategy, Work, Output, Target','Supply, Workforce, Organization, Technology'], a:0, exp:'SWOT examines Strengths, Weaknesses, Opportunities, and Threats.' },
+        { q:'What is a startup\'s MVP?', o:['Most Valuable Player','Minimum Viable Product','Maximum Volume Production','Market Value Proposition'], a:1, exp:'MVP = Minimum Viable Product — the simplest version to test with users.' },
+        { q:'Which accounting equation is fundamental?', o:['Assets = Liabilities + Equity','Revenue = Costs + Profit','Cash = Debt + Savings','Income = Expenses + Tax'], a:0, exp:'The fundamental accounting equation: Assets = Liabilities + Owner\'s Equity.' },
+        { q:'What is market segmentation?', o:['Combining all customers together','Dividing a market into distinct groups','Eliminating competitors','Setting the lowest price'], a:1, exp:'Segmentation divides a broad market into sub-groups with common needs.' },
+        { q:'What does B2B mean?', o:['Back to Basics','Business to Business','Buyer to Broker','Brand to Brand'], a:1, exp:'B2B = Business-to-Business, selling between companies.' },
+        { q:'What is a balance sheet?', o:['A record of daily sales','A snapshot of assets, liabilities, and equity','A list of employees','A marketing plan'], a:1, exp:'A balance sheet shows what a company owns and owes at a point in time.' },
+        { q:'What is inflation?', o:['Decrease in prices','General increase in prices over time','Stock market crash','Currency devaluation'], a:1, exp:'Inflation is a sustained increase in the general price level of goods and services.' },
+      ],
+      'Arts & Sciences': [
+        { q:'Who painted the Mona Lisa?', o:['Michelangelo','Leonardo da Vinci','Raphael','Donatello'], a:1, exp:'Leonardo da Vinci painted the Mona Lisa, completed around 1519.' },
+        { q:'What is the chemical symbol for gold?', o:['Go','Gd','Au','Ag'], a:2, exp:'Au comes from the Latin "aurum" meaning gold.' },
+        { q:'What is the largest planet in our solar system?', o:['Saturn','Neptune','Jupiter','Uranus'], a:2, exp:'Jupiter is the largest planet with a mass over 300 times that of Earth.' },
+        { q:'In philosophy, what is epistemology?', o:['Study of beauty','Study of knowledge','Study of ethics','Study of existence'], a:1, exp:'Epistemology is the branch of philosophy concerned with the nature of knowledge.' },
+        { q:'What is the powerhouse of the cell?', o:['Nucleus','Ribosome','Mitochondria','Golgi apparatus'], a:2, exp:'Mitochondria generate most of the cell\'s ATP energy supply.' },
+        { q:'Who wrote "1984"?', o:['Aldous Huxley','George Orwell','Ray Bradbury','H.G. Wells'], a:1, exp:'George Orwell published "1984" in 1949 as a dystopian warning.' },
+        { q:'What is the speed of light approximately?', o:['300,000 km/s','150,000 km/s','500,000 km/s','100,000 km/s'], a:0, exp:'Light travels at approximately 299,792 km/s in a vacuum.' },
+        { q:'What literary device involves exaggeration for emphasis?', o:['Metaphor','Hyperbole','Irony','Simile'], a:1, exp:'Hyperbole is intentional exaggeration not meant to be taken literally.' },
+        { q:'What is photosynthesis?', o:['Cell division','Converting light to chemical energy','DNA replication','Protein synthesis'], a:1, exp:'Photosynthesis converts sunlight, CO₂, and water into glucose and oxygen.' },
+        { q:'Which element has atomic number 1?', o:['Helium','Oxygen','Carbon','Hydrogen'], a:3, exp:'Hydrogen is the lightest element with atomic number 1.' },
+      ],
+      'Medicine': [
+        { q:'What is the largest organ in the human body?', o:['Liver','Brain','Skin','Heart'], a:2, exp:'The skin is the largest organ, covering approximately 1.5-2 square meters.' },
+        { q:'How many chambers does the human heart have?', o:['2','3','4','5'], a:2, exp:'The heart has 4 chambers: left/right atria and left/right ventricles.' },
+        { q:'What does DNA stand for?', o:['Deoxyribonucleic Acid','Dinitrogen Acid','Dynamic Neural Activity','Dual Nucleic Assembly'], a:0, exp:'DNA = Deoxyribonucleic Acid, carrying genetic instructions.' },
+        { q:'Which blood type is considered the universal donor?', o:['A','B','AB','O negative'], a:3, exp:'O negative can be transfused to any patient in emergencies.' },
+        { q:'What is the normal resting heart rate for adults?', o:['40-50 bpm','60-100 bpm','100-120 bpm','120-140 bpm'], a:1, exp:'Normal adult resting heart rate is 60-100 beats per minute.' },
+        { q:'What does MRI stand for?', o:['Magnetic Resonance Imaging','Medical Radio Inspection','Molecular Reconstruction Index','Motor Response Indicator'], a:0, exp:'MRI uses strong magnetic fields to create detailed body images.' },
+        { q:'Which organ produces insulin?', o:['Liver','Kidney','Pancreas','Thyroid'], a:2, exp:'The pancreas produces insulin to regulate blood sugar levels.' },
+        { q:'What are antibiotics used to treat?', o:['Viral infections','Bacterial infections','Fungal infections','All infections'], a:1, exp:'Antibiotics specifically target and kill bacteria, not viruses.' },
+        { q:'How many bones are in the adult human body?', o:['106','206','306','406'], a:1, exp:'The adult human skeleton contains 206 bones.' },
+        { q:'What is the Hippocratic Oath?', o:['A surgical technique','An ethical pledge for physicians','A diagnostic test','A medical textbook'], a:1, exp:'The Hippocratic Oath is a historical ethical pledge taken by physicians.' },
+      ],
+      'Law': [
+        { q:'What is the presumption of innocence?', o:['Guilty until proven innocent','Innocent until proven guilty','Neither guilty nor innocent','Presumed guilty by default'], a:1, exp:'Accused persons are presumed innocent until proven guilty in court.' },
+        { q:'What does "habeas corpus" mean?', o:['Body of evidence','You shall have the body','Rule of law','Right to counsel'], a:1, exp:'Habeas corpus protects against unlawful detention by requiring court review.' },
+        { q:'What is a precedent in law?', o:['A new law','A previous court decision used as a guide','A type of contract','A criminal charge'], a:1, exp:'Legal precedent (stare decisis) means courts follow earlier decisions on similar cases.' },
+        { q:'What is the difference between civil and criminal law?', o:['No difference','Civil involves disputes, criminal involves offenses against the state','Civil is for corporations only','Criminal is for minor offenses'], a:1, exp:'Civil law resolves disputes between parties; criminal law addresses offenses against society.' },
+        { q:'What does "pro bono" mean?', o:['For profit','For the public good (free legal work)','For the prosecution','For the defense'], a:1, exp:'Pro bono = "for the public good" — legal services provided free of charge.' },
+        { q:'What is a tort in law?', o:['A type of contract','A criminal act','A civil wrong causing harm','A constitutional right'], a:2, exp:'A tort is a civil wrong that causes loss or harm, leading to legal liability.' },
+        { q:'What is double jeopardy?', o:['Being tried twice for the same offense','Having two lawyers','Filing two lawsuits','Two judges on one case'], a:0, exp:'Double jeopardy prevents being prosecuted twice for the same offense.' },
+        { q:'What is jurisdiction?', o:['A type of law','Authority of a court to hear a case','A legal document','A judge\'s opinion'], a:1, exp:'Jurisdiction is the official power of a court to make legal decisions.' },
+        { q:'What does "burden of proof" mean?', o:['Weight of evidence documents','Obligation to prove allegations','Cost of legal proceedings','Judge\'s responsibility'], a:1, exp:'Burden of proof is the obligation to prove allegations — typically on the prosecution.' },
+        { q:'What is an affidavit?', o:['A court order','A written sworn statement','A legal fee','A type of verdict'], a:1, exp:'An affidavit is a written statement confirmed by oath for use as evidence.' },
+      ],
+    };
+
+    let currentQuizIndex = 0, quizScore = 0, quizStreak = 0, quizMaxStreak = 0;
+    let quizTimerInterval = null, quizQuestionsPool = [];
+    let quizTimerMode = 'none'; // 'none', 'total', 'per'
+    let quizTotalTimeLeft = 300; // 5 min in seconds
+    let quizPerTimeLeft = 10;
+
+    let selectedQuizDept = null;
+
+    function getUserDepartment() {
+      const u = Auth.getUser();
+      return (u && u.department) ? u.department : 'Computer Science';
+    }
+
+    function updateQuizSelectedCourse(dept) {
+      selectedQuizDept = dept;
+      document.getElementById('quizModeCourseName').textContent = `📚 Questions tailored to: ${dept}`;
+      document.getElementById('quizCategoryTag').textContent = `📚 ${dept}`;
+    }
+
+    function showQuizModeSelector() {
+      document.getElementById('quizModeSelector').style.display = 'block';
+      document.getElementById('quizActiveWrapper').style.display = 'none';
+      selectedQuizDept = getUserDepartment();
+      const sel = document.getElementById('quizCourseSelect');
+      if (sel) sel.value = selectedQuizDept;
+      document.getElementById('quizModeCourseName').textContent = `📚 Questions tailored to: ${selectedQuizDept}`;
+      document.getElementById('quizCategoryTag').textContent = `📚 ${selectedQuizDept}`;
+    }
+
+    function startQuizWithMode(mode) {
+      quizTimerMode = mode;
+      document.getElementById('quizModeSelector').style.display = 'none';
+      document.getElementById('quizActiveWrapper').style.display = 'block';
+      startQuiz();
+    }
+
+    function startQuiz() {
+      const dept = selectedQuizDept || getUserDepartment();
+      const bank = QUIZ_BANK[dept] || QUIZ_BANK['Computer Science'];
+      quizQuestionsPool = [...bank].sort(() => 0.5 - Math.random()).slice(0, 10);
+      currentQuizIndex = 0; quizScore = 0; quizStreak = 0; quizMaxStreak = 0;
+      quizTotalTimeLeft = 300;
+      document.getElementById('quizActiveContent').style.display = 'block';
+      document.getElementById('quizResultsContent').style.display = 'none';
+
+      const tc = document.getElementById('quizTimerContainer');
+      tc.style.display = (quizTimerMode === 'none') ? 'none' : 'block';
+
+      if (quizTimerMode === 'total') {
+        startTotalTimer();
+      }
+      loadQuizQuestion();
+    }
+
+    function startTotalTimer() {
+      clearInterval(quizTimerInterval);
+      const bar = document.getElementById('quizTimerBar');
+      bar.style.width = '100%'; bar.classList.remove('warning');
+      quizTimerInterval = setInterval(() => {
+        quizTotalTimeLeft -= 0.1;
+        const pct = Math.max(0, (quizTotalTimeLeft / 300) * 100);
+        bar.style.width = `${pct}%`;
+        if (quizTotalTimeLeft <= 60) bar.classList.add('warning');
+        if (quizTotalTimeLeft <= 0) { clearInterval(quizTimerInterval); showQuizResults(); }
+      }, 100);
+    }
+
+    function loadQuizQuestion() {
+      if (quizTimerMode === 'per') { clearInterval(quizTimerInterval); }
+      const q = quizQuestionsPool[currentQuizIndex];
+      document.getElementById('quizProgressText').textContent = `Question ${currentQuizIndex+1} of ${quizQuestionsPool.length}`;
+      document.getElementById('quizScoreText').textContent = `Score: ${quizScore}`;
+      document.getElementById('quizStreakBadge').textContent = `🔥 Streak: ${quizStreak}x`;
+      document.getElementById('quizQuestionText').textContent = q.q;
+      document.getElementById('quizFeedbackBox').classList.remove('active');
+
+      const grid = document.getElementById('quizOptionsGrid'); grid.innerHTML = '';
+      const letters = ['A','B','C','D'];
+      q.o.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt-btn';
+        btn.innerHTML = `<span class="opt-letter">${letters[idx]}</span><span>${escapeHtml(opt)}</span>`;
+        btn.onclick = () => selectQuizAnswer(idx);
+        grid.appendChild(btn);
+      });
+
+      if (quizTimerMode === 'per') {
+        quizPerTimeLeft = 10;
+        const bar = document.getElementById('quizTimerBar');
+        bar.style.width = '100%'; bar.classList.remove('warning');
+        quizTimerInterval = setInterval(() => {
+          quizPerTimeLeft -= 0.1;
+          bar.style.width = `${Math.max(0,(quizPerTimeLeft/10)*100)}%`;
+          if (quizPerTimeLeft <= 3) bar.classList.add('warning');
+          if (quizPerTimeLeft <= 0) { clearInterval(quizTimerInterval); selectQuizAnswer(-1); }
+        }, 100);
+      }
+    }
+
+    function selectQuizAnswer(idx) {
+      if (quizTimerMode === 'per') clearInterval(quizTimerInterval);
+      const q = quizQuestionsPool[currentQuizIndex];
+      const btns = document.querySelectorAll('.quiz-opt-btn');
+      btns.forEach(b => b.disabled = true);
+      const fb = document.getElementById('quizFeedbackBox'), ft = document.getElementById('quizFeedbackTitle'), fe = document.getElementById('quizFeedbackExplanation');
+      const correct = (idx === q.a);
+      if (correct) {
+        quizStreak++; if (quizStreak > quizMaxStreak) quizMaxStreak = quizStreak;
+        const timeBonus = quizTimerMode === 'per' ? Math.round(quizPerTimeLeft * 10) : (quizTimerMode === 'total' ? Math.round(Math.min(quizTotalTimeLeft / 30, 10) * 5) : 0);
+        const streakBonus = (quizStreak - 1) * 25;
+        const pts = 100 + timeBonus + streakBonus;
+        quizScore += pts;
+        btns[idx].classList.add('correct');
+        fb.style.borderLeftColor = '#10b981';
+        ft.innerHTML = `🎉 Correct! (+${pts} pts)`; ft.style.color = '#34d399';
+        UI.toast(`Correct! Streak: ${quizStreak}x`, 'success');
+      } else {
+        quizStreak = 0;
+        if (idx >= 0) btns[idx].classList.add('wrong');
+        if (btns[q.a]) btns[q.a].classList.add('correct');
+        fb.style.borderLeftColor = '#ef4444';
+        ft.innerHTML = (idx === -1) ? '⏱️ Time Up!' : '❌ Incorrect!'; ft.style.color = '#f87171';
+      }
+      document.getElementById('quizScoreText').textContent = `Score: ${quizScore}`;
+      document.getElementById('quizStreakBadge').textContent = `🔥 Streak: ${quizStreak}x`;
+      fe.textContent = q.exp;
+      fb.classList.add('active');
+      document.getElementById('btnNextQuestion').textContent = (currentQuizIndex + 1 >= quizQuestionsPool.length) ? 'View Results 🏆' : 'Next Question →';
+    }
+
+    function nextQuizQuestion() {
+      currentQuizIndex++;
+      if (currentQuizIndex >= quizQuestionsPool.length) showQuizResults();
+      else loadQuizQuestion();
+    }
+
+    function showQuizResults() {
+      clearInterval(quizTimerInterval);
+      document.getElementById('quizActiveContent').style.display = 'none';
+      document.getElementById('quizResultsContent').style.display = 'block';
+      document.getElementById('quizResultScore').textContent = `${quizScore} pts`;
+
+      let icon='🎓', title='Campus Scholar', sub='Good effort!';
+      if (quizScore >= 1200) { icon='👑'; title='Campus Legend'; sub='Flawless! You mastered it!'; }
+      else if (quizScore >= 800) { icon='⭐'; title="Dean's Honor"; sub='Exceptional accuracy!'; }
+      document.getElementById('quizResultIcon').textContent = icon;
+      document.getElementById('quizResultTitle').textContent = title;
+      document.getElementById('quizResultSubtitle').textContent = sub;
+      document.getElementById('quizResultBreakdown').textContent = `Score: ${quizScore} pts • Best Streak: ${quizMaxStreak}x`;
+      addPoints(quizScore);
+      recordStreak(quizMaxStreak);
+      checkAchievements();
+    }
+
+    // ══════════════════════════════════════════════
+    // MEMORY MATCH GAME
+    // ══════════════════════════════════════════════
+    const MEMORY_EMOJIS = ['📚','🎓','🔬','💻','🏛️','🎨','⚽','🎵'];
+    let memoryCards = [], memoryFlipped = [], memoryMatched = 0, memoryMoves = 0;
+    let memoryTimerInterval = null, memorySeconds = 0, memoryLocked = false;
+
+    function initMemoryGame() {
+      memoryMatched = 0; memoryMoves = 0; memorySeconds = 0; memoryLocked = false;
+      memoryFlipped = [];
+      document.getElementById('memoryResult').style.display = 'none';
+      document.getElementById('memoryGrid').style.display = 'grid';
+
+      const pairs = [...MEMORY_EMOJIS, ...MEMORY_EMOJIS];
+      memoryCards = pairs.sort(() => 0.5 - Math.random());
+
+      const grid = document.getElementById('memoryGrid');
+      grid.innerHTML = memoryCards.map((emoji, i) =>
+        `<div class="memory-card" data-index="${i}" onclick="flipMemoryCard(this, ${i})">
+          <div class="memory-card-inner">
+            <div class="memory-card-front">❓</div>
+            <div class="memory-card-back">${emoji}</div>
+          </div>
+        </div>`
+      ).join('');
+
+      updateMemoryUI();
+      clearInterval(memoryTimerInterval);
+      memoryTimerInterval = setInterval(() => { memorySeconds++; updateMemoryUI(); }, 1000);
+    }
+
+    function flipMemoryCard(el, idx) {
+      if (memoryLocked || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+      el.classList.add('flipped');
+      memoryFlipped.push({ el, idx, emoji: memoryCards[idx] });
+
+      if (memoryFlipped.length === 2) {
+        memoryMoves++;
+        memoryLocked = true;
+        const [a, b] = memoryFlipped;
+        if (a.emoji === b.emoji) {
+          a.el.classList.add('matched');
+          b.el.classList.add('matched');
+          memoryMatched++;
+          memoryFlipped = [];
+          memoryLocked = false;
+          updateMemoryUI();
+          if (memoryMatched === MEMORY_EMOJIS.length) {
+            clearInterval(memoryTimerInterval);
+            setTimeout(() => finishMemoryGame(), 400);
+          }
+        } else {
+          setTimeout(() => {
+            a.el.classList.remove('flipped');
+            b.el.classList.remove('flipped');
+            memoryFlipped = [];
+            memoryLocked = false;
+          }, 700);
+        }
+        updateMemoryUI();
+      }
+    }
+
+    function updateMemoryUI() {
+      document.getElementById('memoryMovesBadge').textContent = `Moves: ${memoryMoves}`;
+      const m = Math.floor(memorySeconds / 60), s = memorySeconds % 60;
+      document.getElementById('memoryTimeBadge').textContent = `⏱️ ${m}:${s.toString().padStart(2, '0')}`;
+      document.getElementById('memoryPairsBadge').textContent = `Pairs: ${memoryMatched}/${MEMORY_EMOJIS.length}`;
+    }
+
+    function finishMemoryGame() {
+      document.getElementById('memoryGrid').style.display = 'none';
+      document.getElementById('memoryResult').style.display = 'block';
+      const m = Math.floor(memorySeconds / 60), s = memorySeconds % 60;
+      document.getElementById('memoryResultText').textContent = `${memoryMoves} moves • ${m}:${s.toString().padStart(2, '0')} elapsed`;
+      const pts = Math.max(50, 200 - memoryMoves * 5);
+      addPoints(pts);
+
+      const d = loadGamesData();
+      if (memoryMoves < d.bestMemoryMoves) { d.bestMemoryMoves = memoryMoves; saveGamesData(d); }
+      if (memorySeconds < d.bestMemoryTime) { d.bestMemoryTime = memorySeconds; saveGamesData(d); }
+      checkAchievements();
+      UI.toast(`Memory Match complete! +${pts} pts`, 'success');
+    }
+
+    // ══════════════════════════════════════════════
+    // TYPING RACER (ENHANCED: FULL PARAGRAPH & RANDOM WORDS, 1-5 MIN TIMERS)
+    // ══════════════════════════════════════════════
+    const TYPING_PASSAGES = [
+      "The modern university campus stands as an enduring beacon of intellectual discovery, academic rigor, and human innovation. Within lecture halls, scientific laboratories, and sprawling research libraries, students and faculty converge from diverse backgrounds to question assumptions, synthesize groundbreaking theories, and engineer solutions for tomorrow's most pressing challenges. Beyond examinations and lectures, university life fosters personal resilience, ethical leadership, and lifelong friendships that endure across generations and geographical borders.",
+      "Artificial intelligence and computer systems are rapidly reshaping our technological landscape. From neural networks trained on vast datasets to quantum computing architectures, computational research pushes the boundaries of what machines can achieve. Computer scientists and software engineers must constantly balance rapid innovation with ethical responsibility, ensuring algorithms remain transparent, equitable, and aligned with human values and social welfare in every digital interaction.",
+      "The campus central library serves as the intellectual heart of academic life. Across its vast physical stacks and boundless digital repositories, centuries of human knowledge are carefully preserved and continually expanded. Here, scholars scrutinize historical manuscripts, synthesize peer-reviewed scientific journals, and collaborate on multidisciplinary breakthroughs that propel human civilization forward across medicine, arts, humanities, and engineering sciences.",
+      "Environmental sustainability and climate resilience are paramount imperatives for modern institutions. Universities around the world are transforming campuses into living laboratories, integrating solar microgrids, advanced water reclamation systems, and zero-waste initiatives. Through rigorous environmental science and collaborative student stewardship, campus communities demonstrate that sustainable practices and high academic achievement can harmoniously flourish together.",
+      "Graduation ceremony marks not an ending, but the commencement of an impactful lifelong journey. Armed with analytical acuity, empathetic communication skills, and collaborative experience, graduates step courageously into diverse global industries. They become visionary researchers, compassionate healthcare professionals, innovative entrepreneurs, and principled civic leaders dedicated to improving their communities and inspiring future generations."
+    ];
+
+    const TYPING_WORD_BANK = [
+      "university", "campus", "knowledge", "research", "student", "faculty", "library", "semester",
+      "lecture", "algorithm", "science", "discovery", "technology", "society", "future", "education",
+      "system", "program", "project", "analysis", "theory", "method", "practice", "culture",
+      "community", "academic", "history", "physics", "chemistry", "biology", "logic", "database",
+      "network", "software", "hardware", "creative", "design", "solution", "challenge", "opportunity",
+      "leadership", "integrity", "excellence", "laboratory", "experiment", "journal", "scholar", "thesis",
+      "deadline", "schedule", "conference", "presentation", "resource", "innovation", "development",
+      "performance", "achievement", "milestone", "success", "journey", "curiosity", "perspective"
+    ];
+
+    let typingMode = 'paragraph'; // 'paragraph' | 'random'
+    let typingDuration = 60; // 60, 120, 180, 240, 300 seconds
+    let typingTimerInterval = null, typingTimeLeft = 60, typingStarted = false;
+    let typingPassage = '', typingCorrectChars = 0, typingTotalChars = 0;
+
+    function selectTypingMode(mode) {
+      typingMode = mode;
+      document.querySelectorAll('#typingModeSelector .typing-pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      const badge = document.getElementById('typingModeActiveBadge');
+      if (badge) badge.textContent = mode === 'paragraph' ? '📄 Full Paragraph' : '🔀 Random Words';
+    }
+
+    function selectTypingDuration(sec) {
+      typingDuration = parseInt(sec, 10);
+      document.querySelectorAll('#typingTimerSelector .typing-pill-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.time, 10) === typingDuration);
+      });
+      updateTypingTimerBadge(typingDuration);
+    }
+
+    function formatMinSec(totalSeconds) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function updateTypingTimerBadge(sec) {
+      const badge = document.getElementById('typingTimeBadge');
+      if (badge) badge.textContent = `⏱️ ${formatMinSec(sec)}`;
+    }
+
+    function generateRandomWordsPassage(wordCount = 200) {
+      const words = [];
+      for (let i = 0; i < wordCount; i++) {
+        const rand = TYPING_WORD_BANK[Math.floor(Math.random() * TYPING_WORD_BANK.length)];
+        words.push(rand);
+      }
+      return words.join(' ');
+    }
+
+    function showTypingPreStart() {
+      clearInterval(typingTimerInterval);
+      document.getElementById('typingPreStart').style.display = 'block';
+      document.getElementById('typingActiveContent').style.display = 'none';
+      document.getElementById('typingResult').style.display = 'none';
+      updateTypingTimerBadge(typingDuration);
+    }
+
+    function startTypingRace() {
+      if (typingMode === 'paragraph') {
+        typingPassage = TYPING_PASSAGES[Math.floor(Math.random() * TYPING_PASSAGES.length)];
+      } else {
+        // Generate enough words for 5 minutes of 120+ WPM
+        typingPassage = generateRandomWordsPassage(400);
+      }
+
+      typingTimeLeft = typingDuration;
+      typingStarted = false;
+      typingCorrectChars = 0;
+      typingTotalChars = 0;
+
+      document.getElementById('typingPreStart').style.display = 'none';
+      document.getElementById('typingActiveContent').style.display = 'block';
+      document.getElementById('typingResult').style.display = 'none';
+
+      renderTypingPassage('');
+      const input = document.getElementById('typingInput');
+      input.value = '';
+      input.focus();
+      input.oninput = onTypingInput;
+
+      document.getElementById('typingWpmBadge').textContent = 'WPM: 0';
+      document.getElementById('typingAccBadge').textContent = 'Accuracy: 100%';
+      updateTypingTimerBadge(typingTimeLeft);
+      document.getElementById('typingProgressInfo').textContent = `0 / ${typingPassage.length} chars`;
+
+      clearInterval(typingTimerInterval);
+    }
+
+    function onTypingInput() {
+      const input = document.getElementById('typingInput');
+      const typed = input.value;
+
+      if (!typingStarted) {
+        typingStarted = true;
+        typingTimerInterval = setInterval(() => {
+          typingTimeLeft--;
+          updateTypingTimerBadge(typingTimeLeft);
+          if (typingTimeLeft <= 0) {
+            clearInterval(typingTimerInterval);
+            finishTypingRace();
+          }
+        }, 1000);
+      }
+
+      renderTypingPassage(typed);
+
+      // Calculate accuracy & correct chars
+      let correct = 0;
+      for (let i = 0; i < typed.length && i < typingPassage.length; i++) {
+        if (typed[i] === typingPassage[i]) correct++;
+      }
+      typingCorrectChars = correct;
+      typingTotalChars = typed.length;
+
+      const elapsed = typingDuration - typingTimeLeft;
+      const wpm = elapsed > 0 ? Math.round((correct / 5) / (elapsed / 60)) : 0;
+      const acc = typingTotalChars > 0 ? Math.round((correct / typingTotalChars) * 100) : 100;
+
+      document.getElementById('typingWpmBadge').textContent = `WPM: ${wpm}`;
+      document.getElementById('typingAccBadge').textContent = `Accuracy: ${acc}%`;
+      document.getElementById('typingProgressInfo').textContent = `${typed.length} / ${typingPassage.length} chars (${Math.round((typed.length / typingPassage.length) * 100)}%)`;
+
+      // Check if passage complete
+      if (typed.length >= typingPassage.length) {
+        clearInterval(typingTimerInterval);
+        finishTypingRace();
+      }
+    }
+
+    function renderTypingPassage(typed) {
+      const el = document.getElementById('typingPassage');
+      let html = '';
+      for (let i = 0; i < typingPassage.length; i++) {
+        if (i < typed.length) {
+          if (typed[i] === typingPassage[i]) {
+            html += `<span class="typing-char correct">${escapeHtml(typingPassage[i])}</span>`;
+          } else {
+            html += `<span class="typing-char wrong">${escapeHtml(typingPassage[i])}</span>`;
+          }
+        } else if (i === typed.length) {
+          html += `<span class="typing-char cursor" id="activeTypingCursor">${escapeHtml(typingPassage[i])}</span>`;
+        } else {
+          html += `<span class="typing-char">${escapeHtml(typingPassage[i])}</span>`;
+        }
+      }
+      el.innerHTML = html;
+
+      // Auto-scroll to keep active cursor visible
+      const cursor = document.getElementById('activeTypingCursor');
+      if (cursor) {
+        cursor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function finishTypingRace() {
+      document.getElementById('typingActiveContent').style.display = 'none';
+      document.getElementById('typingResult').style.display = 'block';
+
+      const elapsed = Math.max(1, typingDuration - typingTimeLeft);
+      const wpm = Math.round((typingCorrectChars / 5) / (elapsed / 60));
+      const acc = typingTotalChars > 0 ? Math.round((typingCorrectChars / typingTotalChars) * 100) : 0;
+
+      let icon = '⌨️', title = 'Race Complete!';
+      if (wpm >= 75) { icon = '⚡'; title = 'Legendary Speed Demon!'; }
+      else if (wpm >= 50) { icon = '🚀'; title = 'Campus Speedster!'; }
+      else if (wpm >= 35) { icon = '🎯'; title = 'Solid Typing Cadence!'; }
+
+      document.getElementById('typingResultIcon').textContent = icon;
+      document.getElementById('typingResultTitle').textContent = title;
+      document.getElementById('typingResultWpm').textContent = `${wpm} WPM`;
+      document.getElementById('typingResultDetails').textContent = `Mode: ${typingMode === 'paragraph' ? 'Full Paragraph' : 'Random Words'} • Accuracy: ${acc}% • ${typingCorrectChars} correct characters • ${formatMinSec(elapsed)} elapsed`;
+
+      // Award points scaled by duration & speed
+      const durationBonus = Math.round(elapsed / 30) * 20;
+      const pts = Math.max(30, wpm * 2 + Math.round(acc / 2) + durationBonus);
+      addPoints(pts);
+
+      const d = loadGamesData();
+      if (wpm > d.bestWpm) { d.bestWpm = wpm; }
+      if (elapsed >= 180) { d.typingLongRuns = (d.typingLongRuns || 0) + 1; }
+      saveGamesData(d);
+
+      checkAchievements();
+      UI.toast(`Typing Race finished! ${wpm} WPM • +${pts} pts`, 'success');
+    }
+
+    // ══════════════════════════════════════════════
+    // SUDOKU ENGINE (TRAINING TO PRO)
+    // ══════════════════════════════════════════════
+    let sudokuMode = 'training'; // 'training' | 'casual' | 'advanced' | 'pro'
+    let sudokuSolution = []; // 9x9 array
+    let sudokuGiven = []; // 9x9 boolean array
+    let sudokuBoard = []; // 9x9 current values
+    let sudokuNotes = []; // 9x9 Set of numbers 1-9
+    let sudokuSelectedCell = null; // { r, c }
+    let sudokuIsNotesActive = false;
+    let sudokuMistakes = 0;
+    let sudokuHintsLeft = 999;
+    let sudokuTimerSeconds = 0;
+    let sudokuTimerInterval = null;
+    let sudokuHistory = []; // { r, c, prevVal, newVal, prevNotes }
+
+    const SUDOKU_CONFIGS = {
+      training: { clues: 48, hints: 999, maxMistakes: Infinity, label: '🟢 Training', desc: '🟢 <strong>Training Mode:</strong> Relaxed practice. Instant conflict alerts and unlimited hints.', engine: 'Training (48 clues)' },
+      casual: { clues: 38, hints: 5, maxMistakes: Infinity, label: '🟡 Casual', desc: '🟡 <strong>Casual Mode:</strong> Standard puzzle challenge with 5 helpful hints.', engine: 'Casual (38 clues)' },
+      advanced: { clues: 30, hints: 2, maxMistakes: 3, label: '🟠 Advanced', desc: '🟠 <strong>Advanced Mode:</strong> Strict tournament challenge. 2 hints and max 3 mistakes.', engine: 'Advanced (30 clues)' },
+      pro: { clues: 25, hints: 0, maxMistakes: 3, label: '🔴 Pro', desc: '🔴 <strong>Pro Mode:</strong> Master puzzle solver. Zero hints and strict 3 strikes limit!', engine: 'Pro (25 clues)' }
+    };
+
+    function setSudokuMode(mode) {
+      sudokuMode = mode;
+      document.querySelectorAll('#sudokuModePills .chess-mode-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      const cfg = SUDOKU_CONFIGS[mode];
+      document.getElementById('sudokuModeDescriptionText').innerHTML = cfg.desc;
+      document.getElementById('sudokuDifficultyBadge').textContent = `Difficulty: ${cfg.engine}`;
+      initNewSudokuGame();
+    }
+
+    // Sudoku Generator using randomized backtracking
+    function generateValidSudoku() {
+      const grid = Array.from({ length: 9 }, () => Array(9).fill(0));
+
+      function isValid(g, row, col, num) {
+        for (let i = 0; i < 9; i++) {
+          if (g[row][i] === num || g[i][col] === num) return false;
+        }
+        const startRow = Math.floor(row / 3) * 3;
+        const startCol = Math.floor(col / 3) * 3;
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 3; c++) {
+            if (g[startRow + r][startCol + c] === num) return false;
+          }
+        }
+        return true;
+      }
+
+      function solve(g) {
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (g[r][c] === 0) {
+              const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+              for (const n of nums) {
+                if (isValid(g, r, c, n)) {
+                  g[r][c] = n;
+                  if (solve(g)) return true;
+                  g[r][c] = 0;
+                }
+              }
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      solve(grid);
+      return grid;
+    }
+
+    function initNewSudokuGame() {
+      clearInterval(sudokuTimerInterval);
+      const cfg = SUDOKU_CONFIGS[sudokuMode];
+      sudokuMistakes = 0;
+      sudokuHintsLeft = cfg.hints;
+      sudokuTimerSeconds = 0;
+      sudokuHistory = [];
+      sudokuSelectedCell = null;
+      sudokuIsNotesActive = false;
+
+      updateSudokuHeaderBadges();
+
+      // Generate solution
+      sudokuSolution = generateValidSudoku();
+      sudokuBoard = Array.from({ length: 9 }, (_, r) => [...sudokuSolution[r]]);
+      sudokuGiven = Array.from({ length: 9 }, () => Array(9).fill(true));
+      sudokuNotes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
+
+      // Dig holes to match clue count
+      const cellsToDig = 81 - cfg.clues;
+      const positions = [];
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          positions.push({ r, c });
+        }
+      }
+      positions.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < cellsToDig; i++) {
+        const { r, c } = positions[i];
+        sudokuBoard[r][c] = 0;
+        sudokuGiven[r][c] = false;
+      }
+
+      // Render board & numpad
+      renderSudokuGrid();
+      renderSudokuNumpad();
+
+      // Start timer
+      sudokuTimerInterval = setInterval(() => {
+        sudokuTimerSeconds++;
+        const badge = document.getElementById('sudokuTimeBadge');
+        if (badge) badge.textContent = `⏱️ ${formatMinSec(sudokuTimerSeconds)}`;
+      }, 1000);
+
+      document.getElementById('btnSudokuNotes').classList.remove('active');
+      document.getElementById('sudokuStatusMsg').textContent = 'Select a cell to enter a number';
+      document.getElementById('sudokuSubStatus').textContent = 'Use the numpad or keys 1-9. Press N for notes.';
+    }
+
+    function updateSudokuHeaderBadges() {
+      const cfg = SUDOKU_CONFIGS[sudokuMode];
+      const mistakesBadge = document.getElementById('sudokuMistakesBadge');
+      if (mistakesBadge) {
+        mistakesBadge.textContent = cfg.maxMistakes === Infinity ? `Mistakes: ${sudokuMistakes}` : `Mistakes: ${sudokuMistakes}/${cfg.maxMistakes}`;
+        mistakesBadge.style.color = sudokuMistakes > 0 ? '#f87171' : 'inherit';
+      }
+      const hintsBadge = document.getElementById('sudokuHintsBadge');
+      if (hintsBadge) {
+        hintsBadge.textContent = cfg.hints >= 900 ? '💡 Hints: Unlimited' : `💡 Hints: ${sudokuHintsLeft}`;
+      }
+    }
+
+    function renderSudokuGrid() {
+      const grid = document.getElementById('sudokuGrid');
+      grid.innerHTML = '';
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const val = sudokuBoard[r][c];
+          const isGiven = sudokuGiven[r][c];
+          const cell = document.createElement('div');
+          cell.className = 'sudoku-cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+
+          if (isGiven) {
+            cell.classList.add('given');
+            cell.textContent = val;
+          } else if (val !== 0) {
+            cell.classList.add('user-placed');
+            cell.textContent = val;
+          } else {
+            // Render candidate notes if any
+            const notes = sudokuNotes[r][c];
+            if (notes && notes.size > 0) {
+              const notesDiv = document.createElement('div');
+              notesDiv.className = 'sudoku-notes';
+              for (let n = 1; n <= 9; n++) {
+                const noteNum = document.createElement('div');
+                noteNum.className = 'sudoku-note-num';
+                noteNum.textContent = notes.has(n) ? n : '';
+                notesDiv.appendChild(noteNum);
+              }
+              cell.appendChild(notesDiv);
+            }
+          }
+
+          cell.onclick = () => selectSudokuCell(r, c);
+          grid.appendChild(cell);
+        }
+      }
+
+      highlightSudokuSelection();
+    }
+
+    function selectSudokuCell(r, c) {
+      sudokuSelectedCell = { r, c };
+      highlightSudokuSelection();
+      const val = sudokuBoard[r][c];
+      const msg = document.getElementById('sudokuStatusMsg');
+      if (val !== 0) {
+        msg.textContent = `Cell [${r + 1}, ${c + 1}]: Digit ${val}`;
+      } else {
+        msg.textContent = `Cell [${r + 1}, ${c + 1}] selected (empty)`;
+      }
+    }
+
+    function highlightSudokuSelection() {
+      const cells = document.querySelectorAll('.sudoku-cell');
+      if (!sudokuSelectedCell) {
+        cells.forEach(c => c.classList.remove('selected', 'highlight-peer', 'highlight-same'));
+        return;
+      }
+
+      const { r: selR, c: selC } = sudokuSelectedCell;
+      const selVal = sudokuBoard[selR][selC];
+      const startR = Math.floor(selR / 3) * 3;
+      const startC = Math.floor(selC / 3) * 3;
+
+      cells.forEach(cell => {
+        const r = parseInt(cell.dataset.r, 10);
+        const c = parseInt(cell.dataset.c, 10);
+        const val = sudokuBoard[r][c];
+
+        cell.classList.remove('selected', 'highlight-peer', 'highlight-same');
+
+        if (r === selR && c === selC) {
+          cell.classList.add('selected');
+        } else if (r === selR || c === selC || (r >= startR && r < startR + 3 && c >= startC && c < startC + 3)) {
+          cell.classList.add('highlight-peer');
+        }
+
+        if (selVal !== 0 && val === selVal) {
+          cell.classList.add('highlight-same');
+        }
+      });
+    }
+
+    function renderSudokuNumpad() {
+      const numpad = document.getElementById('sudokuNumpad');
+      numpad.innerHTML = '';
+
+      // Count placed numbers 1 to 9
+      const counts = Array(10).fill(0);
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (sudokuBoard[r][c] > 0) counts[sudokuBoard[r][c]]++;
+        }
+      }
+
+      for (let n = 1; n <= 9; n++) {
+        const btn = document.createElement('button');
+        btn.className = 'sudoku-num-btn';
+        const remaining = 9 - counts[n];
+        if (remaining <= 0) {
+          btn.disabled = true;
+        }
+
+        btn.innerHTML = `
+          <span>${n}</span>
+          <span class="sudoku-num-count">${remaining > 0 ? `${remaining} left` : '✓ done'}</span>
+        `;
+        btn.onclick = () => handleSudokuInputNumber(n);
+        numpad.appendChild(btn);
+      }
+    }
+
+    function handleSudokuInputNumber(num) {
+      if (!sudokuSelectedCell) {
+        UI.toast('Please select a square on the Sudoku board first.', 'info');
+        return;
+      }
+      const { r, c } = sudokuSelectedCell;
+      if (sudokuGiven[r][c]) {
+        UI.toast('Given numbers cannot be changed.', 'info');
+        return;
+      }
+
+      // If Notes mode is active, toggle note
+      if (sudokuIsNotesActive) {
+        const notes = sudokuNotes[r][c];
+        if (notes.has(num)) notes.delete(num);
+        else notes.add(num);
+        renderSudokuGrid();
+        return;
+      }
+
+      // Normal number placement
+      const prevVal = sudokuBoard[r][c];
+      const prevNotes = new Set(sudokuNotes[r][c]);
+
+      // Check if correct according to solution
+      const correctVal = sudokuSolution[r][c];
+      const isCorrect = (num === correctVal);
+
+      if (!isCorrect) {
+        sudokuMistakes++;
+        updateSudokuHeaderBadges();
+
+        // Conflict visual feedback
+        const cell = document.querySelector(`.sudoku-cell[data-r="${r}"][data-c="${c}"]`);
+        if (cell) {
+          cell.classList.add('conflict');
+          setTimeout(() => cell.classList.remove('conflict'), 800);
+        }
+
+        const cfg = SUDOKU_CONFIGS[sudokuMode];
+        if (cfg.maxMistakes !== Infinity && sudokuMistakes >= cfg.maxMistakes) {
+          clearInterval(sudokuTimerInterval);
+          UI.toast(`Game Over! You reached ${cfg.maxMistakes} mistakes in ${cfg.label}.`, 'error');
+          document.getElementById('sudokuStatusMsg').textContent = 'Match Over — Maximum mistakes reached';
+          return;
+        } else {
+          UI.toast(`Incorrect number for that cell! (${sudokuMistakes} mistake${sudokuMistakes > 1 ? 's' : ''})`, 'error');
+          return;
+        }
+      }
+
+      // Valid placement
+      sudokuBoard[r][c] = num;
+      sudokuNotes[r][c].clear();
+
+      // Clear peer notes with this number
+      const startR = Math.floor(r / 3) * 3;
+      const startC = Math.floor(c / 3) * 3;
+      for (let i = 0; i < 9; i++) {
+        sudokuNotes[r][i].delete(num);
+        sudokuNotes[i][c].delete(num);
+      }
+      for (let ro = 0; ro < 3; ro++) {
+        for (let co = 0; co < 3; co++) {
+          sudokuNotes[startR + ro][startC + co].delete(num);
+        }
+      }
+
+      sudokuHistory.push({ r, c, prevVal, newVal: num, prevNotes });
+
+      renderSudokuGrid();
+      renderSudokuNumpad();
+
+      // Check win condition
+      checkSudokuCompletion();
+    }
+
+    function toggleSudokuNotes() {
+      sudokuIsNotesActive = !sudokuIsNotesActive;
+      const btn = document.getElementById('btnSudokuNotes');
+      if (btn) btn.classList.toggle('active', sudokuIsNotesActive);
+      UI.toast(sudokuIsNotesActive ? 'Pencil Notes Mode: Active' : 'Normal Entry Mode', 'info');
+    }
+
+    function useSudokuHint() {
+      if (!sudokuSelectedCell) {
+        UI.toast('Select an empty cell to receive a hint.', 'info');
+        return;
+      }
+      const { r, c } = sudokuSelectedCell;
+      if (sudokuGiven[r][c] || sudokuBoard[r][c] === sudokuSolution[r][c]) {
+        UI.toast('This cell is already correct!', 'info');
+        return;
+      }
+
+      if (sudokuHintsLeft <= 0) {
+        UI.toast('No hints remaining in this difficulty mode!', 'error');
+        return;
+      }
+
+      if (sudokuHintsLeft < 900) {
+        sudokuHintsLeft--;
+      }
+      updateSudokuHeaderBadges();
+
+      const correctVal = sudokuSolution[r][c];
+      sudokuBoard[r][c] = correctVal;
+      sudokuNotes[r][c].clear();
+
+      renderSudokuGrid();
+      renderSudokuNumpad();
+      UI.toast(`Hint used! Cell [${r + 1}, ${c + 1}] is ${correctVal}`, 'success');
+
+      checkSudokuCompletion();
+    }
+
+    function sudokuErase() {
+      if (!sudokuSelectedCell) return;
+      const { r, c } = sudokuSelectedCell;
+      if (sudokuGiven[r][c]) {
+        UI.toast('Given numbers cannot be erased.', 'info');
+        return;
+      }
+      const prevVal = sudokuBoard[r][c];
+      const prevNotes = new Set(sudokuNotes[r][c]);
+      sudokuBoard[r][c] = 0;
+      sudokuNotes[r][c].clear();
+      sudokuHistory.push({ r, c, prevVal, newVal: 0, prevNotes });
+      renderSudokuGrid();
+      renderSudokuNumpad();
+    }
+
+    function sudokuUndo() {
+      if (sudokuHistory.length === 0) {
+        UI.toast('No moves to undo.', 'info');
+        return;
+      }
+      const last = sudokuHistory.pop();
+      sudokuBoard[last.r][last.c] = last.prevVal;
+      sudokuNotes[last.r][last.c] = new Set(last.prevNotes);
+      selectSudokuCell(last.r, last.c);
+      renderSudokuGrid();
+      renderSudokuNumpad();
+      UI.toast('Move undone.', 'info');
+    }
+
+    function checkSudokuBoard() {
+      let errors = 0;
+      let filled = 0;
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (sudokuBoard[r][c] !== 0) {
+            filled++;
+            if (sudokuBoard[r][c] !== sudokuSolution[r][c]) errors++;
+          }
+        }
+      }
+      if (errors === 0 && filled === 81) {
+        checkSudokuCompletion();
+      } else if (errors === 0) {
+        UI.toast(`Great progress! All ${filled} placed numbers are correct so far.`, 'success');
+      } else {
+        UI.toast(`Found ${errors} misplaced number${errors > 1 ? 's' : ''}. Check carefully!`, 'error');
+      }
+    }
+
+    function checkSudokuCompletion() {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (sudokuBoard[r][c] !== sudokuSolution[r][c]) return;
+        }
+      }
+
+      // Solved!
+      clearInterval(sudokuTimerInterval);
+      const pointsMap = { training: 120, casual: 250, advanced: 450, pro: 700 };
+      const pts = pointsMap[sudokuMode] || 200;
+
+      addPoints(pts);
+      const d = loadGamesData();
+      d.sudokuWins = (d.sudokuWins || 0) + 1;
+      if (sudokuMode === 'advanced' || sudokuMode === 'pro') {
+        d.sudokuProWins = (d.sudokuProWins || 0) + 1;
+      }
+      saveGamesData(d);
+      checkAchievements();
+
+      UI.toast(`🎉 Incredible! You solved the Sudoku in ${formatMinSec(sudokuTimerSeconds)}! +${pts} pts`, 'success');
+      document.getElementById('sudokuStatusMsg').textContent = '🎉 Solved! Congratulations!';
+    }
+
+    // Keyboard support for Sudoku
+    document.addEventListener('keydown', (e) => {
+      const arena = document.getElementById('sudokuArena');
+      if (!arena || !arena.classList.contains('active')) return;
+
+      if (e.key >= '1' && e.key <= '9') {
+        handleSudokuInputNumber(parseInt(e.key, 10));
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        sudokuErase();
+      } else if (e.key.toLowerCase() === 'n') {
+        toggleSudokuNotes();
+      } else if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey)) {
+        sudokuUndo();
+      } else if (sudokuSelectedCell) {
+        const { r, c } = sudokuSelectedCell;
+        if (e.key === 'ArrowUp' && r > 0) selectSudokuCell(r - 1, c);
+        else if (e.key === 'ArrowDown' && r < 8) selectSudokuCell(r + 1, c);
+        else if (e.key === 'ArrowLeft' && c > 0) selectSudokuCell(r, c - 1);
+        else if (e.key === 'ArrowRight' && c < 8) selectSudokuCell(r, c + 1);
+      }
+    });
+
+    // ══════════════════════════════════════════════
+    // BILLIARDS ENGINE (8-BALL POOL: SOLO & AI TRAINING TO PRO)
+    // ══════════════════════════════════════════════
+    let billiardsMode = 'solo'; // 'solo' | 'training' | 'casual' | 'advanced' | 'pro'
+    let billiardsAnimId = null;
+    let billiardsStrokes = 0;
+    let billiardsTurn = 'player'; // 'player' | 'ai'
+    let billiardsTableStatus = 'open'; // 'open' | 'assigned'
+    let billiardsPlayerSuit = null; // 'solids' | 'stripes'
+    let billiardsAiSuit = null; // 'solids' | 'stripes'
+    let billiardsBallInHand = false;
+    let billiardsIsAiming = false;
+    let billiardsAimAngle = 0;
+    let billiardsPower = 50; // 10 to 100
+    let billiardsDragStart = null;
+    let billiardsBallsMoving = false;
+    let billiardsBallsPottedThisShot = [];
+    let billiardsCueBallScratch = false;
+    let billiardsAiThinking = false;
+
+    // Table geometry (Virtual canvas 900 x 480)
+    const TABLE = {
+      w: 900,
+      h: 480,
+      cushion: 42,
+      pocketRadius: 24,
+      ballRadius: 11,
+      friction: 0.988,
+      pockets: [
+        { x: 44, y: 44 },   // top-left
+        { x: 450, y: 38 },  // top-mid
+        { x: 856, y: 44 },  // top-right
+        { x: 44, y: 436 },  // bot-left
+        { x: 450, y: 442 }, // bot-mid
+        { x: 856, y: 436 }  // bot-right
+      ]
+    };
+
+    const BALL_COLORS = {
+      0: '#ffffff', // Cue
+      1: '#fbbf24', // Solid Yellow
+      2: '#3b82f6', // Solid Blue
+      3: '#ef4444', // Solid Red
+      4: '#a855f7', // Solid Purple
+      5: '#f97316', // Solid Orange
+      6: '#10b981', // Solid Green
+      7: '#881337', // Solid Maroon
+      8: '#0f172a', // Eight-Ball
+      9: '#fbbf24', // Stripe Yellow
+      10: '#3b82f6', // Stripe Blue
+      11: '#ef4444', // Stripe Red
+      12: '#a855f7', // Stripe Purple
+      13: '#f97316', // Stripe Orange
+      14: '#10b981', // Stripe Green
+      15: '#881337'  // Stripe Maroon
+    };
+
+    let billiardsBalls = [];
+
+    const BILLIARDS_CONFIGS = {
+      solo: { label: '🎯 Solo', desc: '🎯 <strong>Solo Practice:</strong> Free table play! Pot balls in any order and practice bank shots.' },
+      training: { label: '🟢 Training AI', desc: '🟢 <strong>Training AI:</strong> Relaxed beginner bot. Moderate shot variance, great for learning.' },
+      casual: { label: '🟡 Casual AI', desc: '🟡 <strong>Casual AI:</strong> Balanced intermediate play with good tactical shot selection.' },
+      advanced: { label: '🟠 Advanced AI', desc: '🟠 <strong>Advanced AI:</strong> Calculated positioning and sharp bank shot angles.' },
+      pro: { label: '🔴 Pro AI', desc: '🔴 <strong>Pro AI:</strong> Precision ghost-ball angle calculations and master run-outs!' }
+    };
+
+    function setBilliardsMode(mode) {
+      billiardsMode = mode;
+      document.querySelectorAll('#billiardsModePills .chess-mode-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      const cfg = BILLIARDS_CONFIGS[mode];
+      document.getElementById('billiardsModeText').innerHTML = cfg.desc;
+      document.getElementById('billiardsOpponentRackRow').style.display = (mode === 'solo') ? 'none' : 'flex';
+      initNewBilliardsRack();
+    }
+
+    function initBilliardsArena() {
+      const canvas = document.getElementById('billiardsCanvas');
+      if (!canvas) return;
+
+      // Mouse and touch interaction
+      canvas.onmousedown = onBilliardsMouseDown;
+      canvas.onmousemove = onBilliardsMouseMove;
+      window.onmouseup = onBilliardsMouseUp;
+
+      initNewBilliardsRack();
+      startBilliardsLoop();
+    }
+
+    function initNewBilliardsRack() {
+      billiardsStrokes = 0;
+      billiardsTurn = 'player';
+      billiardsTableStatus = 'open';
+      billiardsPlayerSuit = null;
+      billiardsAiSuit = null;
+      billiardsBallInHand = false;
+      billiardsBallsMoving = false;
+      billiardsIsAiming = false;
+      billiardsAiThinking = false;
+
+      document.getElementById('billiardsStrokesBadge').textContent = 'Strokes: 0';
+      document.getElementById('billiardsTurnBadge').textContent = '🟢 Your Turn';
+      document.getElementById('billiardsTurnBadge').style.color = '#10b981';
+      document.getElementById('billiardsStatusMain').textContent = 'Open Table';
+      document.getElementById('billiardsSubStatus').textContent = 'Aim at the cue ball and strike with desired power.';
+      document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+
+      updateBilliardsRacksUI();
+
+      // Create balls
+      billiardsBalls = [];
+
+      // Cue ball
+      billiardsBalls.push({
+        num: 0,
+        x: 230,
+        y: 240,
+        vx: 0,
+        vy: 0,
+        potted: false,
+        radius: TABLE.ballRadius,
+        color: BALL_COLORS[0]
+      });
+
+      // 15 Object balls in triangular pyramid rack
+      // Standard arrangement: 8-ball in center, corners one solid one stripe
+      const rackOrder = [
+        1,
+        10, 2,
+        3, 8, 11,
+        12, 4, 13, 5,
+        6, 14, 7, 15, 9
+      ];
+
+      const startX = 640;
+      const startY = 240;
+      const r = TABLE.ballRadius;
+      const dx = r * Math.sqrt(3) + 0.6;
+      const dy = r * 2 + 0.6;
+
+      let idx = 0;
+      for (let col = 0; col < 5; col++) {
+        for (let row = 0; row <= col; row++) {
+          const num = rackOrder[idx++];
+          const bx = startX + col * dx;
+          const by = startY - (col * dy / 2) + row * dy;
+          billiardsBalls.push({
+            num,
+            x: bx,
+            y: by,
+            vx: 0,
+            vy: 0,
+            potted: false,
+            radius: r,
+            color: BALL_COLORS[num]
+          });
+        }
+      }
+    }
+
+    function resetCueBallToKitchen() {
+      const cue = billiardsBalls[0];
+      cue.potted = false;
+      cue.x = 230;
+      cue.y = 240;
+      cue.vx = 0;
+      cue.vy = 0;
+      billiardsBallInHand = false;
+      document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+      UI.toast('Cue ball placed in kitchen.', 'info');
+    }
+
+    function updateBilliardsPowerSlider(val) {
+      billiardsPower = parseInt(val, 10);
+      document.getElementById('billiardsPowerPercent').textContent = `${billiardsPower}%`;
+      document.getElementById('billiardsPowerFill').style.width = `${billiardsPower}%`;
+    }
+
+    function billiardsShootWithButton() {
+      if (billiardsBallsMoving || billiardsTurn !== 'player' || billiardsAiThinking) return;
+      takeBilliardsShot(billiardsAimAngle, billiardsPower);
+    }
+
+    function takeBilliardsShot(angle, power) {
+      const cue = billiardsBalls[0];
+      if (cue.potted) {
+        resetCueBallToKitchen();
+      }
+
+      billiardsStrokes++;
+      document.getElementById('billiardsStrokesBadge').textContent = `Strokes: ${billiardsStrokes}`;
+
+      billiardsBallsPottedThisShot = [];
+      billiardsCueBallScratch = false;
+
+      // Speed proportional to power
+      const speed = (power / 100) * 22 + 4;
+      cue.vx = Math.cos(angle) * speed;
+      cue.vy = Math.sin(angle) * speed;
+
+      billiardsBallsMoving = true;
+      billiardsIsAiming = false;
+    }
+
+    function onBilliardsMouseDown(e) {
+      if (billiardsBallsMoving || billiardsTurn !== 'player' || billiardsAiThinking) return;
+      const rect = e.target.getBoundingClientRect();
+      const scaleX = TABLE.w / rect.width;
+      const scaleY = TABLE.h / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
+
+      // If ball in hand, allow placing cue ball behind head string (kitchen)
+      if (billiardsBallInHand) {
+        if (mx <= 270 && mx >= TABLE.cushion + TABLE.ballRadius && my >= TABLE.cushion + TABLE.ballRadius && my <= TABLE.h - TABLE.cushion - TABLE.ballRadius) {
+          const cue = billiardsBalls[0];
+          cue.x = mx;
+          cue.y = my;
+          cue.potted = false;
+          cue.vx = 0;
+          cue.vy = 0;
+          billiardsBallInHand = false;
+          document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+          UI.toast('Cue ball placed! Now take your shot.', 'success');
+        } else {
+          UI.toast('Must place cue ball behind the head string (left kitchen line).', 'info');
+        }
+        return;
+      }
+
+      billiardsDragStart = { x: mx, y: my };
+      billiardsIsAiming = true;
+    }
+
+    function onBilliardsMouseMove(e) {
+      const canvas = document.getElementById('billiardsCanvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = TABLE.w / rect.width;
+      const scaleY = TABLE.h / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
+
+      const cue = billiardsBalls[0];
+      if (cue.potted) return;
+
+      if (!billiardsDragStart) {
+        // Aim toward cursor
+        billiardsAimAngle = Math.atan2(my - cue.y, mx - cue.x);
+      } else {
+        // Dragging backwards charges power
+        const dx = cue.x - mx;
+        const dy = cue.y - my;
+        const dist = Math.hypot(dx, dy);
+        const p = Math.min(100, Math.max(10, Math.round((dist / 140) * 100)));
+        updateBilliardsPowerSlider(p);
+        billiardsAimAngle = Math.atan2(cue.y - my, cue.x - mx);
+      }
+    }
+
+    function onBilliardsMouseUp(e) {
+      if (!billiardsDragStart) return;
+      const cue = billiardsBalls[0];
+      if (billiardsIsAiming && !billiardsBallsMoving && billiardsTurn === 'player' && !cue.potted && !billiardsBallInHand) {
+        takeBilliardsShot(billiardsAimAngle, billiardsPower);
+      }
+      billiardsDragStart = null;
+      billiardsIsAiming = false;
+    }
+
+    // Billiards Main Physics Loop
+    function startBilliardsLoop() {
+      if (billiardsAnimId) cancelAnimationFrame(billiardsAnimId);
+
+      function loop() {
+        updateBilliardsPhysics();
+        drawBilliardsTable();
+        billiardsAnimId = requestAnimationFrame(loop);
+      }
+      billiardsAnimId = requestAnimationFrame(loop);
+    }
+
+    function updateBilliardsPhysics() {
+      const SUB_STEPS = 4;
+      let anyMoving = false;
+
+      for (let step = 0; step < SUB_STEPS; step++) {
+        // Move balls
+        for (let i = 0; i < billiardsBalls.length; i++) {
+          const b = billiardsBalls[i];
+          if (b.potted) continue;
+
+          b.x += b.vx / SUB_STEPS;
+          b.y += b.vy / SUB_STEPS;
+
+          b.vx *= Math.pow(TABLE.friction, 1 / SUB_STEPS);
+          b.vy *= Math.pow(TABLE.friction, 1 / SUB_STEPS);
+
+          if (Math.hypot(b.vx, b.vy) < 0.05) {
+            b.vx = 0;
+            b.vy = 0;
+          } else {
+            anyMoving = true;
+          }
+
+          // Check pocket sinking
+          for (const p of TABLE.pockets) {
+            const dist = Math.hypot(b.x - p.x, b.y - p.y);
+            if (dist < TABLE.pocketRadius) {
+              b.potted = true;
+              b.vx = 0;
+              b.vy = 0;
+              if (b.num === 0) {
+                billiardsCueBallScratch = true;
+              } else {
+                billiardsBallsPottedThisShot.push(b.num);
+              }
+              break;
+            }
+          }
+          if (b.potted) continue;
+
+          // Cushion bounce
+          const minX = TABLE.cushion + b.radius;
+          const maxX = TABLE.w - TABLE.cushion - b.radius;
+          const minY = TABLE.cushion + b.radius;
+          const maxY = TABLE.h - TABLE.cushion - b.radius;
+
+          if (b.x < minX) { b.x = minX; b.vx = -b.vx * 0.85; }
+          if (b.x > maxX) { b.x = maxX; b.vx = -b.vx * 0.85; }
+          if (b.y < minY) { b.y = minY; b.vy = -b.vy * 0.85; }
+          if (b.y > maxY) { b.y = maxY; b.vy = -b.vy * 0.85; }
+        }
+
+        // Ball to ball collision
+        for (let i = 0; i < billiardsBalls.length; i++) {
+          const b1 = billiardsBalls[i];
+          if (b1.potted) continue;
+
+          for (let j = i + 1; j < billiardsBalls.length; j++) {
+            const b2 = billiardsBalls[j];
+            if (b2.potted) continue;
+
+            const dx = b2.x - b1.x;
+            const dy = b2.y - b1.y;
+            const dist = Math.hypot(dx, dy);
+            const minDist = b1.radius + b2.radius;
+
+            if (dist < minDist && dist > 0) {
+              // Normal and tangent unit vectors
+              const nx = dx / dist;
+              const ny = dy / dist;
+
+              // Separate overlap
+              const overlap = (minDist - dist) / 2;
+              b1.x -= nx * overlap;
+              b1.y -= ny * overlap;
+              b2.x += nx * overlap;
+              b2.y += ny * overlap;
+
+              // Elastic impulse
+              const kx = b1.vx - b2.vx;
+              const ky = b1.vy - b2.vy;
+              const p = 2 * (nx * kx + ny * ky) / 2;
+
+              b1.vx -= p * nx * 0.96;
+              b1.vy -= p * ny * 0.96;
+              b2.vx += p * nx * 0.96;
+              b2.vy += p * ny * 0.96;
+            }
+          }
+        }
+      }
+
+      // Check if all balls stopped
+      if (billiardsBallsMoving && !anyMoving) {
+        billiardsBallsMoving = false;
+        handleBilliardsShotResolved();
+      }
+    }
+
+    function handleBilliardsShotResolved() {
+      updateBilliardsRacksUI();
+
+      // Handle scratch
+      if (billiardsCueBallScratch) {
+        billiardsCueBallScratch = false;
+        billiardsBallInHand = true;
+        document.getElementById('billiardsBallInHandAlert').style.display = 'block';
+        UI.toast('Scratch foul! Ball in hand in kitchen.', 'error');
+      }
+
+      // Check 8-Ball sink
+      const eightBall = billiardsBalls.find(b => b.num === 8);
+      if (eightBall.potted) {
+        handleEightBallPotted();
+        return;
+      }
+
+      // Assign suits if open table and ball potted
+      if (billiardsTableStatus === 'open' && billiardsBallsPottedThisShot.length > 0 && billiardsMode !== 'solo') {
+        const first = billiardsBallsPottedThisShot[0];
+        const isStripe = (first >= 9 && first <= 15);
+        if (billiardsTurn === 'player') {
+          billiardsPlayerSuit = isStripe ? 'stripes' : 'solids';
+          billiardsAiSuit = isStripe ? 'solids' : 'stripes';
+        } else {
+          billiardsAiSuit = isStripe ? 'stripes' : 'solids';
+          billiardsPlayerSuit = isStripe ? 'solids' : 'stripes';
+        }
+        billiardsTableStatus = 'assigned';
+        document.getElementById('billiardsStatusMain').textContent = `You: ${billiardsPlayerSuit.toUpperCase()} | AI: ${billiardsAiSuit.toUpperCase()}`;
+        UI.toast(`Suit assigned! You are ${billiardsPlayerSuit.toUpperCase()}`, 'info');
+      }
+
+      // Check turn switch for vs AI mode
+      if (billiardsMode !== 'solo') {
+        let switchTurn = true;
+        if (!billiardsBallInHand && billiardsBallsPottedThisShot.length > 0) {
+          // If potted own suit, keep turn
+          const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
+          if (!activeSuit || billiardsBallsPottedThisShot.some(n => (activeSuit === 'solids' ? n <= 7 : n >= 9))) {
+            switchTurn = false;
+          }
+        }
+
+        if (switchTurn) {
+          billiardsTurn = (billiardsTurn === 'player') ? 'ai' : 'player';
+        }
+
+        const badge = document.getElementById('billiardsTurnBadge');
+        if (billiardsTurn === 'player') {
+          badge.textContent = '🟢 Your Turn';
+          badge.style.color = '#10b981';
+          document.getElementById('billiardsSubStatus').textContent = 'Your turn. Line up your shot!';
+        } else {
+          badge.textContent = '🤖 AI Thinking...';
+          badge.style.color = '#f59e0b';
+          document.getElementById('billiardsSubStatus').textContent = 'AI is calculating shot trajectory...';
+          triggerBilliardsAiTurn();
+        }
+      }
+    }
+
+    function handleEightBallPotted() {
+      const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
+      let remainingOwn = 0;
+
+      if (activeSuit) {
+        remainingOwn = billiardsBalls.filter(b => !b.potted && b.num !== 0 && b.num !== 8 && (activeSuit === 'solids' ? b.num <= 7 : b.num >= 9)).length;
+      }
+
+      if (remainingOwn === 0 && !billiardsCueBallScratch) {
+        // Legitimate Win!
+        if (billiardsTurn === 'player' || billiardsMode === 'solo') {
+          const pts = billiardsMode === 'solo' ? 200 : (billiardsMode === 'pro' ? 600 : 350);
+          addPoints(pts);
+          const d = loadGamesData();
+          d.billiardsWins = (d.billiardsWins || 0) + 1;
+          saveGamesData(d);
+          checkAchievements();
+          UI.toast(`🏆 VICTORY! 8-Ball pocketed legally! +${pts} pts`, 'success');
+          document.getElementById('billiardsStatusMain').textContent = '🎉 You Won!';
+        } else {
+          UI.toast('AI won the match by potting the 8-Ball legally.', 'info');
+          document.getElementById('billiardsStatusMain').textContent = 'Match Over — AI Won';
+        }
+      } else {
+        // Premature 8-ball or scratched -> Loss
+        if (billiardsTurn === 'player') {
+          UI.toast('Defeat: 8-Ball pocketed prematurely or on foul.', 'error');
+          document.getElementById('billiardsStatusMain').textContent = 'Defeat — Early 8-Ball';
+        } else {
+          UI.toast('Victory! AI committed foul on 8-Ball!', 'success');
+          addPoints(250);
+          const d = loadGamesData();
+          d.billiardsWins = (d.billiardsWins || 0) + 1;
+          saveGamesData(d);
+          checkAchievements();
+          document.getElementById('billiardsStatusMain').textContent = '🎉 Victory — AI Fouled 8-Ball';
+        }
+      }
+    }
+
+    function triggerBilliardsAiTurn() {
+      if (billiardsAiThinking) return;
+      billiardsAiThinking = true;
+
+      setTimeout(() => {
+        const cue = billiardsBalls[0];
+        if (cue.potted) resetCueBallToKitchen();
+
+        // Find candidate target balls for AI
+        const candidates = billiardsBalls.filter(b => {
+          if (b.potted || b.num === 0) return false;
+          if (billiardsTableStatus === 'open') return b.num !== 8;
+          const targetSuit = billiardsAiSuit;
+          const remainingOwn = billiardsBalls.filter(ob => !ob.potted && ob.num !== 0 && ob.num !== 8 && (targetSuit === 'solids' ? ob.num <= 7 : ob.num >= 9)).length;
+          if (remainingOwn > 0) {
+            return targetSuit === 'solids' ? b.num <= 7 : b.num >= 9;
+          }
+          return b.num === 8;
+        });
+
+        if (candidates.length === 0) {
+          billiardsAiThinking = false;
+          return;
+        }
+
+        // Pick best ball & pocket according to AI mode difficulty
+        let bestTarget = candidates[0];
+        let bestPocket = TABLE.pockets[0];
+        let bestScore = -Infinity;
+
+        for (const ball of candidates) {
+          for (const pocket of TABLE.pockets) {
+            const dBallPocket = Math.hypot(pocket.x - ball.x, pocket.y - ball.y);
+            const dCueBall = Math.hypot(ball.x - cue.x, ball.y - cue.y);
+            const score = -(dBallPocket * 0.7 + dCueBall * 0.3);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = ball;
+              bestPocket = pocket;
+            }
+          }
+        }
+
+        // Ghost ball calculation
+        const toPocketAngle = Math.atan2(bestPocket.y - bestTarget.y, bestPocket.x - bestTarget.x);
+        const ghostX = bestTarget.x - Math.cos(toPocketAngle) * (TABLE.ballRadius * 2);
+        const ghostY = bestTarget.y - Math.sin(toPocketAngle) * (TABLE.ballRadius * 2);
+
+        let aimAngle = Math.atan2(ghostY - cue.y, ghostX - cue.x);
+
+        // Add error / variance based on AI difficulty
+        let variance = 0;
+        let aiPower = 55;
+
+        if (billiardsMode === 'training') {
+          variance = (Math.random() - 0.5) * 0.35; // +/- 10 deg
+          aiPower = 40 + Math.random() * 20;
+        } else if (billiardsMode === 'casual') {
+          variance = (Math.random() - 0.5) * 0.14; // +/- 4 deg
+          aiPower = 45 + Math.random() * 25;
+        } else if (billiardsMode === 'advanced') {
+          variance = (Math.random() - 0.5) * 0.05; // +/- 1.4 deg
+          aiPower = 50 + Math.random() * 30;
+        } else if (billiardsMode === 'pro') {
+          variance = (Math.random() - 0.5) * 0.015; // < 0.5 deg
+          aiPower = 60 + Math.random() * 25;
+        }
+
+        aimAngle += variance;
+        billiardsAimAngle = aimAngle;
+        updateBilliardsPowerSlider(Math.round(aiPower));
+
+        // Visual aiming delay before release
+        setTimeout(() => {
+          billiardsAiThinking = false;
+          takeBilliardsShot(aimAngle, aiPower);
+        }, 900);
+      }, 700);
+    }
+
+    function updateBilliardsRacksUI() {
+      const pRack = document.getElementById('billiardsPlayerRack');
+      const aiRack = document.getElementById('billiardsAiRack');
+      if (!pRack) return;
+
+      const pBalls = billiardsBalls.filter(b => b.potted && b.num !== 0);
+      pRack.innerHTML = pBalls.map(b => `
+        <span class="billiards-mini-ball" style="background:${BALL_COLORS[b.num]};">${b.num}</span>
+      `).join('') || '<span style="font-size:0.75rem;color:var(--text-muted);">None yet</span>';
+
+      if (aiRack) {
+        aiRack.innerHTML = pBalls.map(b => `
+          <span class="billiards-mini-ball" style="background:${BALL_COLORS[b.num]};">${b.num}</span>
+        `).join('') || '<span style="font-size:0.75rem;color:var(--text-muted);">None yet</span>';
+      }
+
+      if (billiardsPlayerSuit) {
+        document.getElementById('billiardsPlayerSuitType').textContent = billiardsPlayerSuit.toUpperCase();
+        if (document.getElementById('billiardsAiSuitType')) {
+          document.getElementById('billiardsAiSuitType').textContent = billiardsAiSuit ? billiardsAiSuit.toUpperCase() : 'None';
+        }
+      }
+    }
+
+    function drawBilliardsTable() {
+      const canvas = document.getElementById('billiardsCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      // Table felt background
+      ctx.fillStyle = '#0f4c3a';
+      ctx.fillRect(0, 0, TABLE.w, TABLE.h);
+
+      // Subtle baize felt radial lighting gradient
+      const feltGrad = ctx.createRadialGradient(TABLE.w / 2, TABLE.h / 2, 80, TABLE.w / 2, TABLE.h / 2, 450);
+      feltGrad.addColorStop(0, '#15614a');
+      feltGrad.addColorStop(1, '#0c382b');
+      ctx.fillStyle = feltGrad;
+      ctx.fillRect(TABLE.cushion, TABLE.cushion, TABLE.w - TABLE.cushion * 2, TABLE.h - TABLE.cushion * 2);
+
+      // Head string line & spot
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(270, TABLE.cushion);
+      ctx.lineTo(270, TABLE.h - TABLE.cushion);
+      ctx.stroke();
+
+      // Foot spot
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.arc(640, 240, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Table cushions (wood rails border with gradient)
+      ctx.fillStyle = '#26170d';
+      ctx.fillRect(0, 0, TABLE.w, TABLE.cushion); // top
+      ctx.fillRect(0, TABLE.h - TABLE.cushion, TABLE.w, TABLE.cushion); // bottom
+      ctx.fillRect(0, 0, TABLE.cushion, TABLE.h); // left
+      ctx.fillRect(TABLE.w - TABLE.cushion, 0, TABLE.cushion, TABLE.h); // right
+
+      // Diamond sights on rails
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      const diamondCoords = [
+        [225, 20], [450, 20], [675, 20],
+        [225, 460], [450, 460], [675, 460],
+        [20, 160], [20, 320],
+        [880, 160], [880, 320]
+      ];
+      for (const [dx, dy] of diamondCoords) {
+        ctx.beginPath();
+        ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw 6 pockets
+      for (const p of TABLE.pockets) {
+        ctx.fillStyle = '#05070a';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, TABLE.pocketRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Draw balls
+      for (const b of billiardsBalls) {
+        if (b.potted) continue;
+
+        // Ball shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.beginPath();
+        ctx.arc(b.x + 2, b.y + 2, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ball base color
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Stripes styling
+        if (b.num >= 9 && b.num <= 15) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.radius - 2.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = b.color;
+          ctx.fillRect(b.x - b.radius + 2, b.y - 3, (b.radius - 2) * 2, 6);
+        }
+
+        // Center white circle for numbers 1-15
+        if (b.num !== 0) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 7px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.num.toString(), b.x, b.y + 0.5);
+        }
+
+        // 3D reflection highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.arc(b.x - 3, b.y - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw Cue Stick & Aim Line
+      const cue = billiardsBalls[0];
+      if (!cue.potted && !billiardsBallsMoving && (billiardsTurn === 'player' || billiardsAiThinking)) {
+        // Dotted aim line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cue.x, cue.y);
+        ctx.lineTo(cue.x + Math.cos(billiardsAimAngle) * 350, cue.y + Math.sin(billiardsAimAngle) * 350);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Cue stick graphic
+        const pullDist = 15 + (billiardsPower / 100) * 35;
+        const stickStartX = cue.x - Math.cos(billiardsAimAngle) * (TABLE.ballRadius + pullDist);
+        const stickStartY = cue.y - Math.sin(billiardsAimAngle) * (TABLE.ballRadius + pullDist);
+        const stickEndX = stickStartX - Math.cos(billiardsAimAngle) * 180;
+        const stickEndY = stickStartY - Math.sin(billiardsAimAngle) * 180;
+
+        // Wooden cue stick body
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(stickStartX, stickStartY);
+        ctx.lineTo(stickEndX, stickEndY);
+        ctx.stroke();
+
+        // Cue tip
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(stickStartX, stickStartY);
+        ctx.lineTo(stickStartX - Math.cos(billiardsAimAngle) * 8, stickStartY - Math.sin(billiardsAimAngle) * 8);
+        ctx.stroke();
+      }
+    }
+  </script>
+</body>
+</html>

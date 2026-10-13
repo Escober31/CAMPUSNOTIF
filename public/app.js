@@ -399,7 +399,7 @@ const Auth = {
   },
 
   // Strict authentication: must exist in registered users and credentials must match
-  authenticate(email, password, role) {
+  authenticate(email, password, role, remember = true) {
     if (!email || !password) {
       return { success: false, message: 'Please enter both email and password.' };
     }
@@ -435,19 +435,28 @@ const Auth = {
     this.updateUserInStore(user);
     this.addLoginLog(user);
 
-    localStorage.setItem('campusnotify_user', JSON.stringify(user));
-    localStorage.setItem('campusnotify_role', user.role);
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('campusnotify_user', JSON.stringify(user));
+    storage.setItem('campusnotify_role', user.role);
+    if (remember) {
+      sessionStorage.removeItem('campusnotify_user');
+      sessionStorage.removeItem('campusnotify_role');
+    } else {
+      localStorage.removeItem('campusnotify_user');
+      localStorage.removeItem('campusnotify_role');
+    }
 
     return { success: true, user };
   },
 
-  loginWithUser(user) {
+  loginWithUser(user, remember = true) {
     user.lastLogin = new Date().toISOString();
     this.updateUserInStore(user);
     this.addLoginLog(user);
 
-    localStorage.setItem('campusnotify_user', JSON.stringify(user));
-    localStorage.setItem('campusnotify_role', user.role);
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('campusnotify_user', JSON.stringify(user));
+    storage.setItem('campusnotify_role', user.role);
     window.location.href = 'dashboard.html';
   },
 
@@ -481,7 +490,12 @@ const Auth = {
     const current = this.getUser();
     if (!current) return null;
     const merged = { ...current, ...updatedFields };
-    localStorage.setItem('campusnotify_user', JSON.stringify(merged));
+    if (localStorage.getItem('campusnotify_user')) {
+      localStorage.setItem('campusnotify_user', JSON.stringify(merged));
+    }
+    if (sessionStorage.getItem('campusnotify_user')) {
+      sessionStorage.setItem('campusnotify_user', JSON.stringify(merged));
+    }
     this.updateUserInStore(merged);
     return merged;
   },
@@ -489,20 +503,22 @@ const Auth = {
   logout() {
     localStorage.removeItem('campusnotify_user');
     localStorage.removeItem('campusnotify_role');
+    sessionStorage.removeItem('campusnotify_user');
+    sessionStorage.removeItem('campusnotify_role');
     window.location.href = 'login.html';
   },
 
   getUser() {
-    const data = localStorage.getItem('campusnotify_user');
+    const data = sessionStorage.getItem('campusnotify_user') || localStorage.getItem('campusnotify_user');
     return data ? JSON.parse(data) : null;
   },
 
   getRole() {
-    return localStorage.getItem('campusnotify_role') || 'student';
+    return sessionStorage.getItem('campusnotify_role') || localStorage.getItem('campusnotify_role') || 'student';
   },
 
   isLoggedIn() {
-    return !!localStorage.getItem('campusnotify_user');
+    return !!(sessionStorage.getItem('campusnotify_user') || localStorage.getItem('campusnotify_user'));
   },
 
   requireAuth() {
@@ -1257,6 +1273,10 @@ function renderSidebar(activePage) {
             Events & Alerts
             ${unreadCount > 0 ? `<span class="nav-badge">${unreadCount}</span>` : ''}
           </a>
+          <a href="games.html" class="nav-item ${activePage === 'games' ? 'active' : ''}" id="nav-games">
+            <span class="nav-icon">🎮</span>
+            Games
+          </a>
           ` : `
           <a href="campus-hub.html" class="nav-item ${activePage === 'campus-hub' ? 'active' : ''}" id="nav-campus-hub">
             <span class="nav-icon">📢</span>
@@ -1266,6 +1286,10 @@ function renderSidebar(activePage) {
           <a href="my-activity.html" class="nav-item ${activePage === 'my-activity' ? 'active' : ''}" id="nav-my-activity">
             <span class="nav-icon">⭐</span>
             My Activity
+          </a>
+          <a href="games.html" class="nav-item ${activePage === 'games' ? 'active' : ''}" id="nav-games">
+            <span class="nav-icon">🎮</span>
+            Games
           </a>
           `}
         </div>
