@@ -588,6 +588,9 @@
               <button class="chess-mode-pill" data-mode="pro" onclick="setBilliardsMode('pro')">🔴 Pro AI</button>
             </div>
             <div class="flex items-center gap-md" style="margin-left:auto;">
+              <button class="chess-btn" onclick="openBilliardsRulesModal()" style="padding:4px 10px;font-size:0.75rem;border-color:rgba(255,255,255,0.25);">
+                <span>📋</span> Rules
+              </button>
               <span class="games-pill" id="billiardsTurnBadge" style="color:#10b981;font-weight:700;">🟢 Your Turn</span>
               <span class="games-pill" id="billiardsStrokesBadge">Strokes: 0</span>
             </div>
@@ -604,9 +607,10 @@
               <div class="billiards-table-container">
                 <canvas id="billiardsCanvas" width="900" height="480" class="billiards-canvas"></canvas>
               </div>
-              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.6rem;display:flex;justify-content:space-between;">
-                <span>💡 <strong>Controls:</strong> Aim with mouse. Click & drag backward from cue ball to pull back cue stick, or use power slider.</span>
-                <span id="billiardsBallInHandAlert" style="color:#38bdf8;font-weight:700;display:none;">🎯 Ball in Hand: Click anywhere behind kitchen line</span>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.6rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span>💡 <strong>Controls:</strong> Aim with mouse. Drag backward & release or use power slider. When on 8-ball, click any pocket to designate!</span>
+                <span id="billiardsBallInHandAlert" style="color:#38bdf8;font-weight:700;display:none;">🎯 Ball in Hand: Click anywhere on table to place cue ball</span>
+                <span id="billiardsDesignatedAlert" style="color:#f59e0b;font-weight:700;display:none;">⭐ On 8-Ball: Target Pocket: <strong id="billiardsDesignatedTargetName">Top-Right</strong></span>
               </div>
             </div>
 
@@ -622,11 +626,29 @@
                 </div>
               </div>
 
+              <!-- Designated Pocket Selector (Active when on 8-Ball) -->
+              <div class="chess-status-card" id="billiardsPocketPickerCard" style="display:none;background:rgba(245, 158, 11, 0.1);border-color:rgba(245, 158, 11, 0.35);">
+                <div class="chess-status-title" style="color:#f59e0b;display:flex;align-items:center;gap:6px;">
+                  <span>⭐</span> 8-Ball Designated Pocket
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">
+                  Select pocket to sink the 8-ball into (or click on table):
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="billiardsPocketButtons">
+                  <button class="chess-btn" id="btnPocket0" onclick="setBilliardsDesignatedPocket(0)">Top-Left</button>
+                  <button class="chess-btn" id="btnPocket1" onclick="setBilliardsDesignatedPocket(1)">Top-Center</button>
+                  <button class="chess-btn active" id="btnPocket2" onclick="setBilliardsDesignatedPocket(2)">Top-Right</button>
+                  <button class="chess-btn" id="btnPocket3" onclick="setBilliardsDesignatedPocket(3)">Bottom-Left</button>
+                  <button class="chess-btn" id="btnPocket4" onclick="setBilliardsDesignatedPocket(4)">Bottom-Center</button>
+                  <button class="chess-btn" id="btnPocket5" onclick="setBilliardsDesignatedPocket(5)">Bottom-Right</button>
+                </div>
+              </div>
+
               <!-- Potted Racks -->
               <div class="billiards-racks">
                 <div class="billiards-rack-row">
                   <div>
-                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsPlayerSuitLabel">Player Balls</span>
+                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsPlayerSuitLabel">Player Group</span>
                     <div style="font-size:0.7rem;color:var(--text-muted);" id="billiardsPlayerSuitType">Any (Open)</div>
                   </div>
                   <div class="billiards-rack-balls" id="billiardsPlayerRack"></div>
@@ -634,7 +656,7 @@
 
                 <div class="billiards-rack-row" id="billiardsOpponentRackRow">
                   <div>
-                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsAiSuitLabel">Opponent Balls</span>
+                    <span style="font-size:0.8rem;font-weight:700;color:var(--text-primary);" id="billiardsAiSuitLabel">Opponent Group</span>
                     <div style="font-size:0.7rem;color:var(--text-muted);" id="billiardsAiSuitType">Any (Open)</div>
                   </div>
                   <div class="billiards-rack-balls" id="billiardsAiRack"></div>
@@ -664,7 +686,74 @@
                 <button class="chess-btn" onclick="resetCueBallToKitchen()">
                   <span>⚪</span> Reset Cue Ball
                 </button>
+                <button class="chess-btn" id="btnForceAiShot" onclick="triggerAiBreakShot()" style="grid-column: span 2; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4);">
+                  <span>🤖</span> Let AI Shoot
+                </button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ BILLIARDS RULES MODAL ═══════════════ -->
+        <div class="modal-overlay" id="billiardsRulesModal" onclick="if(event.target===this)closeBilliardsRulesModal()">
+          <div class="modal" style="max-width: 640px;">
+            <div class="modal-header">
+              <h3 style="display:flex;align-items:center;gap:8px;margin:0;font-size:1.15rem;">
+                <span>🎱</span> Campus 8-Ball Pool Rules
+              </h3>
+              <button onclick="closeBilliardsRulesModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;font-size:0.875rem;line-height:1.6;color:var(--text-secondary);max-height:70vh;overflow-y:auto;">
+              
+              <!-- The Goal -->
+              <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:1rem;">
+                <h4 style="margin:0 0 6px 0;color:var(--text-primary);display:flex;align-items:center;gap:6px;font-size:0.95rem;">
+                  <span>🎱</span> The Goal
+                </h4>
+                <p style="margin:0;">The objective is to pocket all of your assigned group of balls (either <strong>Solids [1-7]</strong> or <strong>Stripes [9-15]</strong>) and then legally pocket the <strong>8-ball (black ball)</strong> into a designated pocket to win the game.</p>
+              </div>
+
+              <!-- Simple Rules of Play -->
+              <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:1rem;">
+                <h4 style="margin:0 0 8px 0;color:var(--text-primary);display:flex;align-items:center;gap:6px;font-size:0.95rem;">
+                  <span>📋</span> Simple Rules of Play
+                </h4>
+                <ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:6px;">
+                  <li><strong>The Break:</strong> One player hits the stacked triangle of balls to start the game. If any balls go into a pocket on the break, the table is still "open" until a player cleanly pockets a specific ball to claim their group.</li>
+                  <li><strong>Choosing Groups:</strong> The first player to legally pocket a ball after the break chooses that group for the rest of the game. For example, if you pocket a Solid, you are "Solids" and your opponent is "Stripes."</li>
+                  <li><strong>Taking Turns:</strong> You keep shooting as long as you legally pocket a ball from your own group. If you miss or commit a foul, it becomes your opponent's turn.</li>
+                  <li><strong>Hitting Your Group First:</strong> On every shot, the cue ball (white ball) must hit one of your own balls first. If it hits an opponent's ball first, or hits nothing at all, it is a foul.</li>
+                </ul>
+              </div>
+
+              <!-- Common Fouls & Penalties -->
+              <div style="background:rgba(239, 68, 68, 0.08);border:1px solid rgba(239, 68, 68, 0.25);border-radius:var(--radius-md);padding:1rem;">
+                <h4 style="margin:0 0 8px 0;color:#ef4444;display:flex;align-items:center;gap:6px;font-size:0.95rem;">
+                  <span>⚠️</span> Common Fouls & Penalties
+                </h4>
+                <p style="margin:0 0 8px 0;">When a player commits a foul, the opponent gets <strong>"Ball in Hand"</strong>. This means they can pick up the white cue ball and place it <strong>anywhere on the table</strong> for their next shot.</p>
+                <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;">A foul happens if:</div>
+                <ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:4px;">
+                  <li>The cue ball goes into a pocket (called scratching).</li>
+                  <li>The cue ball does not touch any ball on the table.</li>
+                  <li>The cue ball hits the opponent’s ball or the 8-ball first.</li>
+                </ul>
+              </div>
+
+              <!-- Winning and Losing -->
+              <div style="background:rgba(16, 185, 129, 0.08);border:1px solid rgba(16, 185, 129, 0.25);border-radius:var(--radius-md);padding:1rem;">
+                <h4 style="margin:0 0 8px 0;color:#10b981;display:flex;align-items:center;gap:6px;font-size:0.95rem;">
+                  <span>🏆</span> Winning and Losing
+                </h4>
+                <ul style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:6px;">
+                  <li><strong>How to Win:</strong> Once you have pocketed all 7 of your group's balls (Solids or Stripes), you must pocket the black 8-ball into a <strong>designated pocket</strong> to win.</li>
+                  <li><strong>Instant Loss:</strong> You lose the game instantly if you pocket the 8-ball before clearing your group, or if you scratch (pocket the white cue ball) on the same turn that you pocket the 8-ball, or if you pocket the 8-ball into the wrong pocket.</li>
+                </ul>
+              </div>
+
+            </div>
+            <div class="modal-footer" style="justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="closeBilliardsRulesModal()">Got it, Let's Play!</button>
             </div>
           </div>
         </div>
@@ -2061,6 +2150,17 @@
     let billiardsBallsPottedThisShot = [];
     let billiardsCueBallScratch = false;
     let billiardsAiThinking = false;
+    let billiardsDesignatedPocket = 2; // Default: Top-Right (Index 2)
+    let billiardsMousePos = { x: 230, y: 240 };
+
+    const POCKET_NAMES = [
+      'Top-Left',
+      'Top-Center',
+      'Top-Right',
+      'Bottom-Left',
+      'Bottom-Center',
+      'Bottom-Right'
+    ];
 
     // Table geometry (Virtual canvas 900 x 480)
     const TABLE = {
@@ -2071,12 +2171,12 @@
       ballRadius: 11,
       friction: 0.988,
       pockets: [
-        { x: 44, y: 44 },   // top-left
-        { x: 450, y: 38 },  // top-mid
-        { x: 856, y: 44 },  // top-right
-        { x: 44, y: 436 },  // bot-left
-        { x: 450, y: 442 }, // bot-mid
-        { x: 856, y: 436 }  // bot-right
+        { x: 44, y: 44, name: 'Top-Left' },      // 0
+        { x: 450, y: 38, name: 'Top-Center' },    // 1
+        { x: 856, y: 44, name: 'Top-Right' },     // 2
+        { x: 44, y: 436, name: 'Bottom-Left' },   // 3
+        { x: 450, y: 442, name: 'Bottom-Center' },// 4
+        { x: 856, y: 436, name: 'Bottom-Right' }  // 5
       ]
     };
 
@@ -2120,11 +2220,59 @@
       initNewBilliardsRack();
     }
 
+    function openBilliardsRulesModal() {
+      const modal = document.getElementById('billiardsRulesModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeBilliardsRulesModal() {
+      const modal = document.getElementById('billiardsRulesModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function setBilliardsDesignatedPocket(idx) {
+      if (idx < 0 || idx >= 6) return;
+      billiardsDesignatedPocket = idx;
+      const targetLabel = document.getElementById('billiardsDesignatedTargetName');
+      if (targetLabel) targetLabel.textContent = POCKET_NAMES[idx];
+
+      for (let i = 0; i < 6; i++) {
+        const btn = document.getElementById(`btnPocket${i}`);
+        if (btn) btn.classList.toggle('active', i === idx);
+      }
+      UI.toast(`🎯 Designated Pocket set to: ${POCKET_NAMES[idx]}`, 'info');
+    }
+
+    function isPlayerOnEightBall() {
+      if (billiardsTableStatus !== 'assigned' || !billiardsPlayerSuit) return false;
+      return billiardsBalls.filter(b => !b.potted && b.num !== 0 && b.num !== 8 && (billiardsPlayerSuit === 'solids' ? b.num <= 7 : b.num >= 9)).length === 0;
+    }
+
+    function isAiOnEightBall() {
+      if (billiardsTableStatus !== 'assigned' || !billiardsAiSuit) return false;
+      return billiardsBalls.filter(b => !b.potted && b.num !== 0 && b.num !== 8 && (billiardsAiSuit === 'solids' ? b.num <= 7 : b.num >= 9)).length === 0;
+    }
+
+    function isBilliardsCuePlacementValid(x, y) {
+      const r = TABLE.ballRadius;
+      const minX = TABLE.cushion + r + 2;
+      const maxX = TABLE.w - TABLE.cushion - r - 2;
+      const minY = TABLE.cushion + r + 2;
+      const maxY = TABLE.h - TABLE.cushion - r - 2;
+      if (x < minX || x > maxX || y < minY || y > maxY) return false;
+
+      // Must not overlap any other unpotted ball
+      for (const b of billiardsBalls) {
+        if (b.num === 0 || b.potted) continue;
+        if (Math.hypot(b.x - x, b.y - y) < r * 2 + 2) return false;
+      }
+      return true;
+    }
+
     function initBilliardsArena() {
       const canvas = document.getElementById('billiardsCanvas');
       if (!canvas) return;
 
-      // Mouse and touch interaction
       canvas.onmousedown = onBilliardsMouseDown;
       canvas.onmousemove = onBilliardsMouseMove;
       window.onmouseup = onBilliardsMouseUp;
@@ -2132,6 +2280,15 @@
       initNewBilliardsRack();
       startBilliardsLoop();
     }
+
+    let billiardsLockedAngle = 0;
+    let billiardsIsMouseDown = false;
+    let billiardsCueStrikeOffset = 0;
+    let billiardsShotMovingFrames = 0;
+    let billiardsIsBreakShot = true;
+    let billiardsPlayerPotted = [];
+    let billiardsAiPotted = [];
+    let billiardsFirstBallHitByCue = null;
 
     function initNewBilliardsRack() {
       billiardsStrokes = 0;
@@ -2142,21 +2299,38 @@
       billiardsBallInHand = false;
       billiardsBallsMoving = false;
       billiardsIsAiming = false;
+      billiardsIsMouseDown = false;
       billiardsAiThinking = false;
+      billiardsAimAngle = 0;
+      billiardsLockedAngle = 0;
+      billiardsCueStrikeOffset = 0;
+      billiardsIsBreakShot = true;
+      billiardsPlayerPotted = [];
+      billiardsAiPotted = [];
+      billiardsFirstBallHitByCue = null;
+      billiardsDesignatedPocket = 2; // Default top-right
 
       document.getElementById('billiardsStrokesBadge').textContent = 'Strokes: 0';
-      document.getElementById('billiardsTurnBadge').textContent = '🟢 Your Turn';
+      document.getElementById('billiardsTurnBadge').textContent = '🟢 Your Turn (Break)';
       document.getElementById('billiardsTurnBadge').style.color = '#10b981';
-      document.getElementById('billiardsStatusMain').textContent = 'Open Table';
-      document.getElementById('billiardsSubStatus').textContent = 'Aim at the cue ball and strike with desired power.';
+      document.getElementById('billiardsStatusMain').textContent = 'Open Table (Break)';
+      document.getElementById('billiardsSubStatus').textContent = 'Hit the triangle rack to start the break shot!';
       document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+      document.getElementById('billiardsDesignatedAlert').style.display = 'none';
+      document.getElementById('billiardsPocketPickerCard').style.display = 'none';
 
+      document.getElementById('billiardsPlayerSuitType').textContent = 'Open (TBD)';
+      if (document.getElementById('billiardsAiSuitType')) {
+        document.getElementById('billiardsAiSuitType').textContent = 'Open (TBD)';
+      }
+
+      setBilliardsDesignatedPocket(2);
       updateBilliardsRacksUI();
 
       // Create balls
       billiardsBalls = [];
 
-      // Cue ball
+      // Cue ball at position (230, 240)
       billiardsBalls.push({
         num: 0,
         x: 230,
@@ -2169,7 +2343,6 @@
       });
 
       // 15 Object balls in triangular pyramid rack
-      // Standard arrangement: 8-ball in center, corners one solid one stripe
       const rackOrder = [
         1,
         10, 2,
@@ -2238,14 +2411,20 @@
 
       billiardsBallsPottedThisShot = [];
       billiardsCueBallScratch = false;
+      billiardsShotMovingFrames = 0;
+      billiardsFirstBallHitByCue = null;
 
-      // Speed proportional to power
-      const speed = (power / 100) * 22 + 4;
-      cue.vx = Math.cos(angle) * speed;
-      cue.vy = Math.sin(angle) * speed;
+      // Animate cue strike forward over 50ms
+      billiardsCueStrikeOffset = 18;
+      setTimeout(() => {
+        billiardsCueStrikeOffset = 0;
+        const speed = (power / 100) * 20 + 3.5;
+        cue.vx = Math.cos(angle) * speed;
+        cue.vy = Math.sin(angle) * speed;
 
-      billiardsBallsMoving = true;
-      billiardsIsAiming = false;
+        billiardsBallsMoving = true;
+        billiardsIsAiming = false;
+      }, 50);
     }
 
     function onBilliardsMouseDown(e) {
@@ -2256,9 +2435,20 @@
       const mx = (e.clientX - rect.left) * scaleX;
       const my = (e.clientY - rect.top) * scaleY;
 
-      // If ball in hand, allow placing cue ball behind head string (kitchen)
+      // When on 8-ball, check if player clicked a pocket to designate it
+      if (isPlayerOnEightBall()) {
+        for (let i = 0; i < TABLE.pockets.length; i++) {
+          const p = TABLE.pockets[i];
+          if (Math.hypot(mx - p.x, my - p.y) < TABLE.pocketRadius * 1.8) {
+            setBilliardsDesignatedPocket(i);
+            return;
+          }
+        }
+      }
+
+      // If ball in hand, allow placing cue ball anywhere on the table inside cushions
       if (billiardsBallInHand) {
-        if (mx <= 270 && mx >= TABLE.cushion + TABLE.ballRadius && my >= TABLE.cushion + TABLE.ballRadius && my <= TABLE.h - TABLE.cushion - TABLE.ballRadius) {
+        if (isBilliardsCuePlacementValid(mx, my)) {
           const cue = billiardsBalls[0];
           cue.x = mx;
           cue.y = my;
@@ -2267,13 +2457,16 @@
           cue.vy = 0;
           billiardsBallInHand = false;
           document.getElementById('billiardsBallInHandAlert').style.display = 'none';
-          UI.toast('Cue ball placed! Now take your shot.', 'success');
+          UI.toast('Cue ball placed on table! Aim your shot.', 'success');
         } else {
-          UI.toast('Must place cue ball behind the head string (left kitchen line).', 'info');
+          UI.toast('Cannot place cue ball here (outside table boundaries or overlapping an object ball).', 'info');
         }
         return;
       }
 
+      // Lock current aim angle so stick NEVER flips on hold or drag
+      billiardsIsMouseDown = true;
+      billiardsLockedAngle = billiardsAimAngle;
       billiardsDragStart = { x: mx, y: my };
       billiardsIsAiming = true;
     }
@@ -2286,35 +2479,50 @@
       const scaleY = TABLE.h / rect.height;
       const mx = (e.clientX - rect.left) * scaleX;
       const my = (e.clientY - rect.top) * scaleY;
+      billiardsMousePos = { x: mx, y: my };
 
       const cue = billiardsBalls[0];
       if (cue.potted) return;
 
-      if (!billiardsDragStart) {
-        // Aim toward cursor
+      if (billiardsBallInHand) {
+        // Will render ghost cue ball following cursor
+        return;
+      }
+
+      if (!billiardsIsMouseDown) {
+        // Free aiming: aim directly from cue ball toward cursor
         billiardsAimAngle = Math.atan2(my - cue.y, mx - cue.x);
       } else {
-        // Dragging backwards charges power
-        const dx = cue.x - mx;
-        const dy = cue.y - my;
-        const dist = Math.hypot(dx, dy);
-        const p = Math.min(100, Math.max(10, Math.round((dist / 140) * 100)));
-        updateBilliardsPowerSlider(p);
-        billiardsAimAngle = Math.atan2(cue.y - my, cue.x - mx);
+        // MOUSE IS DOWN / HOLDING: Aim angle is strictly LOCKED to billiardsLockedAngle
+        const forwardX = Math.cos(billiardsLockedAngle);
+        const forwardY = Math.sin(billiardsLockedAngle);
+
+        const deltaX = mx - billiardsDragStart.x;
+        const deltaY = my - billiardsDragStart.y;
+        const pull = -(deltaX * forwardX + deltaY * forwardY);
+        const dragDist = Math.hypot(deltaX, deltaY);
+
+        const effectivePull = Math.max(pull, dragDist * 0.75);
+        if (effectivePull > 6) {
+          const p = Math.min(100, Math.max(10, Math.round((effectivePull / 130) * 100)));
+          updateBilliardsPowerSlider(p);
+        }
       }
     }
 
     function onBilliardsMouseUp(e) {
-      if (!billiardsDragStart) return;
+      if (!billiardsIsMouseDown) return;
+      billiardsIsMouseDown = false;
+
       const cue = billiardsBalls[0];
-      if (billiardsIsAiming && !billiardsBallsMoving && billiardsTurn === 'player' && !cue.potted && !billiardsBallInHand) {
-        takeBilliardsShot(billiardsAimAngle, billiardsPower);
+      if (!billiardsBallsMoving && billiardsTurn === 'player' && !cue.potted && !billiardsBallInHand) {
+        takeBilliardsShot(billiardsLockedAngle, billiardsPower);
       }
       billiardsDragStart = null;
       billiardsIsAiming = false;
     }
 
-    // Billiards Main Physics Loop
+    // Main Physics Loop
     function startBilliardsLoop() {
       if (billiardsAnimId) cancelAnimationFrame(billiardsAnimId);
 
@@ -2330,6 +2538,10 @@
       const SUB_STEPS = 4;
       let anyMoving = false;
 
+      if (billiardsBallsMoving) {
+        billiardsShotMovingFrames++;
+      }
+
       for (let step = 0; step < SUB_STEPS; step++) {
         // Move balls
         for (let i = 0; i < billiardsBalls.length; i++) {
@@ -2342,7 +2554,8 @@
           b.vx *= Math.pow(TABLE.friction, 1 / SUB_STEPS);
           b.vy *= Math.pow(TABLE.friction, 1 / SUB_STEPS);
 
-          if (Math.hypot(b.vx, b.vy) < 0.05) {
+          // Velocity cutoff deadband
+          if (Math.hypot(b.vx, b.vy) < 0.08) {
             b.vx = 0;
             b.vy = 0;
           } else {
@@ -2350,7 +2563,8 @@
           }
 
           // Check pocket sinking
-          for (const p of TABLE.pockets) {
+          for (let pIdx = 0; pIdx < TABLE.pockets.length; pIdx++) {
+            const p = TABLE.pockets[pIdx];
             const dist = Math.hypot(b.x - p.x, b.y - p.y);
             if (dist < TABLE.pocketRadius) {
               b.potted = true;
@@ -2359,23 +2573,28 @@
               if (b.num === 0) {
                 billiardsCueBallScratch = true;
               } else {
-                billiardsBallsPottedThisShot.push(b.num);
+                billiardsBallsPottedThisShot.push({ num: b.num, pocket: pIdx });
+                if (billiardsTurn === 'player') {
+                  if (!billiardsPlayerPotted.includes(b.num)) billiardsPlayerPotted.push(b.num);
+                } else {
+                  if (!billiardsAiPotted.includes(b.num)) billiardsAiPotted.push(b.num);
+                }
               }
               break;
             }
           }
           if (b.potted) continue;
 
-          // Cushion bounce
+          // Cushion bounce with direction check
           const minX = TABLE.cushion + b.radius;
           const maxX = TABLE.w - TABLE.cushion - b.radius;
           const minY = TABLE.cushion + b.radius;
           const maxY = TABLE.h - TABLE.cushion - b.radius;
 
-          if (b.x < minX) { b.x = minX; b.vx = -b.vx * 0.85; }
-          if (b.x > maxX) { b.x = maxX; b.vx = -b.vx * 0.85; }
-          if (b.y < minY) { b.y = minY; b.vy = -b.vy * 0.85; }
-          if (b.y > maxY) { b.y = maxY; b.vy = -b.vy * 0.85; }
+          if (b.x < minX) { b.x = minX; if (b.vx < 0) b.vx = -b.vx * 0.85; }
+          if (b.x > maxX) { b.x = maxX; if (b.vx > 0) b.vx = -b.vx * 0.85; }
+          if (b.y < minY) { b.y = minY; if (b.vy < 0) b.vy = -b.vy * 0.85; }
+          if (b.y > maxY) { b.y = maxY; if (b.vy > 0) b.vy = -b.vy * 0.85; }
         }
 
         // Ball to ball collision
@@ -2393,9 +2612,21 @@
             const minDist = b1.radius + b2.radius;
 
             if (dist < minDist && dist > 0) {
-              // Normal and tangent unit vectors
               const nx = dx / dist;
               const ny = dy / dist;
+
+              const kx = b1.vx - b2.vx;
+              const ky = b1.vy - b2.vy;
+              const velAlongNormal = nx * kx + ny * ky;
+
+              // Record first object ball contacted by cue ball (num 0)
+              if ((b1.num === 0 || b2.num === 0) && billiardsFirstBallHitByCue === null) {
+                const targetBall = (b1.num === 0) ? b2 : b1;
+                billiardsFirstBallHitByCue = targetBall.num;
+              }
+
+              // Do NOT resolve if balls are already separating
+              if (velAlongNormal <= 0) continue;
 
               // Separate overlap
               const overlap = (minDist - dist) / 2;
@@ -2405,10 +2636,7 @@
               b2.y += ny * overlap;
 
               // Elastic impulse
-              const kx = b1.vx - b2.vx;
-              const ky = b1.vy - b2.vy;
-              const p = 2 * (nx * kx + ny * ky) / 2;
-
+              const p = velAlongNormal;
               b1.vx -= p * nx * 0.96;
               b1.vy -= p * ny * 0.96;
               b2.vx += p * nx * 0.96;
@@ -2418,9 +2646,14 @@
         }
       }
 
-      // Check if all balls stopped
-      if (billiardsBallsMoving && !anyMoving) {
+      // Safety timeout: if rolling for > 6 seconds or speeds are negligible, force stop
+      if (billiardsBallsMoving && (billiardsShotMovingFrames > 360 || !anyMoving)) {
+        for (const b of billiardsBalls) {
+          b.vx = 0;
+          b.vy = 0;
+        }
         billiardsBallsMoving = false;
+        billiardsShotMovingFrames = 0;
         handleBilliardsShotResolved();
       }
     }
@@ -2428,76 +2661,221 @@
     function handleBilliardsShotResolved() {
       updateBilliardsRacksUI();
 
-      // Handle scratch
+      let foulMessage = null;
+
+      // ─── RULE: FOUL CHECKS ───
+      // 1. Scratch
       if (billiardsCueBallScratch) {
         billiardsCueBallScratch = false;
-        billiardsBallInHand = true;
-        document.getElementById('billiardsBallInHandAlert').style.display = 'block';
-        UI.toast('Scratch foul! Ball in hand in kitchen.', 'error');
+        foulMessage = 'Scratch foul! Cue ball sunk in pocket.';
       }
 
-      // Check 8-Ball sink
-      const eightBall = billiardsBalls.find(b => b.num === 8);
-      if (eightBall.potted) {
-        handleEightBallPotted();
+      // 2. Cue ball did not touch any ball
+      if (!foulMessage) {
+        if (billiardsFirstBallHitByCue === null) {
+          foulMessage = 'Foul! Cue ball did not touch any ball on the table.';
+        } else if (billiardsTableStatus === 'open') {
+          // On open table, hitting 8-ball first is a foul
+          if (billiardsFirstBallHitByCue === 8) {
+            foulMessage = 'Foul! Cue ball cannot hit the 8-Ball first on an open table.';
+          }
+        } else if (billiardsTableStatus === 'assigned') {
+          const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
+          const remainingOwn = billiardsBalls.filter(b => !b.potted && b.num !== 0 && b.num !== 8 && (activeSuit === 'solids' ? b.num <= 7 : b.num >= 9)).length;
+
+          if (remainingOwn > 0) {
+            // Must hit own group first!
+            if (activeSuit === 'solids' && (billiardsFirstBallHitByCue >= 8)) {
+              foulMessage = `Foul! Must hit your own group (Solids) first (hit #${billiardsFirstBallHitByCue}).`;
+            } else if (activeSuit === 'stripes' && (billiardsFirstBallHitByCue <= 8)) {
+              foulMessage = `Foul! Must hit your own group (Stripes) first (hit #${billiardsFirstBallHitByCue}).`;
+            }
+          } else {
+            // On the 8-Ball: must hit the 8-ball first!
+            if (billiardsFirstBallHitByCue !== 8) {
+              foulMessage = 'Foul! Must hit the 8-Ball first.';
+            }
+          }
+        }
+      }
+
+      // Check if 8-Ball was potted this shot
+      const eightPottedInfo = billiardsBallsPottedThisShot.find(item => item.num === 8);
+
+      // Handle 8-Ball on the break shot
+      if (billiardsIsBreakShot && eightPottedInfo) {
+        // Per standard 8-ball rules: re-spot 8-ball on foot spot
+        const eightBall = billiardsBalls.find(b => b.num === 8);
+        eightBall.potted = false;
+        eightBall.x = 640;
+        eightBall.y = 240;
+        eightBall.vx = 0;
+        eightBall.vy = 0;
+        billiardsBallsPottedThisShot = billiardsBallsPottedThisShot.filter(item => item.num !== 8);
+        billiardsPlayerPotted = billiardsPlayerPotted.filter(n => n !== 8);
+        billiardsAiPotted = billiardsAiPotted.filter(n => n !== 8);
+        UI.toast('8-Ball sunk on the break! Re-spotted to foot spot.', 'info');
+      } else if (eightPottedInfo) {
+        handleEightBallPotted(foulMessage, eightPottedInfo.pocket);
         return;
       }
 
-      // Assign suits if open table and ball potted
-      if (billiardsTableStatus === 'open' && billiardsBallsPottedThisShot.length > 0 && billiardsMode !== 'solo') {
-        const first = billiardsBallsPottedThisShot[0];
-        const isStripe = (first >= 9 && first <= 15);
-        if (billiardsTurn === 'player') {
-          billiardsPlayerSuit = isStripe ? 'stripes' : 'solids';
-          billiardsAiSuit = isStripe ? 'solids' : 'stripes';
-        } else {
-          billiardsAiSuit = isStripe ? 'stripes' : 'solids';
-          billiardsPlayerSuit = isStripe ? 'solids' : 'stripes';
-        }
-        billiardsTableStatus = 'assigned';
-        document.getElementById('billiardsStatusMain').textContent = `You: ${billiardsPlayerSuit.toUpperCase()} | AI: ${billiardsAiSuit.toUpperCase()}`;
-        UI.toast(`Suit assigned! You are ${billiardsPlayerSuit.toUpperCase()}`, 'info');
-      }
+      const isFoul = (foulMessage !== null);
 
-      // Check turn switch for vs AI mode
-      if (billiardsMode !== 'solo') {
-        let switchTurn = true;
-        if (!billiardsBallInHand && billiardsBallsPottedThisShot.length > 0) {
-          // If potted own suit, keep turn
-          const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
-          if (!activeSuit || billiardsBallsPottedThisShot.some(n => (activeSuit === 'solids' ? n <= 7 : n >= 9))) {
-            switchTurn = false;
+      // ─── RULE: THE BREAK ───
+      // If any balls go into a pocket on the break, table is still "open"
+      if (billiardsIsBreakShot) {
+        billiardsIsBreakShot = false;
+
+        if (isFoul) {
+          billiardsBallInHand = true;
+          document.getElementById('billiardsBallInHandAlert').style.display = 'block';
+          UI.toast(foulMessage + ' Opponent gets ball in hand anywhere on the table.', 'error');
+          switchBilliardsTurn(true);
+        } else {
+          if (billiardsBallsPottedThisShot.length > 0) {
+            UI.toast('Clean break! Balls potted — table remains OPEN until a group is claimed.', 'info');
+            updateTurnBadges(false);
+          } else {
+            switchBilliardsTurn(false);
           }
         }
+        return;
+      }
 
-        if (switchTurn) {
-          billiardsTurn = (billiardsTurn === 'player') ? 'ai' : 'player';
-        }
-
-        const badge = document.getElementById('billiardsTurnBadge');
-        if (billiardsTurn === 'player') {
-          badge.textContent = '🟢 Your Turn';
-          badge.style.color = '#10b981';
-          document.getElementById('billiardsSubStatus').textContent = 'Your turn. Line up your shot!';
+      // ─── RULE: CHOOSING GROUPS (AFTER BREAK, OPEN TABLE) ───
+      if (billiardsTableStatus === 'open') {
+        if (isFoul) {
+          billiardsBallInHand = true;
+          document.getElementById('billiardsBallInHandAlert').style.display = 'block';
+          UI.toast(foulMessage + ' Opponent gets ball in hand anywhere on the table.', 'error');
+          switchBilliardsTurn(true);
         } else {
-          badge.textContent = '🤖 AI Thinking...';
-          badge.style.color = '#f59e0b';
-          document.getElementById('billiardsSubStatus').textContent = 'AI is calculating shot trajectory...';
-          triggerBilliardsAiTurn();
+          if (billiardsBallsPottedThisShot.length > 0) {
+            const first = billiardsBallsPottedThisShot[0].num;
+            const isStripe = (first >= 9 && first <= 15);
+
+            if (billiardsTurn === 'player') {
+              billiardsPlayerSuit = isStripe ? 'stripes' : 'solids';
+              billiardsAiSuit = isStripe ? 'solids' : 'stripes';
+            } else {
+              billiardsAiSuit = isStripe ? 'stripes' : 'solids';
+              billiardsPlayerSuit = isStripe ? 'solids' : 'stripes';
+            }
+            billiardsTableStatus = 'assigned';
+
+            document.getElementById('billiardsStatusMain').textContent = `You: ${billiardsPlayerSuit.toUpperCase()} | Opponent: ${billiardsAiSuit.toUpperCase()}`;
+            document.getElementById('billiardsPlayerSuitType').textContent = billiardsPlayerSuit.toUpperCase();
+            if (document.getElementById('billiardsAiSuitType')) {
+              document.getElementById('billiardsAiSuitType').textContent = billiardsAiSuit.toUpperCase();
+            }
+
+            UI.toast(`Group chosen! You are ${billiardsPlayerSuit.toUpperCase()}, Opponent is ${billiardsAiSuit.toUpperCase()}`, 'success');
+            updateTurnBadges(false);
+          } else {
+            switchBilliardsTurn(false);
+          }
+        }
+        return;
+      }
+
+      // ─── RULE: REGULAR SHOT (GROUPS ASSIGNED) ───
+      if (billiardsTableStatus === 'assigned') {
+        if (isFoul) {
+          billiardsBallInHand = true;
+          document.getElementById('billiardsBallInHandAlert').style.display = 'block';
+          UI.toast(foulMessage + ' Opponent gets ball in hand anywhere on the table.', 'error');
+          switchBilliardsTurn(true);
+        } else {
+          const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
+          // Check if legally pocketed at least one ball from own group
+          const pottedOwn = billiardsBallsPottedThisShot.some(item => (activeSuit === 'solids' ? (item.num >= 1 && item.num <= 7) : (item.num >= 9 && item.num <= 15)));
+
+          if (pottedOwn) {
+            UI.toast('Ball pocketed! Keep shooting.', 'success');
+            updateTurnBadges(false);
+          } else {
+            switchBilliardsTurn(false);
+          }
         }
       }
     }
 
-    function handleEightBallPotted() {
-      const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
-      let remainingOwn = 0;
+    function switchBilliardsTurn(foul) {
+      if (billiardsMode !== 'solo') {
+        billiardsTurn = (billiardsTurn === 'player') ? 'ai' : 'player';
+      }
+      updateTurnBadges(foul);
+    }
 
-      if (activeSuit) {
-        remainingOwn = billiardsBalls.filter(b => !b.potted && b.num !== 0 && b.num !== 8 && (activeSuit === 'solids' ? b.num <= 7 : b.num >= 9)).length;
+    function updateTurnBadges(foul) {
+      const badge = document.getElementById('billiardsTurnBadge');
+      if (billiardsTurn === 'player') {
+        badge.textContent = billiardsBallInHand ? '🟢 Your Turn (Ball in Hand)' : '🟢 Your Turn';
+        badge.style.color = '#10b981';
+        document.getElementById('billiardsSubStatus').textContent = billiardsBallInHand ? 'Click anywhere on the table to place the cue ball and shoot.' : 'Your turn! Aim and strike.';
+      } else {
+        badge.textContent = '🤖 AI Turn (Aiming...)';
+        badge.style.color = '#f59e0b';
+        document.getElementById('billiardsSubStatus').textContent = 'Opponent AI is planning its shot...';
+        triggerBilliardsAiTurn();
+      }
+      updateBilliardsRacksUI();
+    }
+
+    function handleEightBallPotted(foulMessage, pocketIndex) {
+      const activeSuit = (billiardsTurn === 'player') ? billiardsPlayerSuit : billiardsAiSuit;
+      
+      // Check if shooter cleared all 7 balls before this shot
+      let remainingOwn = 7;
+      if (activeSuit && billiardsTableStatus === 'assigned') {
+        remainingOwn = billiardsBalls.filter(b => {
+          if (b.num === 0 || b.num === 8) return false;
+          const isOwn = (activeSuit === 'solids' ? b.num <= 7 : b.num >= 9);
+          if (!isOwn) return false;
+          const wasPottedThisShot = billiardsBallsPottedThisShot.some(item => item.num === b.num);
+          return !b.potted || wasPottedThisShot;
+        }).length;
       }
 
-      if (remainingOwn === 0 && !billiardsCueBallScratch) {
-        // Legitimate Win!
+      const isScratch = billiardsCueBallScratch || (foulMessage && foulMessage.includes('Scratch'));
+      const isRightPocket = (pocketIndex === billiardsDesignatedPocket);
+      const pocketName = POCKET_NAMES[pocketIndex] || 'Unknown';
+      const designatedName = POCKET_NAMES[billiardsDesignatedPocket] || 'Unknown';
+
+      // ─── RULE: INSTANT LOSS OR VICTORY ───
+      if (remainingOwn > 0 || billiardsTableStatus !== 'assigned') {
+        // Pocketed 8-ball before clearing group -> Instant Loss
+        if (billiardsTurn === 'player') {
+          UI.toast(`Defeat: Pocketed 8-Ball before clearing all your ${billiardsPlayerSuit ? billiardsPlayerSuit.toUpperCase() : 'group balls'}!`, 'error');
+          document.getElementById('billiardsStatusMain').textContent = 'Defeat — Early 8-Ball';
+        } else {
+          UI.toast('Victory! AI pocketed 8-Ball before clearing its group!', 'success');
+          addPoints(350);
+          document.getElementById('billiardsStatusMain').textContent = '🎉 Victory — AI Fouled 8-Ball';
+        }
+      } else if (isScratch) {
+        // Scratched on 8-ball -> Instant Loss
+        if (billiardsTurn === 'player') {
+          UI.toast('Defeat: Scratch foul (cue ball sunk) while pocketing the 8-Ball!', 'error');
+          document.getElementById('billiardsStatusMain').textContent = 'Defeat — Scratch on 8-Ball';
+        } else {
+          UI.toast('Victory! AI scratched the cue ball while pocketing 8-Ball!', 'success');
+          addPoints(350);
+          document.getElementById('billiardsStatusMain').textContent = '🎉 Victory — AI Scratched 8-Ball';
+        }
+      } else if (!isRightPocket) {
+        // Sunk into wrong pocket -> Instant Loss
+        if (billiardsTurn === 'player') {
+          UI.toast(`Defeat: 8-Ball sunk in wrong pocket (${pocketName} instead of designated ${designatedName})!`, 'error');
+          document.getElementById('billiardsStatusMain').textContent = 'Defeat — Wrong Pocket on 8-Ball';
+        } else {
+          UI.toast(`Victory! AI missed designated pocket (${pocketName} instead of ${designatedName})!`, 'success');
+          addPoints(350);
+          document.getElementById('billiardsStatusMain').textContent = '🎉 Victory — AI Missed Pocket';
+        }
+      } else {
+        // Legal Win!
         if (billiardsTurn === 'player' || billiardsMode === 'solo') {
           const pts = billiardsMode === 'solo' ? 200 : (billiardsMode === 'pro' ? 600 : 350);
           addPoints(pts);
@@ -2505,27 +2883,140 @@
           d.billiardsWins = (d.billiardsWins || 0) + 1;
           saveGamesData(d);
           checkAchievements();
-          UI.toast(`🏆 VICTORY! 8-Ball pocketed legally! +${pts} pts`, 'success');
+          UI.toast(`🏆 VICTORY! 8-Ball legally pocketed in designated ${designatedName} pocket! +${pts} pts`, 'success');
           document.getElementById('billiardsStatusMain').textContent = '🎉 You Won!';
         } else {
-          UI.toast('AI won the match by potting the 8-Ball legally.', 'info');
+          UI.toast(`AI won the match by pocketing the 8-Ball legally in ${designatedName} pocket.`, 'info');
           document.getElementById('billiardsStatusMain').textContent = 'Match Over — AI Won';
         }
+      }
+    }
+
+    function updateBilliardsRacksUI() {
+      const pRack = document.getElementById('billiardsPlayerRack');
+      const aiRack = document.getElementById('billiardsAiRack');
+      if (!pRack) return;
+
+      const playerOn8 = isPlayerOnEightBall();
+      const aiOn8 = isAiOnEightBall();
+
+      // Show designated pocket selector if player is on the 8-ball
+      const pickerCard = document.getElementById('billiardsPocketPickerCard');
+      const desAlert = document.getElementById('billiardsDesignatedAlert');
+      if (playerOn8 || aiOn8) {
+        if (pickerCard) pickerCard.style.display = (playerOn8 && billiardsTurn === 'player') ? 'block' : 'none';
+        if (desAlert) {
+          desAlert.style.display = 'inline-block';
+          const targetLabel = document.getElementById('billiardsDesignatedTargetName');
+          if (targetLabel) targetLabel.textContent = POCKET_NAMES[billiardsDesignatedPocket];
+        }
       } else {
-        // Premature 8-ball or scratched -> Loss
-        if (billiardsTurn === 'player') {
-          UI.toast('Defeat: 8-Ball pocketed prematurely or on foul.', 'error');
-          document.getElementById('billiardsStatusMain').textContent = 'Defeat — Early 8-Ball';
-        } else {
-          UI.toast('Victory! AI committed foul on 8-Ball!', 'success');
-          addPoints(250);
-          const d = loadGamesData();
-          d.billiardsWins = (d.billiardsWins || 0) + 1;
-          saveGamesData(d);
-          checkAchievements();
-          document.getElementById('billiardsStatusMain').textContent = '🎉 Victory — AI Fouled 8-Ball';
+        if (pickerCard) pickerCard.style.display = 'none';
+        if (desAlert) desAlert.style.display = 'none';
+      }
+
+      if (billiardsTableStatus === 'open') {
+        const pBalls = billiardsBalls.filter(b => b.potted && b.num !== 0);
+        pRack.innerHTML = pBalls.map(b => `
+          <span class="billiards-mini-ball" style="background:${BALL_COLORS[b.num]};">${b.num}</span>
+        `).join('') || '<span style="font-size:0.75rem;color:var(--text-muted);">None yet (Open Table)</span>';
+
+        if (aiRack) {
+          aiRack.innerHTML = '<span style="font-size:0.75rem;color:var(--text-muted);">Open Table</span>';
+        }
+      } else {
+        // Player group rack
+        const pNums = billiardsPlayerSuit === 'solids' ? [1,2,3,4,5,6,7] : [9,10,11,12,13,14,15];
+        const pRemaining = billiardsBalls.filter(b => !b.potted && pNums.includes(b.num)).length;
+        document.getElementById('billiardsPlayerSuitType').textContent = `${billiardsPlayerSuit.toUpperCase()} (${pRemaining === 0 ? '⭐ ON 8-BALL' : pRemaining + ' Left'})`;
+
+        pRack.innerHTML = pNums.map(n => {
+          const b = billiardsBalls.find(ball => ball.num === n);
+          const isPotted = b ? b.potted : false;
+          return `
+            <span class="billiards-mini-ball" style="background:${BALL_COLORS[n]};${isPotted ? '' : 'opacity:0.3;filter:grayscale(0.8);border-style:dashed;'}">
+              ${n}
+            </span>
+          `;
+        }).join('');
+
+        // Opponent group rack
+        if (aiRack && billiardsAiSuit) {
+          const aiNums = billiardsAiSuit === 'solids' ? [1,2,3,4,5,6,7] : [9,10,11,12,13,14,15];
+          const aiRemaining = billiardsBalls.filter(b => !b.potted && aiNums.includes(b.num)).length;
+          document.getElementById('billiardsAiSuitType').textContent = `${billiardsAiSuit.toUpperCase()} (${aiRemaining === 0 ? '⭐ ON 8-BALL' : aiRemaining + ' Left'})`;
+
+          aiRack.innerHTML = aiNums.map(n => {
+            const b = billiardsBalls.find(ball => ball.num === n);
+            const isPotted = b ? b.potted : false;
+            return `
+              <span class="billiards-mini-ball" style="background:${BALL_COLORS[n]};${isPotted ? '' : 'opacity:0.3;filter:grayscale(0.8);border-style:dashed;'}">
+                ${n}
+              </span>
+            `;
+          }).join('');
         }
       }
+    }
+
+    function placeAiCueBallInHand() {
+      const cue = billiardsBalls[0];
+      cue.potted = false;
+      cue.vx = 0;
+      cue.vy = 0;
+
+      const candidates = getAiCandidateBalls();
+      if (candidates.length > 0) {
+        const target = candidates[0];
+        let bestP = TABLE.pockets[0];
+        let minDist = Infinity;
+        for (const p of TABLE.pockets) {
+          const d = Math.hypot(p.x - target.x, p.y - target.y);
+          if (d < minDist) { minDist = d; bestP = p; }
+        }
+        const angleToPocket = Math.atan2(bestP.y - target.y, bestP.x - target.x);
+        const px = target.x - Math.cos(angleToPocket) * 75;
+        const py = target.y - Math.sin(angleToPocket) * 75;
+
+        if (isBilliardsCuePlacementValid(px, py)) {
+          cue.x = px;
+          cue.y = py;
+          billiardsBallInHand = false;
+          document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+          return;
+        }
+      }
+
+      const fallbacks = [
+        { x: 230, y: 240 },
+        { x: 320, y: 240 },
+        { x: 450, y: 240 },
+        { x: 250, y: 150 },
+        { x: 250, y: 330 }
+      ];
+      for (const f of fallbacks) {
+        if (isBilliardsCuePlacementValid(f.x, f.y)) {
+          cue.x = f.x;
+          cue.y = f.y;
+          break;
+        }
+      }
+      billiardsBallInHand = false;
+      document.getElementById('billiardsBallInHandAlert').style.display = 'none';
+    }
+
+    function getAiCandidateBalls() {
+      return billiardsBalls.filter(b => {
+        if (b.potted || b.num === 0) return false;
+        if (billiardsTableStatus === 'open') return b.num !== 8;
+
+        const targetSuit = billiardsAiSuit;
+        const remainingOwn = billiardsBalls.filter(ob => !ob.potted && ob.num !== 0 && ob.num !== 8 && (targetSuit === 'solids' ? ob.num <= 7 : ob.num >= 9)).length;
+        if (remainingOwn > 0) {
+          return targetSuit === 'solids' ? (b.num >= 1 && b.num <= 7) : (b.num >= 9 && b.num <= 15);
+        }
+        return b.num === 8;
+      });
     }
 
     function triggerBilliardsAiTurn() {
@@ -2534,32 +3025,27 @@
 
       setTimeout(() => {
         const cue = billiardsBalls[0];
-        if (cue.potted) resetCueBallToKitchen();
+        if (cue.potted || billiardsBallInHand) {
+          placeAiCueBallInHand();
+        }
 
-        // Find candidate target balls for AI
-        const candidates = billiardsBalls.filter(b => {
-          if (b.potted || b.num === 0) return false;
-          if (billiardsTableStatus === 'open') return b.num !== 8;
-          const targetSuit = billiardsAiSuit;
-          const remainingOwn = billiardsBalls.filter(ob => !ob.potted && ob.num !== 0 && ob.num !== 8 && (targetSuit === 'solids' ? ob.num <= 7 : ob.num >= 9)).length;
-          if (remainingOwn > 0) {
-            return targetSuit === 'solids' ? b.num <= 7 : b.num >= 9;
-          }
-          return b.num === 8;
-        });
-
+        const candidates = getAiCandidateBalls();
         if (candidates.length === 0) {
           billiardsAiThinking = false;
+          billiardsTurn = 'player';
+          document.getElementById('billiardsTurnBadge').textContent = '🟢 Your Turn';
           return;
         }
 
-        // Pick best ball & pocket according to AI mode difficulty
+        // Pick best target ball and pocket
         let bestTarget = candidates[0];
         let bestPocket = TABLE.pockets[0];
+        let bestPocketIdx = 0;
         let bestScore = -Infinity;
 
         for (const ball of candidates) {
-          for (const pocket of TABLE.pockets) {
+          for (let pIdx = 0; pIdx < TABLE.pockets.length; pIdx++) {
+            const pocket = TABLE.pockets[pIdx];
             const dBallPocket = Math.hypot(pocket.x - ball.x, pocket.y - ball.y);
             const dCueBall = Math.hypot(ball.x - cue.x, ball.y - cue.y);
             const score = -(dBallPocket * 0.7 + dCueBall * 0.3);
@@ -2567,8 +3053,15 @@
               bestScore = score;
               bestTarget = ball;
               bestPocket = pocket;
+              bestPocketIdx = pIdx;
             }
           }
+        }
+
+        // If AI is on 8-ball, AI designates its chosen pocket
+        if (bestTarget.num === 8) {
+          setBilliardsDesignatedPocket(bestPocketIdx);
+          UI.toast(`🤖 AI designated ${POCKET_NAMES[bestPocketIdx]} pocket for the 8-Ball!`, 'info');
         }
 
         // Ghost ball calculation
@@ -2576,60 +3069,68 @@
         const ghostX = bestTarget.x - Math.cos(toPocketAngle) * (TABLE.ballRadius * 2);
         const ghostY = bestTarget.y - Math.sin(toPocketAngle) * (TABLE.ballRadius * 2);
 
-        let aimAngle = Math.atan2(ghostY - cue.y, ghostX - cue.x);
+        let targetAimAngle = Math.atan2(ghostY - cue.y, ghostX - cue.x);
 
-        // Add error / variance based on AI difficulty
+        // Difficulty variance
         let variance = 0;
         let aiPower = 55;
 
         if (billiardsMode === 'training') {
-          variance = (Math.random() - 0.5) * 0.35; // +/- 10 deg
+          variance = (Math.random() - 0.5) * 0.28; // +/- 8 deg
           aiPower = 40 + Math.random() * 20;
         } else if (billiardsMode === 'casual') {
-          variance = (Math.random() - 0.5) * 0.14; // +/- 4 deg
+          variance = (Math.random() - 0.5) * 0.12; // +/- 3.5 deg
           aiPower = 45 + Math.random() * 25;
         } else if (billiardsMode === 'advanced') {
-          variance = (Math.random() - 0.5) * 0.05; // +/- 1.4 deg
+          variance = (Math.random() - 0.5) * 0.04; // +/- 1.2 deg
           aiPower = 50 + Math.random() * 30;
         } else if (billiardsMode === 'pro') {
-          variance = (Math.random() - 0.5) * 0.015; // < 0.5 deg
+          variance = (Math.random() - 0.5) * 0.01; // < 0.4 deg
           aiPower = 60 + Math.random() * 25;
         }
 
-        aimAngle += variance;
-        billiardsAimAngle = aimAngle;
-        updateBilliardsPowerSlider(Math.round(aiPower));
+        targetAimAngle += variance;
 
-        // Visual aiming delay before release
-        setTimeout(() => {
-          billiardsAiThinking = false;
-          takeBilliardsShot(aimAngle, aiPower);
-        }, 900);
-      }, 700);
+        // Smoothly rotate cue stick toward target angle over 500ms
+        const startAngle = billiardsAimAngle;
+        const startTime = performance.now();
+        const duration = 500;
+
+        function animateAiAim(now) {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+          billiardsAimAngle = startAngle + (targetAimAngle - startAngle) * ease;
+
+          if (progress < 1) {
+            requestAnimationFrame(animateAiAim);
+          } else {
+            billiardsAimAngle = targetAimAngle;
+            updateBilliardsPowerSlider(Math.round(aiPower));
+
+            setTimeout(() => {
+              billiardsAiThinking = false;
+              takeBilliardsShot(targetAimAngle, aiPower);
+            }, 550);
+          }
+        }
+        requestAnimationFrame(animateAiAim);
+      }, 600);
     }
 
-    function updateBilliardsRacksUI() {
-      const pRack = document.getElementById('billiardsPlayerRack');
-      const aiRack = document.getElementById('billiardsAiRack');
-      if (!pRack) return;
-
-      const pBalls = billiardsBalls.filter(b => b.potted && b.num !== 0);
-      pRack.innerHTML = pBalls.map(b => `
-        <span class="billiards-mini-ball" style="background:${BALL_COLORS[b.num]};">${b.num}</span>
-      `).join('') || '<span style="font-size:0.75rem;color:var(--text-muted);">None yet</span>';
-
-      if (aiRack) {
-        aiRack.innerHTML = pBalls.map(b => `
-          <span class="billiards-mini-ball" style="background:${BALL_COLORS[b.num]};">${b.num}</span>
-        `).join('') || '<span style="font-size:0.75rem;color:var(--text-muted);">None yet</span>';
+    function triggerAiBreakShot() {
+      if (billiardsBallsMoving || billiardsAiThinking) return;
+      if (billiardsMode === 'solo') {
+        UI.toast('Please select an AI mode (Training to Pro) above to play vs AI.', 'info');
+        return;
       }
-
-      if (billiardsPlayerSuit) {
-        document.getElementById('billiardsPlayerSuitType').textContent = billiardsPlayerSuit.toUpperCase();
-        if (document.getElementById('billiardsAiSuitType')) {
-          document.getElementById('billiardsAiSuitType').textContent = billiardsAiSuit ? billiardsAiSuit.toUpperCase() : 'None';
-        }
+      billiardsTurn = 'ai';
+      const badge = document.getElementById('billiardsTurnBadge');
+      if (badge) {
+        badge.textContent = '🤖 AI Turn (Aiming...)';
+        badge.style.color = '#f59e0b';
       }
+      document.getElementById('billiardsSubStatus').textContent = 'AI opponent is aiming its shot...';
+      triggerBilliardsAiTurn();
     }
 
     function drawBilliardsTable() {
@@ -2641,7 +3142,7 @@
       ctx.fillStyle = '#0f4c3a';
       ctx.fillRect(0, 0, TABLE.w, TABLE.h);
 
-      // Subtle baize felt radial lighting gradient
+      // Baize felt radial lighting gradient
       const feltGrad = ctx.createRadialGradient(TABLE.w / 2, TABLE.h / 2, 80, TABLE.w / 2, TABLE.h / 2, 450);
       feltGrad.addColorStop(0, '#15614a');
       feltGrad.addColorStop(1, '#0c382b');
@@ -2664,10 +3165,10 @@
 
       // Table cushions (wood rails border with gradient)
       ctx.fillStyle = '#26170d';
-      ctx.fillRect(0, 0, TABLE.w, TABLE.cushion); // top
-      ctx.fillRect(0, TABLE.h - TABLE.cushion, TABLE.w, TABLE.cushion); // bottom
-      ctx.fillRect(0, 0, TABLE.cushion, TABLE.h); // left
-      ctx.fillRect(TABLE.w - TABLE.cushion, 0, TABLE.cushion, TABLE.h); // right
+      ctx.fillRect(0, 0, TABLE.w, TABLE.cushion);
+      ctx.fillRect(0, TABLE.h - TABLE.cushion, TABLE.w, TABLE.cushion);
+      ctx.fillRect(0, 0, TABLE.cushion, TABLE.h);
+      ctx.fillRect(TABLE.w - TABLE.cushion, 0, TABLE.cushion, TABLE.h);
 
       // Diamond sights on rails
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
@@ -2684,7 +3185,8 @@
       }
 
       // Draw 6 pockets
-      for (const p of TABLE.pockets) {
+      for (let pIdx = 0; pIdx < TABLE.pockets.length; pIdx++) {
+        const p = TABLE.pockets[pIdx];
         ctx.fillStyle = '#05070a';
         ctx.beginPath();
         ctx.arc(p.x, p.y, TABLE.pocketRadius, 0, Math.PI * 2);
@@ -2693,6 +3195,21 @@
         ctx.strokeStyle = '#374151';
         ctx.lineWidth = 2;
         ctx.stroke();
+
+        // If either player is on 8-ball, highlight the designated pocket
+        if ((isPlayerOnEightBall() || isAiOnEightBall()) && pIdx === billiardsDesignatedPocket) {
+          const pulse = 1 + Math.sin(Date.now() / 200) * 0.12;
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, (TABLE.pocketRadius + 5) * pulse, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 10px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⭐ TARGET', p.x, p.y < 100 ? p.y + 36 : p.y - 28);
+        }
       }
 
       // Draw balls
@@ -2743,40 +3260,107 @@
         ctx.fill();
       }
 
+      // Ball in Hand preview at cursor
+      if (billiardsBallInHand && billiardsTurn === 'player') {
+        const mx = billiardsMousePos.x;
+        const my = billiardsMousePos.y;
+        const valid = isBilliardsCuePlacementValid(mx, my);
+
+        ctx.save();
+        ctx.fillStyle = valid ? 'rgba(255, 255, 255, 0.7)' : 'rgba(239, 68, 68, 0.5)';
+        ctx.strokeStyle = valid ? '#10b981' : '#ef4444';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(mx, my, TABLE.ballRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = valid ? '#ffffff' : '#f87171';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(valid ? 'Click to place ball' : 'Invalid position', mx, my - 16);
+        ctx.restore();
+      }
+
       // Draw Cue Stick & Aim Line
       const cue = billiardsBalls[0];
-      if (!cue.potted && !billiardsBallsMoving && (billiardsTurn === 'player' || billiardsAiThinking)) {
-        // Dotted aim line
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      if (!cue.potted && !billiardsBallsMoving && !billiardsBallInHand && (billiardsTurn === 'player' || billiardsAiThinking)) {
+        const currentAngle = billiardsIsMouseDown ? billiardsLockedAngle : billiardsAimAngle;
+        const forwardX = Math.cos(currentAngle);
+        const forwardY = Math.sin(currentAngle);
+
+        // Raycast forward to find first ball hit (Ghost Ball prediction)
+        let closestHitDist = 360;
+        let hitBall = null;
+
+        for (const b of billiardsBalls) {
+          if (b.potted || b.num === 0) continue;
+          const toBx = b.x - cue.x;
+          const toBy = b.y - cue.y;
+          const proj = toBx * forwardX + toBy * forwardY;
+          if (proj > 0 && proj < closestHitDist) {
+            const perpDist = Math.abs(toBx * -forwardY + toBy * forwardX);
+            if (perpDist < TABLE.ballRadius * 2) {
+              const dToCollision = proj - Math.sqrt(Math.max(0, Math.pow(TABLE.ballRadius * 2, 2) - perpDist * perpDist));
+              if (dToCollision > 0 && dToCollision < closestHitDist) {
+                closestHitDist = dToCollision;
+                hitBall = b;
+              }
+            }
+          }
+        }
+
+        // Dotted aim line forward
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
+        ctx.setLineDash([5, 4]);
         ctx.beginPath();
         ctx.moveTo(cue.x, cue.y);
-        ctx.lineTo(cue.x + Math.cos(billiardsAimAngle) * 350, cue.y + Math.sin(billiardsAimAngle) * 350);
+        ctx.lineTo(cue.x + forwardX * closestHitDist, cue.y + forwardY * closestHitDist);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Cue stick graphic
-        const pullDist = 15 + (billiardsPower / 100) * 35;
-        const stickStartX = cue.x - Math.cos(billiardsAimAngle) * (TABLE.ballRadius + pullDist);
-        const stickStartY = cue.y - Math.sin(billiardsAimAngle) * (TABLE.ballRadius + pullDist);
-        const stickEndX = stickStartX - Math.cos(billiardsAimAngle) * 180;
-        const stickEndY = stickStartY - Math.sin(billiardsAimAngle) * 180;
+        // Ghost ball outline at collision point
+        if (hitBall) {
+          const ghostX = cue.x + forwardX * closestHitDist;
+          const ghostY = cue.y + forwardY * closestHitDist;
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(ghostX, ghostY, TABLE.ballRadius, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Target ball deflection line
+          const toTargetAngle = Math.atan2(hitBall.y - ghostY, hitBall.x - ghostX);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+          ctx.beginPath();
+          ctx.moveTo(hitBall.x, hitBall.y);
+          ctx.lineTo(hitBall.x + Math.cos(toTargetAngle) * 45, hitBall.y + Math.sin(toTargetAngle) * 45);
+          ctx.stroke();
+        }
+
+        // Cue stick positioning
+        const pullDist = 14 + (billiardsPower / 100) * 36 - billiardsCueStrikeOffset;
+        const stickStartX = cue.x - forwardX * (TABLE.ballRadius + pullDist);
+        const stickStartY = cue.y - forwardY * (TABLE.ballRadius + pullDist);
+        const stickEndX = stickStartX - forwardX * 190;
+        const stickEndY = stickStartY - forwardY * 190;
 
         // Wooden cue stick body
         ctx.strokeStyle = '#d97706';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.moveTo(stickStartX, stickStartY);
         ctx.lineTo(stickEndX, stickEndY);
         ctx.stroke();
 
-        // Cue tip
+        // Cue tip (blue chalk)
         ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.moveTo(stickStartX, stickStartY);
-        ctx.lineTo(stickStartX - Math.cos(billiardsAimAngle) * 8, stickStartY - Math.sin(billiardsAimAngle) * 8);
+        ctx.lineTo(stickStartX - forwardX * 8, stickStartY - forwardY * 8);
         ctx.stroke();
       }
     }
