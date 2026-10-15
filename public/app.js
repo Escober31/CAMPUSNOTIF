@@ -457,6 +457,10 @@ const Auth = {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem('campusnotify_user', JSON.stringify(user));
     storage.setItem('campusnotify_role', user.role);
+    // Set flag for daily login reward auto-prompt (students only)
+    if (user.role === 'student') {
+      localStorage.setItem('campusnotify_just_logged_in', 'true');
+    }
     window.location.href = 'dashboard.html';
   },
 
@@ -1546,6 +1550,525 @@ const ForYouFeed = {
   }
 };
 
+// ─── Daily Login UI & Game Skins Controller (Students Only) ───
+const DailyLoginUI = {
+  _activeLockerGame: 'chess',
+
+  init() {
+    // Only student role is eligible for daily login rewards
+    const role = Auth.getRole();
+    if (role !== 'student') return;
+
+    this.injectModals();
+    this.checkAutoPrompt();
+  },
+
+  injectModals() {
+    if (document.getElementById('dailyLoginModalOverlay')) return;
+
+    // Daily Login Rewards Modal HTML
+    const dailyModal = document.createElement('div');
+    dailyModal.id = 'dailyLoginModalOverlay';
+    dailyModal.className = 'daily-modal-overlay';
+    dailyModal.innerHTML = `
+      <div class="daily-modal-dialog">
+        <button class="daily-modal-close" onclick="DailyLoginUI.closeModal()" title="Close">&times;</button>
+        <div id="dailyModalBody"></div>
+      </div>
+    `;
+    document.body.appendChild(dailyModal);
+
+    // Game Skins & Displays Locker Modal HTML
+    const lockerModal = document.createElement('div');
+    lockerModal.id = 'gameSkinsLockerOverlay';
+    lockerModal.className = 'daily-modal-overlay';
+    lockerModal.innerHTML = `
+      <div class="locker-modal-dialog">
+        <button class="daily-modal-close" onclick="DailyLoginUI.closeLockerModal()" title="Close">&times;</button>
+        <div class="daily-header" style="text-align:left; margin-bottom:var(--space-lg);">
+          <span class="daily-student-pill">🎨 Game Customization</span>
+          <h2 class="daily-title" style="font-size:1.8rem; margin-top:0.2rem;">Skins & Displays Locker</h2>
+          <p class="daily-subtitle" style="margin:0;">Equip custom board finishes, retro cards, CRT monitors, and table baize unlocked via Student Daily Logins.</p>
+        </div>
+        <div class="locker-tabs" id="lockerTabs"></div>
+        <div class="locker-grid" id="lockerGrid"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-subtle); padding-top:var(--space-md); flex-wrap:wrap; gap:10px;">
+          <span style="font-size:0.85rem; color:var(--text-muted);">
+            💡 Unlocked skins persist across your sessions and apply immediately to games.
+          </span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="DailyLoginUI.openModal()">🎁 View Daily Rewards</button>
+            <button class="btn btn-primary btn-sm" onclick="DailyLoginUI.closeLockerModal()">Done</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(lockerModal);
+  },
+
+  checkAutoPrompt() {
+    if (Auth.getRole() !== 'student') return;
+
+    const canClaim = DailyLoginStore.canClaimToday();
+    const justLoggedIn = localStorage.getItem('campusnotify_just_logged_in') === 'true';
+    const promptedThisSession = sessionStorage.getItem('campusnotify_daily_prompted');
+
+    if (canClaim && (justLoggedIn || !promptedThisSession)) {
+      localStorage.removeItem('campusnotify_just_logged_in');
+      sessionStorage.setItem('campusnotify_daily_prompted', 'true');
+      // Delay slightly so the page finish animating
+      setTimeout(() => {
+        this.openModal();
+      }, 700);
+    }
+  },
+
+  openModal() {
+    if (Auth.getRole() !== 'student') {
+      UI.toast('Daily Login Rewards are available exclusively for Students.', 'info');
+      return;
+    }
+    this.injectModals();
+    this.renderModal();
+    const el = document.getElementById('dailyLoginModalOverlay');
+    if (el) el.classList.add('active');
+  },
+
+  closeModal() {
+    const el = document.getElementById('dailyLoginModalOverlay');
+    if (el) el.classList.remove('active');
+  },
+
+  openLockerModal(game = 'chess') {
+    if (Auth.getRole() !== 'student') {
+      UI.toast('Game Skins & Displays Locker is available for Students.', 'info');
+      return;
+    }
+    this.injectModals();
+    this._activeLockerGame = game;
+    this.renderLocker();
+    const el = document.getElementById('gameSkinsLockerOverlay');
+    if (el) el.classList.add('active');
+  },
+
+  closeLockerModal() {
+    const el = document.getElementById('gameSkinsLockerOverlay');
+    if (el) el.classList.remove('active');
+  },
+
+  renderModal() {
+    const body = document.getElementById('dailyModalBody');
+    if (!body) return;
+
+    const status = DailyLoginStore.getStatus();
+    const schedule = DailyLoginStore.getSchedule();
+    const user = Auth.getUser();
+
+    // Build 7-day schedule cards
+    let calendarHtml = '';
+    schedule.forEach(item => {
+      const isPastClaimed = status.alreadyClaimedToday
+        ? item.day <= status.dayInCycle
+        : item.day < status.dayInCycle;
+      const isTodayActive = item.day === status.dayInCycle;
+      const isLocked = item.day > status.dayInCycle;
+
+      let cardClass = 'daily-day-card';
+      let statusLabel = '🔒 Locked';
+
+      if (isPastClaimed) {
+        cardClass += ' claimed';
+        statusLabel = '✓ Claimed';
+      } else if (isTodayActive) {
+        cardClass += ' today-active';
+        statusLabel = status.alreadyClaimedToday ? '✓ Claimed' : '⭐ Ready!';
+      } else {
+        cardClass += ' locked';
+      }
+
+      if (item.day === 7) {
+        cardClass += ' grand-vault';
+      }
+
+      calendarHtml += `
+        <div class="${cardClass}" onclick="DailyLoginUI.highlightDayReward(${item.day})">
+          <div class="daily-day-num">${item.badge}</div>
+          <div class="daily-day-icon">${item.icon}</div>
+          <div class="daily-day-reward-title">${item.title}</div>
+          <div class="daily-day-pts">+${item.points} pts</div>
+          <span class="daily-day-status-pill">${statusLabel}</span>
+        </div>
+      `;
+    });
+
+    const activeReward = status.todayReward;
+
+    body.innerHTML = `
+      <div class="daily-header">
+        <span class="daily-student-pill">🎓 Student Exclusive Bonus</span>
+        <h2 class="daily-title">Daily Login Game Rewards</h2>
+        <p class="daily-subtitle">
+          Sign in daily to unlock exclusive skins, themes, and displays for 
+          <strong>Chess</strong>, <strong>Memory Match</strong>, <strong>Typing Racer</strong>, <strong>Sudoku</strong>, and <strong>Billiards</strong>!
+        </p>
+      </div>
+
+      <div class="daily-streak-bar">
+        <div class="daily-streak-info">
+          <span class="streak-flame">🔥</span>
+          <div>
+            <div class="streak-count-title">
+              ${status.currentStreak > 0 ? `${status.currentStreak}-Day Streak Active!` : 'Start Your Streak Today!'}
+            </div>
+            <div class="streak-count-desc">
+              ${status.canClaim 
+                ? 'Claim today’s login bonus to boost your streak and unlock game skins.'
+                : 'Great job! You claimed today’s reward. Log in tomorrow for Day ' + (((status.currentStreak % 7) + 1)) + '!'}
+            </div>
+          </div>
+        </div>
+        <div class="daily-streak-stats">
+          <div class="daily-streak-stat-item">
+            <div class="daily-streak-stat-val">${status.currentStreak} 🔥</div>
+            <div class="daily-streak-stat-lbl">Current Streak</div>
+          </div>
+          <div class="daily-streak-stat-item">
+            <div class="daily-streak-stat-val">${status.totalClaims} 📅</div>
+            <div class="daily-streak-stat-lbl">Total Days</div>
+          </div>
+          <div class="daily-streak-stat-item">
+            <div class="daily-streak-stat-val">${status.unlockedSkinsCount} 🎨</div>
+            <div class="daily-streak-stat-lbl">Unlocked Skins</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="daily-calendar-grid">
+        ${calendarHtml}
+      </div>
+
+      <div class="daily-showcase-box" id="dailyShowcaseBox">
+        <div class="daily-showcase-icon-wrap">
+          ${activeReward.icon}
+        </div>
+        <div class="daily-showcase-meta">
+          <h4>${activeReward.title}</h4>
+          <p>${activeReward.description}</p>
+          <div class="daily-showcase-tags">
+            <span class="showcase-tag game">🎮 ${activeReward.game === 'multi' ? 'Multi-Game Pack' : activeReward.game.toUpperCase()}</span>
+            <span class="showcase-tag points">⭐ +${activeReward.points} Arcade Points</span>
+            <span class="showcase-tag" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+              🎁 ${status.canClaim ? 'Ready to Claim' : 'Already Claimed Today'}
+            </span>
+          </div>
+        </div>
+        <div>
+          ${status.canClaim ? `
+            <button class="daily-claim-btn" id="btnClaimDailyReward" onclick="DailyLoginUI.handleClaim()">
+              <span>🎁</span> Claim Day ${status.dayInCycle} Reward
+            </button>
+          ` : `
+            <button class="daily-claim-btn" disabled>
+              <span>✓</span> Claimed Today
+            </button>
+          `}
+        </div>
+      </div>
+
+      <div class="daily-actions-row">
+        <div style="font-size:0.85rem; color:var(--text-muted);">
+          Logged in as: <strong style="color:var(--text-primary);">${user ? user.name : 'Student'}</strong> (🎓 Student Account)
+        </div>
+        <div style="display:flex; gap:0.6rem; align-items:center;">
+          <button class="btn btn-secondary btn-sm" onclick="DailyLoginUI.openLockerModal()">
+            🎨 Skins Locker
+          </button>
+          <a href="games.html" class="btn btn-primary btn-sm">
+            🕹️ Play Campus Games →
+          </a>
+        </div>
+      </div>
+    `;
+  },
+
+  highlightDayReward(dayNum) {
+    const schedule = DailyLoginStore.getSchedule();
+    const item = schedule.find(s => s.day === dayNum);
+    if (!item) return;
+
+    const box = document.getElementById('dailyShowcaseBox');
+    if (!box) return;
+
+    const status = DailyLoginStore.getStatus();
+    const isToday = dayNum === status.dayInCycle;
+
+    box.querySelector('.daily-showcase-icon-wrap').innerHTML = item.icon;
+    box.querySelector('.daily-showcase-meta h4').textContent = item.title;
+    box.querySelector('.daily-showcase-meta p').textContent = item.description;
+
+    const tags = box.querySelector('.daily-showcase-tags');
+    if (tags) {
+      tags.innerHTML = `
+        <span class="showcase-tag game">🎮 ${item.game === 'multi' ? 'Multi-Game Pack' : item.game.toUpperCase()}</span>
+        <span class="showcase-tag points">⭐ +${item.points} Arcade Points</span>
+        <span class="showcase-tag" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);">
+          ${item.badge}
+        </span>
+      `;
+    }
+  },
+
+  handleClaim() {
+    const result = DailyLoginStore.claimToday();
+    if (!result.success) {
+      UI.toast(result.message, 'warning');
+      return;
+    }
+
+    // Trigger celebratory visual burst
+    this.celebrateBurst();
+
+    UI.toast(`🎉 Claimed ${result.reward.title}! +${result.reward.points} Arcade Points & Game Skins unlocked!`, 'success');
+
+    // Refresh modal
+    this.renderModal();
+
+    // Refresh any active on-page widgets
+    const banner = document.getElementById('studentDailyBannerContainer');
+    if (banner) {
+      this.renderBanner('studentDailyBannerContainer');
+    }
+
+    // If on games page, refresh games stats & skins
+    if (typeof refreshStatsUI === 'function') {
+      refreshStatsUI();
+    }
+    if (typeof applyAllEquippedGameSkins === 'function') {
+      applyAllEquippedGameSkins();
+    }
+  },
+
+  celebrateBurst() {
+    // Floating confetti emojis burst
+    const emojis = ['🎉', '✨', '🎁', '⭐', '♟️', '🎱', '💎', '🔥'];
+    for (let i = 0; i < 24; i++) {
+      const el = document.createElement('div');
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.position = 'fixed';
+      el.style.left = `${50 + (Math.random() - 0.5) * 40}%`;
+      el.style.top = `${50 + (Math.random() - 0.5) * 30}%`;
+      el.style.fontSize = `${1.5 + Math.random() * 1.5}rem`;
+      el.style.zIndex = '99999';
+      el.style.pointerEvents = 'none';
+      el.style.transition = 'all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      document.body.appendChild(el);
+
+      const destX = (Math.random() - 0.5) * 600;
+      const destY = -150 - Math.random() * 300;
+
+      requestAnimationFrame(() => {
+        el.style.transform = `translate(${destX}px, ${destY}px) rotate(${Math.random() * 360}deg) scale(0)`;
+        el.style.opacity = '0';
+      });
+
+      setTimeout(() => el.remove(), 1300);
+    }
+  },
+
+  renderBanner(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (Auth.getRole() !== 'student') {
+      container.innerHTML = '';
+      return;
+    }
+
+    const status = DailyLoginStore.getStatus();
+    const nextReward = status.todayReward;
+
+    container.innerHTML = `
+      <div class="student-daily-banner">
+        <div class="student-daily-banner-left">
+          <div class="student-daily-banner-icon">
+            ${status.canClaim ? '🎁' : '🔥'}
+          </div>
+          <div>
+            <div class="student-daily-banner-title">
+              <span>Daily Student Login</span>
+              <span class="badge ${status.canClaim ? 'badge-warning' : 'badge-success'}" style="font-size:0.75rem;">
+                ${status.canClaim ? '⭐ Ready to Claim' : '✓ Claimed Today'}
+              </span>
+              ${status.currentStreak > 0 ? `<span style="font-size:0.8rem; color:#f59e0b;">🔥 ${status.currentStreak}-Day Streak</span>` : ''}
+            </div>
+            <div class="student-daily-banner-subtitle">
+              ${status.canClaim
+                ? `Today's Reward: <strong>${nextReward.title}</strong> (+${nextReward.points} pts)`
+                : `Streak active! Unlocked skins ready in your locker. Next reward unlocks tomorrow.`}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button class="student-daily-banner-btn" onclick="DailyLoginUI.openModal()">
+            ${status.canClaim ? '🎁 Claim Reward' : '📅 View Calendar'}
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="DailyLoginUI.openLockerModal()" title="Open Skins Locker">
+            🎨 Locker
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  renderLocker(game = this._activeLockerGame) {
+    this._activeLockerGame = game;
+    const tabs = document.getElementById('lockerTabs');
+    const grid = document.getElementById('lockerGrid');
+    if (!tabs || !grid) return;
+
+    const gameTabs = [
+      { id: 'chess', name: 'Campus Chess', icon: '♟️' },
+      { id: 'memory', name: 'Memory Match', icon: '🃏' },
+      { id: 'typing', name: 'Typing Racer', icon: '⌨️' },
+      { id: 'sudoku', name: 'Sudoku', icon: '🔢' },
+      { id: 'billiards', name: 'Billiards', icon: '🎱' }
+    ];
+
+    tabs.innerHTML = gameTabs.map(t => `
+      <button class="locker-tab-btn ${t.id === game ? 'active' : ''}" onclick="DailyLoginUI.renderLocker('${t.id}')">
+        <span>${t.icon}</span> ${t.name}
+      </button>
+    `).join('');
+
+    const catalog = GameSkinsCatalog[game] || [];
+    const equipped = DailyLoginStore.getEquippedSkin(game);
+
+    grid.innerHTML = catalog.map(skin => {
+      const isUnlocked = DailyLoginStore.isSkinUnlocked(game, skin.id);
+      const isEquipped = equipped && equipped.id === skin.id;
+
+      let cardClass = 'skin-card';
+      if (isEquipped) cardClass += ' is-equipped';
+      if (!isUnlocked) cardClass += ' is-locked';
+
+      // Preview miniature box based on game
+      let previewContent = '';
+      if (game === 'chess') {
+        const p = skin.preview || { light: '#cbd5e1', dark: '#475569', border: '#6366f1' };
+        previewContent = `
+          <div style="display:grid; grid-template-columns:repeat(4, 18px); grid-template-rows:repeat(4, 18px); border:2px solid ${p.border}; border-radius:6px; overflow:hidden;">
+            <div style="background:${p.light};"></div><div style="background:${p.dark};"></div><div style="background:${p.light};"></div><div style="background:${p.dark};"></div>
+            <div style="background:${p.dark};"></div><div style="background:${p.light};"></div><div style="background:${p.dark};"></div><div style="background:${p.light};"></div>
+            <div style="background:${p.light};"></div><div style="background:${p.dark};"></div><div style="background:${p.light};"></div><div style="background:${p.dark};"></div>
+            <div style="background:${p.dark};"></div><div style="background:${p.light};"></div><div style="background:${p.dark};"></div><div style="background:${p.light};"></div>
+          </div>
+        `;
+      } else if (game === 'memory') {
+        const emojis = skin.emojis || ['📚', '🎓'];
+        previewContent = `
+          <div style="display:flex; gap:8px;">
+            <div style="width:36px; height:48px; border-radius:6px; background:#1e293b; border:1px solid #4f46e5; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+              ${skin.cardBackIcon || '❓'}
+            </div>
+            <div style="width:36px; height:48px; border-radius:6px; background:#0f172a; border:1px solid #10b981; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+              ${emojis[0]}
+            </div>
+            <div style="width:36px; height:48px; border-radius:6px; background:#0f172a; border:1px solid #10b981; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+              ${emojis[1]}
+            </div>
+          </div>
+        `;
+      } else if (game === 'typing') {
+        previewContent = `
+          <div style="background:#090d16; border:1px solid ${skin.previewColor || '#34d399'}; border-radius:6px; padding:6px 12px; font-family:monospace; font-size:0.75rem; color:${skin.previewColor || '#34d399'};">
+            > campus.speed(wpm_120)<span style="animation:blink 1s infinite;">_</span>
+          </div>
+        `;
+      } else if (game === 'sudoku') {
+        previewContent = `
+          <div style="display:grid; grid-template-columns:repeat(3, 16px); grid-template-rows:repeat(3, 16px); gap:2px; border:2px solid ${skin.accentColor || '#6366f1'}; border-radius:6px; padding:2px; background:#0f172a;">
+            <div style="background:#1e293b; color:${skin.accentColor || '#6366f1'}; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">5</div>
+            <div style="background:#1e293b; color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">3</div>
+            <div style="background:#1e293b; color:#94a3b8; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">.</div>
+            <div style="background:#1e293b; color:#94a3b8; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">6</div>
+            <div style="background:#1e293b; color:${skin.accentColor || '#6366f1'}; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">7</div>
+            <div style="background:#1e293b; color:#94a3b8; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">.</div>
+            <div style="background:#1e293b; color:#94a3b8; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">.</div>
+            <div style="background:#1e293b; color:#94a3b8; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">9</div>
+            <div style="background:#1e293b; color:${skin.accentColor || '#6366f1'}; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">8</div>
+          </div>
+        `;
+      } else if (game === 'billiards') {
+        previewContent = `
+          <div style="width:110px; height:55px; border-radius:8px; background:${skin.feltCenter || '#15614a'}; border:5px solid ${skin.railColor || '#26170d'}; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:inset 0 0 10px rgba(0,0,0,0.5);">
+            <div style="width:10px; height:10px; border-radius:50%; background:#fff;"></div>
+            <div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div>
+            <div style="width:10px; height:10px; border-radius:50%; background:#000;"></div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="${cardClass}">
+          <div class="skin-card-preview" style="background:rgba(255,255,255,0.02);">
+            ${previewContent}
+          </div>
+          <div class="skin-card-header">
+            <span class="skin-card-name">${skin.icon} ${skin.name}</span>
+            <span class="skin-card-badge ${isUnlocked ? 'badge-primary' : 'badge-secondary'}">
+              ${isUnlocked ? 'Unlocked' : 'Locked'}
+            </span>
+          </div>
+          <p class="skin-card-desc">${skin.desc}</p>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">
+            Source: <strong style="color:var(--text-secondary);">${skin.unlockedBy}</strong>
+          </div>
+          <div class="skin-card-footer">
+            ${isEquipped ? `
+              <button class="skin-equip-btn btn-equipped">
+                <span>✓</span> Currently Equipped
+              </button>
+            ` : isUnlocked ? `
+              <button class="skin-equip-btn btn-equip" onclick="DailyLoginUI.equipSkin('${game}', '${skin.id}')">
+                Equip Skin
+              </button>
+            ` : `
+              <button class="skin-equip-btn btn-locked" onclick="DailyLoginUI.openModal()">
+                🔒 ${skin.unlockedBy}
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  equipSkin(game, skinId) {
+    const res = DailyLoginStore.equipSkin(game, skinId);
+    if (!res.success) {
+      UI.toast(res.message, 'warning');
+      return;
+    }
+
+    const skin = GameSkinsCatalog[game].find(s => s.id === skinId);
+    UI.toast(`Equipped ${skin ? skin.name : skinId} for ${game.toUpperCase()}!`, 'success');
+
+    // Re-render locker UI
+    this.renderLocker(game);
+
+    // Apply directly if games page is open
+    if (typeof applyAllEquippedGameSkins === 'function') {
+      applyAllEquippedGameSkins();
+    }
+  }
+};
+
+// Auto-initialize when DOM ready
 if (typeof window !== 'undefined') {
   window.ForYouFeed = ForYouFeed;
+  window.DailyLoginUI = DailyLoginUI;
+  window.addEventListener('DOMContentLoaded', () => {
+    DailyLoginUI.init();
+  });
 }
+

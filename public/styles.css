@@ -5899,3 +5899,1015 @@ body.no-animations *::after {
   background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
   transition: width 0.05s linear;
 }
+
+/* ==========================================================================
+   DAILY LOGIN REWARDS & GAME SKINS / DISPLAYS SYSTEM (STUDENTS ONLY)
+   ========================================================================== */
+
+/* --- Daily Login Modal --- */
+.daily-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 16, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.daily-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.daily-modal-dialog {
+  background: linear-gradient(160deg, #131b2e 0%, #0b0f1a 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-xl);
+  max-width: 900px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: var(--space-2xl);
+}
+
+.daily-modal-overlay.active .daily-modal-dialog {
+  transform: scale(1) translateY(0);
+}
+
+.daily-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.daily-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.daily-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  position: relative;
+}
+
+.daily-student-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 0.6rem;
+}
+
+.daily-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+
+.daily-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.daily-streak-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.daily-streak-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.streak-flame {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 10px #f59e0b);
+  animation: pulseFlame 1.5s infinite alternate;
+}
+
+@keyframes pulseFlame {
+  0% { transform: scale(1); filter: drop-shadow(0 0 8px #f59e0b); }
+  100% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 16px #ef4444); }
+}
+
+.streak-count-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.streak-count-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.daily-streak-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.daily-streak-stat-item {
+  text-align: right;
+}
+
+.daily-streak-stat-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.daily-streak-stat-lbl {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+/* --- 7-Day Rewards Track --- */
+.daily-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.65rem;
+  margin-bottom: var(--space-xl);
+}
+
+@media (max-width: 820px) {
+  .daily-calendar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .daily-calendar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.daily-day-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.daily-day-card.claimed {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.daily-day-card.claimed .daily-day-status-pill {
+  background: #10b981;
+  color: #fff;
+}
+
+.daily-day-card.today-active {
+  background: linear-gradient(150deg, rgba(99, 102, 241, 0.25), rgba(30, 41, 59, 0.9));
+  border-color: #818cf8;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.4), inset 0 0 15px rgba(99, 102, 241, 0.2);
+  transform: translateY(-4px);
+  animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 16px rgba(99, 102, 241, 0.35); }
+  100% { box-shadow: 0 0 28px rgba(129, 140, 248, 0.7); }
+}
+
+.daily-day-card.locked {
+  opacity: 0.65;
+}
+
+.daily-day-card.grand-vault {
+  grid-column: span 1;
+  background: linear-gradient(150deg, rgba(234, 179, 8, 0.15), rgba(30, 41, 59, 0.9));
+  border-color: rgba(234, 179, 8, 0.45);
+}
+
+@media (max-width: 820px) {
+  .daily-day-card.grand-vault {
+    grid-column: span 2;
+  }
+}
+
+.daily-day-num {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.daily-day-card.today-active .daily-day-num {
+  color: #a5b4fc;
+}
+
+.daily-day-icon {
+  font-size: 2rem;
+  margin: 0.25rem 0;
+  transition: transform 0.2s ease;
+}
+
+.daily-day-card:hover .daily-day-icon {
+  transform: scale(1.18);
+}
+
+.daily-day-reward-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  margin-bottom: 0.35rem;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.daily-day-pts {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 0.4rem;
+}
+
+.daily-day-status-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.daily-day-card.today-active .daily-day-status-pill {
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* --- Today's Reward Highlight Showcase --- */
+.daily-showcase-box {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: var(--space-lg);
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+@media (max-width: 680px) {
+  .daily-showcase-box {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+}
+
+.daily-showcase-icon-wrap {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(34, 211, 238, 0.15));
+  border: 2px solid rgba(99, 102, 241, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.75rem;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+}
+
+.daily-showcase-meta h4 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.daily-showcase-meta p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.daily-showcase-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.showcase-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.showcase-tag.game {
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}
+
+.showcase-tag.points {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.daily-claim-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1.8rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  white-space: nowrap;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.daily-claim-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.6);
+}
+
+.daily-claim-btn:disabled {
+  background: #334155;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  animation: none;
+}
+
+.daily-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-lg);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* --- Banner & Dashboard / Campus Hub Widget --- */
+.student-daily-banner {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: var(--space-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(99, 102, 241, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.student-daily-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #6366f1, #22d3ee);
+}
+
+.student-daily-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.student-daily-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.student-daily-banner-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.student-daily-banner-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.student-daily-banner-btn {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.student-daily-banner-btn:hover {
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   GAME SKINS & DISPLAYS LOCKER MODAL
+   ========================================================================== */
+
+.locker-modal-dialog {
+  background: linear-gradient(160deg, #111827 0%, #090d16 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-xl);
+  max-width: 950px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: var(--space-2xl);
+}
+
+.locker-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.locker-tab-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: 0.5rem 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+
+.locker-tab-btn:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+  border-color: var(--primary-400);
+}
+
+.locker-tab-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(34, 211, 238, 0.2));
+  border-color: #818cf8;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.locker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.skin-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.skin-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.skin-card.is-equipped {
+  border-color: #10b981;
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 0.5));
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+.skin-card.is-locked {
+  opacity: 0.6;
+}
+
+.skin-card-preview {
+  height: 100px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.skin-card-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.skin-card-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.skin-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: var(--space-md);
+  flex-grow: 1;
+}
+
+.skin-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skin-equip-btn {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.skin-equip-btn.btn-equip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.skin-equip-btn.btn-equip:hover {
+  background: var(--primary-600);
+  border-color: var(--primary-500);
+  color: #fff;
+}
+
+.skin-equip-btn.btn-equipped {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #34d399;
+  cursor: default;
+}
+
+.skin-equip-btn.btn-locked {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   DYNAMIC GAME SKINS STYLES (CHESS, MEMORY, TYPING, SUDOKU, BILLIARDS)
+   ========================================================================== */
+
+/* ─── 1. CHESS SKINS ─── */
+
+/* Skin: Neon Cyberpunk */
+.chess-board.skin-cyber {
+  box-shadow: 0 0 35px rgba(0, 245, 255, 0.35), inset 0 0 25px rgba(0, 245, 255, 0.15);
+  border: 2px solid #00f5ff;
+}
+
+.chess-board.skin-cyber .chess-square.light {
+  background-color: #132f38;
+}
+
+.chess-board.skin-cyber .chess-square.dark {
+  background-color: #0b1a24;
+}
+
+.chess-board.skin-cyber .chess-square:hover {
+  background-color: rgba(0, 245, 255, 0.25) !important;
+}
+
+.chess-board.skin-cyber .chess-piece.white {
+  color: #00f5ff;
+  text-shadow: 0 0 10px #00f5ff, 0 0 20px rgba(0, 245, 255, 0.8);
+}
+
+.chess-board.skin-cyber .chess-piece.black {
+  color: #ff007f;
+  text-shadow: 0 0 10px #ff007f, 0 0 20px rgba(255, 0, 127, 0.8);
+}
+
+/* Skin: Imperial Gold & Obsidian */
+.chess-board.skin-gold {
+  box-shadow: 0 0 35px rgba(234, 179, 8, 0.3), inset 0 0 20px rgba(234, 179, 8, 0.2);
+  border: 3px solid #eab308;
+}
+
+.chess-board.skin-gold .chess-square.light {
+  background-color: #ca8a04;
+}
+
+.chess-board.skin-gold .chess-square.dark {
+  background-color: #18181b;
+}
+
+.chess-board.skin-gold .chess-piece.white {
+  color: #fef08a;
+  text-shadow: 0 0 8px #eab308, 0 2px 4px #000;
+}
+
+.chess-board.skin-gold .chess-piece.black {
+  color: #09090b;
+  text-shadow: 0 0 5px rgba(253, 224, 71, 0.6), 0 0 10px rgba(253, 224, 71, 0.3);
+}
+
+/* Skin: Campus Emerald */
+.chess-board.skin-emerald {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+  border: 2px solid #10b981;
+}
+
+.chess-board.skin-emerald .chess-square.light {
+  background-color: #a7f3d0;
+}
+
+.chess-board.skin-emerald .chess-square.dark {
+  background-color: #065f46;
+}
+
+.chess-board.skin-emerald .chess-piece.white {
+  color: #f0fdf4;
+  text-shadow: 0 0 5px #10b981, 0 2px 4px #000;
+}
+
+.chess-board.skin-emerald .chess-piece.black {
+  color: #022c22;
+  text-shadow: 0 0 4px rgba(167, 243, 208, 0.7);
+}
+
+/* ─── 2. MEMORY MATCH SKINS ─── */
+
+/* Retro 8-bit */
+.memory-grid.cardback-retro .memory-card-front {
+  background: #1e1b4b;
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+  font-family: monospace;
+  box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.memory-grid.cardback-retro .memory-card-back {
+  background: linear-gradient(135deg, #312e81, #581c87);
+  border-color: #a855f7;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+/* Mascot Pets */
+.memory-grid.cardback-pets .memory-card-front {
+  background: #272018;
+  border-color: #f59e0b;
+  color: #fcd34d;
+}
+
+.memory-grid.cardback-pets .memory-card-back {
+  background: linear-gradient(135deg, #78350f, #92400e);
+  border-color: #fbbf24;
+}
+
+/* Cyber Cosmos */
+.memory-grid.cardback-cyber .memory-card-front {
+  background: #091724;
+  border-color: #00f5ff;
+  color: #00f5ff;
+  box-shadow: inset 0 0 12px rgba(0, 245, 255, 0.25);
+}
+
+.memory-grid.cardback-cyber .memory-card-back {
+  background: linear-gradient(135deg, #082f49, #0c4a6e);
+  border-color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+/* ─── 3. TYPING RACER SKINS ─── */
+
+/* Matrix Phosphor Terminal */
+#typingArena.skin-typing-matrix .typing-passage {
+  background: #041407;
+  border: 2px solid #22c55e;
+  box-shadow: inset 0 0 30px rgba(34, 197, 94, 0.2), 0 0 20px rgba(34, 197, 94, 0.25);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#typingArena.skin-typing-matrix .typing-char {
+  color: #15803d;
+}
+
+#typingArena.skin-typing-matrix .typing-char.correct {
+  color: #4ade80;
+  text-shadow: 0 0 8px #22c55e;
+}
+
+#typingArena.skin-typing-matrix .typing-char.wrong {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.3);
+}
+
+#typingArena.skin-typing-matrix .typing-char.cursor {
+  background: rgba(34, 197, 94, 0.4);
+  border-bottom: 3px solid #22c55e;
+}
+
+#typingArena.skin-typing-matrix .typing-input {
+  background: #041407;
+  border-color: #22c55e;
+  color: #4ade80;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Cyberpunk Vaporwave */
+#typingArena.skin-typing-vaporwave .typing-passage {
+  background: linear-gradient(135deg, #180928, #0e1231);
+  border: 2px solid #ec4899;
+  box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 30px rgba(6, 182, 212, 0.15);
+}
+
+#typingArena.skin-typing-vaporwave .typing-char.correct {
+  color: #06b6d4;
+  text-shadow: 0 0 8px #06b6d4;
+}
+
+#typingArena.skin-typing-vaporwave .typing-char.cursor {
+  border-bottom: 3px solid #ec4899;
+  background: rgba(236, 72, 153, 0.3);
+}
+
+/* Golden Sunset */
+#typingArena.skin-typing-sunset .typing-passage {
+  background: #1c140a;
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+#typingArena.skin-typing-sunset .typing-char.correct {
+  color: #fbbf24;
+  text-shadow: 0 0 6px #f59e0b;
+}
+
+/* ─── 4. SUDOKU SKINS ─── */
+
+/* Midnight Amethyst */
+.sudoku-grid.skin-sudoku-amethyst {
+  background: #19092c;
+  border-color: #a855f7;
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.3);
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell {
+  background: rgba(38, 16, 66, 0.6);
+  border-right-color: rgba(168, 85, 247, 0.25);
+  border-bottom-color: rgba(168, 85, 247, 0.25);
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell:nth-child(3n) {
+  border-right-color: #a855f7;
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+  border-bottom-color: #a855f7;
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell.given {
+  color: #c084fc;
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell.user-placed {
+  color: #f472b6;
+}
+
+.sudoku-grid.skin-sudoku-amethyst .sudoku-cell.selected {
+  background: rgba(168, 85, 247, 0.45) !important;
+  box-shadow: inset 0 0 0 2px #c084fc;
+}
+
+/* Electric Cyber Grid */
+.sudoku-grid.skin-sudoku-cyber {
+  background: #04161f;
+  border-color: #06b6d4;
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.3);
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell {
+  background: rgba(6, 32, 45, 0.6);
+  border-right-color: rgba(6, 182, 212, 0.25);
+  border-bottom-color: rgba(6, 182, 212, 0.25);
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell:nth-child(3n) {
+  border-right-color: #06b6d4;
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+  border-bottom-color: #06b6d4;
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell.given {
+  color: #22d3ee;
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell.user-placed {
+  color: #34d399;
+}
+
+.sudoku-grid.skin-sudoku-cyber .sudoku-cell.selected {
+  background: rgba(6, 182, 212, 0.45) !important;
+  box-shadow: inset 0 0 0 2px #22d3ee;
+}
+
+/* Golden Dynasty */
+.sudoku-grid.skin-sudoku-gold {
+  background: #1c1407;
+  border-color: #eab308;
+  box-shadow: 0 0 25px rgba(234, 179, 8, 0.3);
+}
+
+.sudoku-grid.skin-sudoku-gold .sudoku-cell {
+  background: rgba(45, 32, 12, 0.6);
+  border-right-color: rgba(234, 179, 8, 0.25);
+  border-bottom-color: rgba(234, 179, 8, 0.25);
+}
+
+.sudoku-grid.skin-sudoku-gold .sudoku-cell:nth-child(3n) {
+  border-right-color: #eab308;
+}
+
+.sudoku-grid.skin-sudoku-gold .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-grid.skin-sudoku-gold .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+  border-bottom-color: #eab308;
+}
+
+.sudoku-grid.skin-sudoku-gold .sudoku-cell.given {
+  color: #fde047;
+}
+
+.sudoku-grid.skin-sudoku-gold .sudoku-cell.user-placed {
+  color: #fb923c;
+}
+
+/* ─── 5. BILLIARDS TABLE SKINS ─── */
+.billiards-table-container.skin-billiards-midnight {
+  background: #081424;
+  border-color: #0f172a;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 35px rgba(30, 58, 138, 0.4);
+}
+
+.billiards-table-container.skin-billiards-crimson {
+  background: #1f0606;
+  border-color: #2b0808;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 35px rgba(127, 29, 29, 0.4);
+}
+
+.billiards-table-container.skin-billiards-neon {
+  background: #090312;
+  border-color: #1a082b;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 40px rgba(168, 85, 247, 0.35);
+}
+
+/* In-Arena Skin Switcher Pill */
+.arena-skin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.arena-skin-pill:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--primary-400);
+}

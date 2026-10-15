@@ -248,6 +248,10 @@
         }
 
         UI.toast(`Welcome, ${authResult.user.name}!`, 'success');
+        // Set flag for daily login reward auto-prompt (students only)
+        if (authResult.user.role === 'student') {
+          localStorage.setItem('campusnotify_just_logged_in', 'true');
+        }
         setTimeout(() => {
           window.location.href = 'dashboard.html';
         }, 500);

@@ -28,6 +28,9 @@
         </div>
       </div>
 
+      <!-- Student Daily Login Reward Banner (Students Only) -->
+      <div id="studentDailyBannerContainer"></div>
+
       <!-- Stats Grid -->
       <div class="stats-grid stagger" id="statsGrid">
         <div class="stat-card animate-scale-in">
@@ -77,6 +80,8 @@
 
       <!-- ✨ For You — Personalized Feed (students only) -->
       <div id="forYouSection" class="foryou-section mt-xl" style="display:none;">
+        <!-- Student Daily Login Reward Banner (Students Only) -->
+        <div id="studentDailyBannerContainer"></div>
         <div class="foryou-header">
           <div class="foryou-title-row">
             <div>
@@ -368,6 +373,11 @@
       const forYouSection = document.getElementById('forYouSection');
       if (forYouSection && role !== 'admin') {
         forYouSection.style.display = 'block';
+
+        // Render Student Daily Login Banner
+        if (typeof DailyLoginUI !== 'undefined') {
+          DailyLoginUI.renderBanner('studentDailyBannerContainer');
+        }
 
         // Set profile badge
         const badgeText = document.getElementById('forYouBadgeText');

@@ -19,12 +19,21 @@
             <h1>🎮 <span class="text-gradient">Campus Games</span></h1>
             <p class="page-subtitle">Take a study break — play chess, test your course knowledge, or unwind with casual games.</p>
           </div>
-          <div class="games-status-pills">
+          <div class="games-status-pills" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="btnStudentDailyRewards" onclick="DailyLoginUI.openModal()" style="display:none;">
+              🎁 Daily Login Rewards
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnGameSkinsLocker" onclick="DailyLoginUI.openLockerModal()" style="display:none;">
+              🎨 Skins & Displays Locker
+            </button>
             <span class="games-pill online">● Online</span>
             <span class="games-pill">🏆 6 Games</span>
           </div>
         </div>
       </div>
+
+      <!-- Student Daily Login Reward Banner (Students Only) -->
+      <div id="studentDailyBannerContainer"></div>
 
       <!-- Player Stats Bar -->
       <div class="stats-grid stagger" id="playerStatsBar">
@@ -265,6 +274,9 @@
               <button class="chess-mode-pill" data-mode="advanced" onclick="setChessMode('advanced')">🟠 Advanced</button>
               <button class="chess-mode-pill" data-mode="pro" onclick="setChessMode('pro')">🔴 Pro</button>
             </div>
+            <button class="arena-skin-pill" id="chessSkinPill" onclick="DailyLoginUI.openLockerModal('chess')" title="Change Chess Board & Pieces Skin" style="margin-left:auto;">
+              🎨 <span id="chessSkinPillLabel">Skin: Classic Slate</span> ▾
+            </button>
           </div>
           <div class="mode-description-banner" id="modeDescriptionBanner">
             <span id="modeDescriptionText">🟢 <strong>Training Mode:</strong> Relaxed AI. Hints and undo enabled.</span>
@@ -408,6 +420,9 @@
               <span class="games-pill" id="memoryTimeBadge">⏱️ 0:00</span>
               <span class="games-pill" id="memoryPairsBadge">Pairs: 0/8</span>
             </div>
+            <button class="arena-skin-pill" id="memorySkinPill" onclick="DailyLoginUI.openLockerModal('memory')" title="Change Memory Cards Skin" style="margin-left:auto;">
+              🎨 <span id="memorySkinPillLabel">Cards: Campus</span> ▾
+            </button>
           </div>
           <div style="max-width:520px;margin:0 auto;">
             <div class="memory-grid" id="memoryGrid"></div>
@@ -434,6 +449,9 @@
               <span class="games-pill" id="typingAccBadge">Accuracy: 100%</span>
               <span class="games-pill" id="typingTimeBadge">⏱️ 01:00</span>
             </div>
+            <button class="arena-skin-pill" id="typingSkinPill" onclick="DailyLoginUI.openLockerModal('typing')" title="Change Typing Display Theme" style="margin-left:auto;">
+              🎨 <span id="typingSkinPillLabel">Display: Terminal</span> ▾
+            </button>
           </div>
           <div style="max-width:820px;margin:0 auto;">
             <div class="quiz-card-box" id="typingBox">
@@ -510,6 +528,9 @@
               <button class="chess-mode-pill" data-mode="pro" onclick="setSudokuMode('pro')">🔴 Pro</button>
             </div>
             <div class="flex items-center gap-md" style="margin-left:auto;">
+              <button class="arena-skin-pill" id="sudokuSkinPill" onclick="DailyLoginUI.openLockerModal('sudoku')" title="Change Sudoku Grid Theme">
+                🎨 <span id="sudokuSkinPillLabel">Theme: Indigo</span> ▾
+              </button>
               <span class="games-pill" id="sudokuMistakesBadge">Mistakes: 0/3</span>
               <span class="games-pill" id="sudokuHintsBadge">💡 Hints: Unlimited</span>
               <span class="games-pill" id="sudokuTimeBadge">⏱️ 00:00</span>
@@ -588,6 +609,9 @@
               <button class="chess-mode-pill" data-mode="pro" onclick="setBilliardsMode('pro')">🔴 Pro AI</button>
             </div>
             <div class="flex items-center gap-md" style="margin-left:auto;">
+              <button class="arena-skin-pill" id="billiardsSkinPill" onclick="DailyLoginUI.openLockerModal('billiards')" title="Change Billiards Table & Cue">
+                🎨 <span id="billiardsSkinPillLabel">Felt: Classic Green</span> ▾
+              </button>
               <button class="chess-btn" onclick="openBilliardsRulesModal()" style="padding:4px 10px;font-size:0.75rem;border-color:rgba(255,255,255,0.25);">
                 <span>📋</span> Rules
               </button>
@@ -861,6 +885,88 @@
       document.getElementById('statGamesPlayed').textContent = d.gamesPlayed;
     }
 
+    // ─── Game Skins & Displays Integration ───
+    function applyAllEquippedGameSkins() {
+      if (typeof DailyLoginStore === 'undefined') return;
+
+      const role = (typeof Auth !== 'undefined') ? Auth.getRole() : 'student';
+      const isStudent = role === 'student';
+
+      const btnRewards = document.getElementById('btnStudentDailyRewards');
+      const btnLocker = document.getElementById('btnGameSkinsLocker');
+      if (btnRewards) btnRewards.style.display = isStudent ? 'inline-flex' : 'none';
+      if (btnLocker) btnLocker.style.display = isStudent ? 'inline-flex' : 'none';
+
+      // Render Student Daily Login Banner if container exists
+      if (isStudent && typeof DailyLoginUI !== 'undefined') {
+        DailyLoginUI.renderBanner('studentDailyBannerContainer');
+      }
+
+      // 1. Chess skin
+      const chessSkin = DailyLoginStore.getEquippedSkin('chess');
+      const chessBoardEl = document.getElementById('chessBoard');
+      if (chessBoardEl && chessSkin) {
+        chessBoardEl.className = 'chess-board ' + (chessSkin.themeClass || '');
+      }
+      const chessLabel = document.getElementById('chessSkinPillLabel');
+      if (chessLabel && chessSkin) {
+        chessLabel.textContent = 'Skin: ' + chessSkin.name;
+      }
+
+      // 2. Memory Match skin
+      const memSkin = DailyLoginStore.getEquippedSkin('memory');
+      const memGrid = document.getElementById('memoryGrid');
+      if (memGrid && memSkin) {
+        memGrid.className = 'memory-grid ' + (memSkin.cardBackClass || '');
+      }
+      const memLabel = document.getElementById('memorySkinPillLabel');
+      if (memLabel && memSkin) {
+        memLabel.textContent = 'Cards: ' + memSkin.name;
+      }
+
+      // 3. Typing Racer skin
+      const typingSkin = DailyLoginStore.getEquippedSkin('typing');
+      const typingArena = document.getElementById('typingArena');
+      if (typingArena && typingSkin) {
+        const tClasses = Array.from(typingArena.classList).filter(c => !c.startsWith('skin-typing-'));
+        tClasses.push(typingSkin.themeClass || 'skin-typing-default');
+        typingArena.className = tClasses.join(' ');
+      }
+      const typingLabel = document.getElementById('typingSkinPillLabel');
+      if (typingLabel && typingSkin) {
+        typingLabel.textContent = 'Display: ' + typingSkin.name;
+      }
+
+      // 4. Sudoku skin
+      const sudokuSkin = DailyLoginStore.getEquippedSkin('sudoku');
+      const sudokuBoard = document.getElementById('sudokuBoard');
+      if (sudokuBoard && sudokuSkin) {
+        const sClasses = Array.from(sudokuBoard.classList).filter(c => !c.startsWith('skin-sudoku-'));
+        sClasses.push(sudokuSkin.themeClass || 'skin-sudoku-default');
+        sudokuBoard.className = sClasses.join(' ');
+      }
+      const sudokuLabel = document.getElementById('sudokuSkinPillLabel');
+      if (sudokuLabel && sudokuSkin) {
+        sudokuLabel.textContent = 'Theme: ' + sudokuSkin.name;
+      }
+
+      // 5. Billiards skin
+      const billiardsSkin = DailyLoginStore.getEquippedSkin('billiards');
+      const billiardsContainer = document.querySelector('.billiards-table-container');
+      if (billiardsContainer && billiardsSkin) {
+        const bClasses = Array.from(billiardsContainer.classList).filter(c => !c.startsWith('skin-billiards-'));
+        if (billiardsSkin.id !== 'billiards_default') {
+          bClasses.push('skin-' + billiardsSkin.id);
+        }
+        billiardsContainer.className = bClasses.join(' ');
+      }
+      const billiardsLabel = document.getElementById('billiardsSkinPillLabel');
+      if (billiardsLabel && billiardsSkin) {
+        billiardsLabel.textContent = 'Felt: ' + billiardsSkin.name;
+      }
+    }
+    window.applyAllEquippedGameSkins = applyAllEquippedGameSkins;
+
     // ══════════════════════════════════════════════
     // PAGE INITIALIZATION
     // ══════════════════════════════════════════════
@@ -877,6 +983,7 @@
 
       refreshStatsUI();
       renderAchievements();
+      applyAllEquippedGameSkins();
     });
 
     function openGame(type) {
@@ -1392,14 +1499,20 @@
       document.getElementById('memoryResult').style.display = 'none';
       document.getElementById('memoryGrid').style.display = 'grid';
 
-      const pairs = [...MEMORY_EMOJIS, ...MEMORY_EMOJIS];
+      const memSkin = (typeof DailyLoginStore !== 'undefined') ? DailyLoginStore.getEquippedSkin('memory') : null;
+      const emojisList = (memSkin && memSkin.emojis) ? memSkin.emojis : MEMORY_EMOJIS;
+      const cardBackIcon = (memSkin && memSkin.cardBackIcon) ? memSkin.cardBackIcon : '❓';
+      const cardBackClass = (memSkin && memSkin.cardBackClass) ? memSkin.cardBackClass : 'cardback-default';
+
+      const pairs = [...emojisList, ...emojisList];
       memoryCards = pairs.sort(() => 0.5 - Math.random());
 
       const grid = document.getElementById('memoryGrid');
+      grid.className = 'memory-grid ' + cardBackClass;
       grid.innerHTML = memoryCards.map((emoji, i) =>
         `<div class="memory-card" data-index="${i}" onclick="flipMemoryCard(this, ${i})">
           <div class="memory-card-inner">
-            <div class="memory-card-front">❓</div>
+            <div class="memory-card-front">${cardBackIcon}</div>
             <div class="memory-card-back">${emoji}</div>
           </div>
         </div>`
@@ -1426,7 +1539,7 @@
           memoryFlipped = [];
           memoryLocked = false;
           updateMemoryUI();
-          if (memoryMatched === MEMORY_EMOJIS.length) {
+          if (memoryMatched === (memoryCards.length / 2)) {
             clearInterval(memoryTimerInterval);
             setTimeout(() => finishMemoryGame(), 400);
           }
@@ -3138,14 +3251,18 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
 
+      const bSkin = (typeof DailyLoginStore !== 'undefined')
+        ? DailyLoginStore.getEquippedSkin('billiards')
+        : { feltBg: '#0f4c3a', feltCenter: '#15614a', feltEdge: '#0c382b', railColor: '#26170d', cueBody: '#d97706', cueTip: '#38bdf8' };
+
       // Table felt background
-      ctx.fillStyle = '#0f4c3a';
+      ctx.fillStyle = bSkin.feltBg || '#0f4c3a';
       ctx.fillRect(0, 0, TABLE.w, TABLE.h);
 
       // Baize felt radial lighting gradient
       const feltGrad = ctx.createRadialGradient(TABLE.w / 2, TABLE.h / 2, 80, TABLE.w / 2, TABLE.h / 2, 450);
-      feltGrad.addColorStop(0, '#15614a');
-      feltGrad.addColorStop(1, '#0c382b');
+      feltGrad.addColorStop(0, bSkin.feltCenter || '#15614a');
+      feltGrad.addColorStop(1, bSkin.feltEdge || '#0c382b');
       ctx.fillStyle = feltGrad;
       ctx.fillRect(TABLE.cushion, TABLE.cushion, TABLE.w - TABLE.cushion * 2, TABLE.h - TABLE.cushion * 2);
 
@@ -3164,7 +3281,7 @@
       ctx.fill();
 
       // Table cushions (wood rails border with gradient)
-      ctx.fillStyle = '#26170d';
+      ctx.fillStyle = bSkin.railColor || '#26170d';
       ctx.fillRect(0, 0, TABLE.w, TABLE.cushion);
       ctx.fillRect(0, TABLE.h - TABLE.cushion, TABLE.w, TABLE.cushion);
       ctx.fillRect(0, 0, TABLE.cushion, TABLE.h);
@@ -3347,16 +3464,16 @@
         const stickEndX = stickStartX - forwardX * 190;
         const stickEndY = stickStartY - forwardY * 190;
 
-        // Wooden cue stick body
-        ctx.strokeStyle = '#d97706';
+        // Cue stick body
+        ctx.strokeStyle = bSkin.cueBody || '#d97706';
         ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.moveTo(stickStartX, stickStartY);
         ctx.lineTo(stickEndX, stickEndY);
         ctx.stroke();
 
-        // Cue tip (blue chalk)
-        ctx.strokeStyle = '#38bdf8';
+        // Cue tip (chalk)
+        ctx.strokeStyle = bSkin.cueTip || '#38bdf8';
         ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.moveTo(stickStartX, stickStartY);
