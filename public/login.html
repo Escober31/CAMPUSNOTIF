@@ -59,41 +59,29 @@
             autocomplete="current-password">
         </div>
 
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-xl);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 0.65rem;">
           <div class="form-checkbox-group">
             <input type="checkbox" id="remember" class="form-checkbox">
-            <label for="remember" style="font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">Remember
-              me</label>
+            <label for="remember" style="font-size:0.82rem; color:var(--text-secondary); cursor:pointer;">Remember me</label>
           </div>
-          <a href="#" style="font-size:0.85rem; color:var(--primary-400); font-weight:500;">Forgot password?</a>
+          <a href="#" style="font-size:0.82rem; color:var(--primary-400); font-weight:500;">Forgot password?</a>
         </div>
 
-        <!-- Create Account link for both Student & Admin -->
-        <div id="createAccountRow"
-          style="text-align:center; margin-bottom:var(--space-lg); animation: fadeIn 300ms ease;">
-          <p style="font-size:0.85rem; color:var(--text-secondary);" id="createAccountPrompt">
-            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)"
-              style="color:var(--primary-400); font-weight:600;">Create Account</a>
-          </p>
-        </div>
-
-        <div class="login-divider">Select your role</div>
-
-        <div class="role-selector" id="roleSelector">
-          <div class="role-option selected" data-role="student" id="role-student" onclick="selectRole('student')">
-            <div class="role-icon">🎓</div>
-            <div class="role-name">Student</div>
-            <div class="role-desc">View announcements & events</div>
-          </div>
-          <div class="role-option" data-role="admin" id="role-admin" onclick="selectRole('admin')">
-            <div class="role-icon">🛡️</div>
-            <div class="role-name">Admin / Staff</div>
-            <div class="role-desc">Manage & publish content</div>
+        <div class="role-toggle-wrapper">
+          <div class="role-selector" id="roleSelector" role="tablist" aria-label="Select role">
+            <button type="button" class="role-option selected" data-role="student" id="role-student" onclick="selectRole('student')" role="tab" aria-selected="true">
+              <span class="role-icon">🎓</span>
+              <span class="role-name">Student</span>
+            </button>
+            <button type="button" class="role-option" data-role="admin" id="role-admin" onclick="selectRole('admin')" role="tab" aria-selected="false">
+              <span class="role-icon">🛡️</span>
+              <span class="role-name">Admin / Staff</span>
+            </button>
           </div>
         </div>
 
-        <div id="activeSessionBadge" style="display:none; margin-bottom:var(--space-lg); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--primary-500); border-radius:var(--radius-md); text-align:center;">
-          <p style="font-size:0.85rem; margin-bottom:var(--space-sm); color:var(--text-primary);">
+        <div id="activeSessionBadge" style="display:none; margin-bottom:0.65rem; padding:0.5rem 0.75rem; background:var(--bg-glass); border:1px solid var(--primary-500); border-radius:var(--radius-md); text-align:center;">
+          <p style="font-size:0.8rem; margin-bottom:0.35rem; color:var(--text-primary);">
             Currently signed in as <strong id="activeSessionUser" style="color:var(--primary-300);"></strong>
           </p>
           <div style="display:flex; gap:var(--space-sm); justify-content:center;">
@@ -102,28 +90,46 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg w-full" id="loginBtn">
+        <button type="submit" class="btn btn-primary w-full" id="loginBtn" style="padding:0.65rem 1rem; font-size:0.95rem; font-weight:600; box-shadow:0 4px 16px rgba(99,102,241,0.35);">
           Sign In
         </button>
+
+        <!-- Create Account link for both Student & Admin -->
+        <div id="createAccountRow"
+          style="text-align:center; margin-top:0.6rem; margin-bottom:0.5rem; animation: fadeIn 300ms ease;">
+          <p style="font-size:0.82rem; color:var(--text-secondary);" id="createAccountPrompt">
+            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)"
+              style="color:var(--primary-400); font-weight:600;">Create Account</a>
+          </p>
+        </div>
       </form>
 
-      <div
-        style="margin-top:var(--space-xl); padding:var(--space-md); background:var(--bg-glass); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.78rem; color:var(--text-muted); text-align:center;">
-        <span style="color:var(--text-secondary); font-weight:600;">Default Demo Logins (click to fill):</span><br>
-        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('alex.rivera@campus.edu', 'password123', 'student')">alex.rivera@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('alex.rivera@campus.edu', 'password123', 'student')">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('jordan.miles@campus.edu', 'password123', 'student')">jordan.miles@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('jordan.miles@campus.edu', 'password123', 'student')">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('priya.shah@campus.edu', 'password123', 'student')">priya.shah@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('priya.shah@campus.edu', 'password123', 'student')">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('marcus.vance@campus.edu', 'password123', 'student')">marcus.vance@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('marcus.vance@campus.edu', 'password123', 'student')">password123</code>)<br>
-        🎓 Student: <code style="color:var(--primary-300); cursor:pointer;" onclick="fillDemo('elena.rostova@campus.edu', 'password123', 'student')">elena.rostova@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('elena.rostova@campus.edu', 'password123', 'student')">password123</code>)<br>
-        🛡️ Admin: <code style="color:var(--accent-cyan); cursor:pointer;" onclick="fillDemo('sarah.chen@campus.edu', 'password123', 'admin')">sarah.chen@campus.edu</code> (pwd: <code
-          style="color:var(--text-secondary); cursor:pointer;" onclick="fillDemo('sarah.chen@campus.edu', 'password123', 'admin')">password123</code>)<br>
-        <span style="font-size:0.72rem; opacity:0.8;">Or click <b>Create Account</b> to register your own
-          account!</span>
+      <!-- Compact Demo Logins Bar -->
+      <div class="login-demo-bar">
+        <div class="login-demo-header">
+          <span>⚡ Quick Demo Logins</span>
+          <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400;">(Click to fill)</span>
+        </div>
+        <div class="login-demo-chips">
+          <button type="button" class="demo-chip" onclick="fillDemo('alex.rivera@campus.edu', 'password123', 'student')" title="Alex Rivera (Student)">
+            🎓 Alex <span class="demo-role">Student</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemo('jordan.miles@campus.edu', 'password123', 'student')" title="Jordan Miles (Student)">
+            🎓 Jordan <span class="demo-role">Student</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemo('priya.shah@campus.edu', 'password123', 'student')" title="Priya Shah (Student)">
+            🎓 Priya <span class="demo-role">Student</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemo('marcus.vance@campus.edu', 'password123', 'student')" title="Marcus Vance (Student)">
+            🎓 Marcus
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemo('elena.rostova@campus.edu', 'password123', 'student')" title="Elena Rostova (Student)">
+            🎓 Elena
+          </button>
+          <button type="button" class="demo-chip demo-chip-admin" onclick="fillDemo('sarah.chen@campus.edu', 'password123', 'admin')" title="Sarah Chen (Admin)">
+            🛡️ Sarah <span class="demo-role">Admin</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -134,8 +140,15 @@
 
     function selectRole(role) {
       selectedRole = role;
-      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
-      document.querySelector(`[data-role="${role}"]`).classList.add('selected');
+      document.querySelectorAll('.role-option').forEach(el => {
+        el.classList.remove('selected');
+        el.setAttribute('aria-selected', 'false');
+      });
+      const target = document.querySelector(`[data-role="${role}"]`);
+      if (target) {
+        target.classList.add('selected');
+        target.setAttribute('aria-selected', 'true');
+      }
 
       // Update create account text to reflect selected role
       const prompt = document.getElementById('createAccountPrompt');
