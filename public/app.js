@@ -1690,11 +1690,12 @@ const DailyLoginUI = {
         cardClass += ' grand-vault';
       }
 
+      const dayLabel = item.day === 7 ? 'Day 7 ★' : (item.badge && item.badge.length <= 6 ? item.badge : `Day ${item.day}`);
+
       calendarHtml += `
-        <div class="${cardClass}" onclick="DailyLoginUI.highlightDayReward(${item.day})">
-          <div class="daily-day-num">${item.badge}</div>
+        <div class="${cardClass}" onclick="DailyLoginUI.highlightDayReward(${item.day})" title="${item.title} (+${item.points} pts)">
+          <div class="daily-day-num">${dayLabel}</div>
           <div class="daily-day-icon">${item.icon}</div>
-          <div class="daily-day-reward-title">${item.title}</div>
           <div class="daily-day-pts">+${item.points} pts</div>
           <span class="daily-day-status-pill">${statusLabel}</span>
         </div>
@@ -1702,67 +1703,99 @@ const DailyLoginUI = {
     });
 
     const activeReward = status.todayReward;
+    const currentDay = Math.min(7, Math.max(1, status.dayInCycle || 1));
+    const progressPercent = ((currentDay - 1) / 6) * 100;
 
     body.innerHTML = `
-      <div class="daily-header">
-        <span class="daily-student-pill">🎓 Student Exclusive Bonus</span>
-        <h2 class="daily-title">Daily Login Game Rewards</h2>
-        <p class="daily-subtitle">
-          Sign in daily to unlock exclusive skins, themes, and displays for 
-          <strong>Chess</strong>, <strong>Memory Match</strong>, <strong>Typing Racer</strong>, <strong>Sudoku</strong>, and <strong>Billiards</strong>!
-        </p>
-      </div>
-
-      <div class="daily-streak-bar">
-        <div class="daily-streak-info">
-          <span class="streak-flame">🔥</span>
-          <div>
-            <div class="streak-count-title">
-              ${status.currentStreak > 0 ? `${status.currentStreak}-Day Streak Active!` : 'Start Your Streak Today!'}
+      <div class="daily-modal-scrollable">
+        <div class="daily-header-merged">
+          <div class="daily-header-left">
+            <div class="daily-header-title-wrap">
+              <h2 class="daily-title">Daily Login Game Rewards</h2>
+              <span class="daily-student-pill">🎓 Student Exclusive</span>
             </div>
-            <div class="streak-count-desc">
-              ${status.canClaim 
-                ? 'Claim today’s login bonus to boost your streak and unlock game skins.'
-                : 'Great job! You claimed today’s reward. Log in tomorrow for Day ' + (((status.currentStreak % 7) + 1)) + '!'}
+            <p class="daily-subtitle">
+              Sign in daily to unlock skins and themes for 6 games.
+              <span class="daily-tooltip-wrap" title="Chess, Memory Match, Typing Racer, Sudoku, 2048 & Billiards">
+                <span class="daily-tooltip-trigger">(View Games ℹ️)</span>
+                <span class="daily-tooltip-box">🎮 Chess, Memory Match, Typing Racer, Sudoku, 2048 & Billiards</span>
+              </span>
+            </p>
+          </div>
+
+          <div class="daily-header-chips">
+            <div class="daily-chip streak-chip" title="Current Active Login Streak">
+              <svg class="streak-chip-svg flame-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+              </svg>
+              <span><strong>${status.currentStreak}</strong>-day streak</span>
+            </div>
+            <div class="daily-chip total-chip" title="Total Days Claimed">
+              <svg class="streak-chip-svg calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span><strong>${status.totalClaims}</strong> total day${status.totalClaims === 1 ? '' : 's'}</span>
+            </div>
+            <div class="daily-chip skins-chip" title="Unlocked Skins in Locker">
+              <svg class="streak-chip-svg palette-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C21.437 6.223 17.215 2 12 2z"/>
+              </svg>
+              <span><strong>${status.unlockedSkinsCount}</strong> skins</span>
             </div>
           </div>
         </div>
-        <div class="daily-streak-stats">
-          <div class="daily-streak-stat-item">
-            <div class="daily-streak-stat-val">${status.currentStreak} 🔥</div>
-            <div class="daily-streak-stat-lbl">Current Streak</div>
+
+        <div class="daily-calendar-wrap">
+          <div class="daily-progress-track" aria-hidden="true">
+            <div class="daily-progress-line-bg"></div>
+            <div class="daily-progress-line-fill" style="width: ${progressPercent}%;"></div>
+            <div class="daily-progress-head ${currentDay === 7 ? 'is-vault' : ''}" style="left: ${progressPercent}%;"></div>
           </div>
-          <div class="daily-streak-stat-item">
-            <div class="daily-streak-stat-val">${status.totalClaims} 📅</div>
-            <div class="daily-streak-stat-lbl">Total Days</div>
+          <div class="daily-calendar-grid" id="dailyCalendarGrid">
+            ${calendarHtml}
           </div>
-          <div class="daily-streak-stat-item">
-            <div class="daily-streak-stat-val">${status.unlockedSkinsCount} 🎨</div>
-            <div class="daily-streak-stat-lbl">Unlocked Skins</div>
+        </div>
+
+        <div class="daily-showcase-box" id="dailyShowcaseBox">
+          <div class="daily-showcase-icon-wrap">
+            ${activeReward.icon}
+          </div>
+          <div class="daily-showcase-meta">
+            <h4>${activeReward.title}</h4>
+            <p>${activeReward.description}</p>
+            <div class="daily-showcase-tags">
+              <span class="showcase-tag game">🎮 ${activeReward.game === 'multi' ? 'Multi-Game Pack' : activeReward.game.toUpperCase()}</span>
+              <span class="showcase-tag points">⭐ +${activeReward.points} Arcade Points</span>
+              <span class="showcase-tag" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+                🎁 ${status.canClaim ? 'Ready to Claim' : 'Already Claimed Today'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="daily-calendar-grid">
-        ${calendarHtml}
-      </div>
-
-      <div class="daily-showcase-box" id="dailyShowcaseBox">
-        <div class="daily-showcase-icon-wrap">
-          ${activeReward.icon}
-        </div>
-        <div class="daily-showcase-meta">
-          <h4>${activeReward.title}</h4>
-          <p>${activeReward.description}</p>
-          <div class="daily-showcase-tags">
-            <span class="showcase-tag game">🎮 ${activeReward.game === 'multi' ? 'Multi-Game Pack' : activeReward.game.toUpperCase()}</span>
-            <span class="showcase-tag points">⭐ +${activeReward.points} Arcade Points</span>
-            <span class="showcase-tag" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
-              🎁 ${status.canClaim ? 'Ready to Claim' : 'Already Claimed Today'}
-            </span>
+      <div class="daily-sticky-footer">
+        <div class="daily-actions-info">
+          <div class="daily-logged-user">
+            Logged in as: <strong style="color:var(--text-primary);">${user ? user.name : 'Student'}</strong> (🎓 Student Account)
+          </div>
+          <div class="daily-footer-btns">
+            <button class="btn btn-secondary btn-sm" onclick="DailyLoginUI.openLockerModal()" title="View unlocked game skins">
+              🎨 Skins Locker
+            </button>
+            <a href="games.html" class="btn btn-ghost btn-sm" title="Go to games arena">
+              🕹️ Games Arena →
+            </a>
           </div>
         </div>
-        <div>
+        <div class="daily-sticky-claim-action">
           ${status.canClaim ? `
             <button class="daily-claim-btn" id="btnClaimDailyReward" onclick="DailyLoginUI.handleClaim()">
               <span>🎁</span> Claim Day ${status.dayInCycle} Reward
@@ -1774,21 +1807,15 @@ const DailyLoginUI = {
           `}
         </div>
       </div>
-
-      <div class="daily-actions-row">
-        <div style="font-size:0.85rem; color:var(--text-muted);">
-          Logged in as: <strong style="color:var(--text-primary);">${user ? user.name : 'Student'}</strong> (🎓 Student Account)
-        </div>
-        <div style="display:flex; gap:0.6rem; align-items:center;">
-          <button class="btn btn-secondary btn-sm" onclick="DailyLoginUI.openLockerModal()">
-            🎨 Skins Locker
-          </button>
-          <a href="games.html" class="btn btn-primary btn-sm">
-            🕹️ Play Campus Games →
-          </a>
-        </div>
-      </div>
     `;
+
+    // On mobile screens, smoothly center the active day card into view
+    setTimeout(() => {
+      const activeCard = body.querySelector('.daily-day-card.today-active');
+      if (activeCard && window.innerWidth <= 820) {
+        activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }, 120);
   },
 
   highlightDayReward(dayNum) {
