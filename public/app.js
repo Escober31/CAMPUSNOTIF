@@ -1693,7 +1693,7 @@ const DailyLoginUI = {
       const dayLabel = item.day === 7 ? 'Day 7 ★' : (item.badge && item.badge.length <= 6 ? item.badge : `Day ${item.day}`);
 
       calendarHtml += `
-        <div class="${cardClass}" onclick="DailyLoginUI.highlightDayReward(${item.day})" title="${item.title} (+${item.points} pts)">
+        <div class="${cardClass}" id="dailyCardDay${item.day}" onclick="DailyLoginUI.highlightDayReward(${item.day})" title="${item.title} (+${item.points} pts)">
           <div class="daily-day-num">${dayLabel}</div>
           <div class="daily-day-icon">${item.icon}</div>
           <div class="daily-day-pts">+${item.points} pts</div>
@@ -1846,60 +1846,200 @@ const DailyLoginUI = {
   },
 
   handleClaim() {
+    const claimBtn = document.getElementById('btnClaimDailyReward');
+    if (claimBtn) {
+      claimBtn.disabled = true;
+      claimBtn.innerHTML = `<span>✨</span> Claiming...`;
+    }
+
     const result = DailyLoginStore.claimToday();
     if (!result.success) {
       UI.toast(result.message, 'warning');
+      if (claimBtn) {
+        claimBtn.disabled = false;
+        claimBtn.innerHTML = `<span>🎁</span> Claim Reward`;
+      }
       return;
     }
 
-    // Trigger celebratory visual burst
-    this.celebrateBurst();
+    const targetPoints = result.reward ? result.reward.points : 100;
+    const claimedDay = result.reward ? result.reward.day : 1;
 
-    UI.toast(`🎉 Claimed ${result.reward.title}! +${result.reward.points} Arcade Points & Game Skins unlocked!`, 'success');
+    // Locate active card being claimed
+    const activeCard = document.querySelector('.daily-day-card.today-active') ||
+                       document.getElementById(`dailyCardDay${claimedDay}`);
 
-    // Refresh modal
-    this.renderModal();
+    // Anchor for animations (active card or claim button)
+    const animAnchor = activeCard || claimBtn;
 
-    // Refresh any active on-page widgets
-    const banner = document.getElementById('studentDailyBannerContainer');
-    if (banner) {
-      this.renderBanner('studentDailyBannerContainer');
+    // 1. Let the claimed card flip and glow before it turns green
+    if (activeCard) {
+      activeCard.classList.add('is-claiming');
     }
 
-    // If on games page, refresh games stats & skins
-    if (typeof refreshStatsUI === 'function') {
-      refreshStatsUI();
+    // 2. Small colorful confetti burst
+    this.spawnConfetti(animAnchor);
+
+    // 3. Points counter animation rolling up from 0 to +X pts
+    this.animatePointsCounter(targetPoints, animAnchor);
+
+    // Secondary sparkle burst near claim button if separate
+    if (claimBtn && activeCard && claimBtn !== activeCard) {
+      setTimeout(() => this.spawnConfetti(claimBtn), 140);
     }
-    if (typeof applyAllEquippedGameSkins === 'function') {
-      applyAllEquippedGameSkins();
-    }
+
+    // 4. After the flip & glow completes, transition card to green, re-render, and celebrate
+    setTimeout(() => {
+      if (activeCard) {
+        activeCard.classList.remove('is-claiming');
+        activeCard.classList.add('claimed', 'just-claimed');
+        const pill = activeCard.querySelector('.daily-day-status-pill');
+        if (pill) pill.textContent = '✓ Claimed';
+      }
+
+      // Re-render modal to reflect new state
+      this.renderModal();
+
+      // Highlight the claimed card in the freshly re-rendered modal
+      const newCard = document.getElementById(`dailyCardDay${claimedDay}`);
+      if (newCard) {
+        newCard.classList.add('just-claimed');
+      }
+
+      UI.toast(`🎉 Claimed ${result.reward.title}! +${result.reward.points} Arcade Points & Game Skins unlocked!`, 'success');
+
+      // Refresh any active on-page widgets
+      const banner = document.getElementById('studentDailyBannerContainer');
+      if (banner) {
+        this.renderBanner('studentDailyBannerContainer');
+      }
+
+      // If on games page, refresh games stats & skins
+      if (typeof refreshStatsUI === 'function') {
+        refreshStatsUI();
+      }
+      if (typeof applyAllEquippedGameSkins === 'function') {
+        applyAllEquippedGameSkins();
+      }
+    }, 720);
   },
 
-  celebrateBurst() {
-    // Floating confetti emojis burst
-    const emojis = ['🎉', '✨', '🎁', '⭐', '♟️', '🎱', '💎', '🔥'];
-    for (let i = 0; i < 24; i++) {
+  spawnConfetti(sourceEl) {
+    let originX = window.innerWidth / 2;
+    let originY = window.innerHeight / 2;
+
+    if (sourceEl) {
+      const rect = sourceEl.getBoundingClientRect();
+      originX = rect.left + rect.width / 2;
+      originY = rect.top + rect.height / 2;
+    }
+
+    const colors = [
+      '#10b981', '#34d399', '#06b6d4', '#22d3ee',
+      '#6366f1', '#818cf8', '#fbbf24', '#f59e0b',
+      '#ec4899', '#f43f5e', '#a855f7', '#ffffff'
+    ];
+    const emojis = ['✨', '⭐', '🎁', '🎉'];
+
+    const count = 38;
+    for (let i = 0; i < count; i++) {
+      const isEmoji = i % 5 === 0;
       const el = document.createElement('div');
-      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.className = 'daily-confetti-particle';
+
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.45;
+      const velocity = 70 + Math.random() * 200;
+      const destX = Math.cos(angle) * velocity + (Math.random() - 0.5) * 35;
+      const destY = Math.sin(angle) * velocity - (35 + Math.random() * 110);
+      const rot = (Math.random() - 0.5) * 720;
+      const scale = 0.6 + Math.random() * 0.7;
+      const duration = 0.8 + Math.random() * 0.4;
+
+      if (isEmoji) {
+        el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.fontSize = `${1 + Math.random() * 0.8}rem`;
+        el.style.background = 'transparent';
+      } else {
+        const isCircle = Math.random() > 0.5;
+        const w = 7 + Math.random() * 7;
+        const h = 5 + Math.random() * 8;
+        el.style.width = `${w}px`;
+        el.style.height = `${h}px`;
+        el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        el.style.borderRadius = isCircle ? '50%' : '2px';
+        el.style.boxShadow = `0 0 8px ${el.style.backgroundColor}`;
+      }
+
       el.style.position = 'fixed';
-      el.style.left = `${50 + (Math.random() - 0.5) * 40}%`;
-      el.style.top = `${50 + (Math.random() - 0.5) * 30}%`;
-      el.style.fontSize = `${1.5 + Math.random() * 1.5}rem`;
-      el.style.zIndex = '99999';
-      el.style.pointerEvents = 'none';
-      el.style.transition = 'all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      el.style.left = `${originX}px`;
+      el.style.top = `${originY}px`;
+      el.style.transform = 'translate(-50%, -50%) scale(0.2)';
+      el.style.opacity = '1';
+      el.style.transition = `transform ${duration}s cubic-bezier(0.12, 0.8, 0.32, 1), opacity ${duration}s ease-in`;
+
       document.body.appendChild(el);
 
-      const destX = (Math.random() - 0.5) * 600;
-      const destY = -150 - Math.random() * 300;
-
       requestAnimationFrame(() => {
-        el.style.transform = `translate(${destX}px, ${destY}px) rotate(${Math.random() * 360}deg) scale(0)`;
+        el.style.transform = `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) rotate(${rot}deg) scale(${scale})`;
         el.style.opacity = '0';
       });
 
-      setTimeout(() => el.remove(), 1300);
+      setTimeout(() => el.remove(), duration * 1000 + 100);
     }
+  },
+
+  animatePointsCounter(targetPoints, anchorEl) {
+    if (!targetPoints) return;
+
+    let posX = window.innerWidth / 2;
+    let posY = window.innerHeight / 2;
+
+    if (anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      posX = rect.left + rect.width / 2;
+      posY = Math.max(70, rect.top - 15);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = 'daily-points-counter-bubble';
+    bubble.style.left = `${posX}px`;
+    bubble.style.top = `${posY}px`;
+    bubble.innerHTML = `
+      <span class="pts-star">⭐</span>
+      <span class="pts-num">+0 PTS</span>
+    `;
+    document.body.appendChild(bubble);
+
+    const numEl = bubble.querySelector('.pts-num');
+    const startTime = performance.now();
+    const duration = 520;
+
+    const updateCounter = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const currentPts = Math.round(easeProgress * targetPoints);
+
+      if (numEl) {
+        numEl.textContent = `+${currentPts} PTS`;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCounter);
+      } else {
+        if (numEl) numEl.textContent = `+${targetPoints} PTS!`;
+      }
+    };
+
+    requestAnimationFrame(updateCounter);
+
+    setTimeout(() => {
+      bubble.remove();
+    }, 1450);
+  },
+
+  celebrateBurst(sourceEl) {
+    this.spawnConfetti(sourceEl);
   },
 
   renderBanner(containerId) {

@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="CampusNotify Dashboard — Overview of announcements, events, and campus activity at a glance.">
+  <meta name="description"
+    content="CampusNotify Dashboard — Overview of announcements, events, and campus activity at a glance.">
   <title>Dashboard — CampusNotify</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="app-layout">
     <div id="app-sidebar"></div>
@@ -16,7 +19,8 @@
       <div class="page-header animate-fade-in">
         <div class="page-header-row">
           <div>
-            <h1>Good <span class="text-gradient" id="greeting">afternoon</span>, <span id="userName">Student</span> 👋</h1>
+            <h1>Good <span class="text-gradient" id="greeting">afternoon</span>, <span id="userName">Student</span> 👋
+            </h1>
             <p class="page-subtitle">Here's what's happening on campus today.</p>
           </div>
           <div class="flex gap-md">
@@ -45,7 +49,8 @@
           <div class="stat-label">Upcoming Events</div>
           <div class="stat-trend up">↑ 2 new</div>
         </div>
-        <div class="stat-card animate-scale-in" style="cursor:pointer;" onclick="window.location.href='events-notifications.html?tab=notifications'" title="View notifications">
+        <div class="stat-card animate-scale-in" style="cursor:pointer;"
+          onclick="window.location.href='events-notifications.html?tab=notifications'" title="View notifications">
           <div class="stat-icon amber">🔔</div>
           <div class="stat-value" id="statNotifications">0</div>
           <div class="stat-label">Unread Notifications</div>
@@ -106,7 +111,8 @@
         <div id="forYouEmpty" class="foryou-empty" style="display:none;">
           <div class="foryou-empty-icon">🎯</div>
           <h3>All caught up!</h3>
-          <p>No personalized content for your profile right now. Check the <a href="campus-hub.html">Campus Hub</a> for campus-wide updates.</p>
+          <p>No personalized content for your profile right now. Check the <a href="campus-hub.html">Campus Hub</a> for
+            campus-wide updates.</p>
         </div>
       </div>
 
@@ -185,7 +191,8 @@
         <form id="createPollForm" onsubmit="handleCreatePollSubmit(event)">
           <div class="form-group mb-lg">
             <label class="form-label" for="pollQuestion">Question <span class="text-danger">*</span></label>
-            <input type="text" id="pollQuestion" class="form-control" placeholder="What activity would you like for Foundation Week?" required>
+            <input type="text" id="pollQuestion" class="form-control"
+              placeholder="What activity would you like for Foundation Week?" required>
           </div>
 
           <div class="poll-form-grid mb-lg">
@@ -265,7 +272,8 @@
               </div>
 
               <div class="form-group mb-md">
-                <label class="form-label" for="editPollClosingDate">Closing Date <span class="text-danger">*</span></label>
+                <label class="form-label" for="editPollClosingDate">Closing Date <span
+                    class="text-danger">*</span></label>
                 <input type="date" id="editPollClosingDate" class="form-control" required>
               </div>
 
@@ -1059,7 +1067,7 @@
 
       document.getElementById('viewResultsTitle').textContent = poll.question;
       document.getElementById('viewResultsCategory').textContent = '🎓 ' + (poll.category || 'General');
-      
+
       const statusBadge = document.getElementById('viewResultsStatus');
       statusBadge.textContent = isClosed ? 'Inactive / Closed' : 'Active';
       statusBadge.className = isClosed ? 'badge badge-warning' : 'badge badge-success';
@@ -1091,4 +1099,5 @@
     }
   </script>
 </body>
+
 </html>
