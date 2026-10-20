@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="CampusNotify Avatar Studio — Customize your student avatar, choose mascots, monogram styles, frames, and campus mood badges.">
+  <title>Customize Avatar — CampusNotify</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ======================================================
+       Avatar Studio Custom Styles & Micro-Animations
+       ====================================================== */
+    .avatar-studio-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: var(--space-xl);
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .avatar-studio-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Live Preview Sticky Sidebar Card */
+    .avatar-preview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-lg);
+      position: sticky;
+      top: var(--space-xl);
+      backdrop-filter: blur(16px);
+      text-align: center;
+      transition: all var(--transition-normal);
+    }
+
+    .avatar-stage-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Stage Background Aura */
+    .avatar-stage-glow {
+      position: absolute;
+      inset: -15px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      filter: blur(28px);
+      opacity: 0.35;
+      transition: all 0.5s ease;
+      z-index: 0;
+      animation: pulseGlow 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.92); opacity: 0.25; }
+      100% { transform: scale(1.08); opacity: 0.45; }
+    }
+
+    /* Main Big Avatar Element */
+    .studio-avatar-main {
+      position: relative;
+      z-index: 2;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    }
+
+    .studio-avatar-main:hover {
+      transform: scale(1.06) rotate(3deg);
+    }
+
+    .studio-avatar-main:active {
+      transform: scale(0.96);
+    }
+
+    /* Aura / Frame Styles */
+    .frame-none {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 4px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .frame-gold {
+      border: 4px solid #f59e0b;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.7), inset 0 0 15px rgba(245, 158, 11, 0.4);
+      animation: goldAura 3s infinite alternate;
+    }
+
+    @keyframes goldAura {
+      0% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3); }
+      100% { box-shadow: 0 0 35px rgba(251, 191, 36, 0.9), inset 0 0 20px rgba(251, 191, 36, 0.6); }
+    }
+
+    .frame-cyber {
+      border: 4px solid #06b6d4;
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.75), inset 0 0 15px rgba(6, 182, 212, 0.4);
+      animation: cyberPulse 2.5s infinite alternate;
+    }
+
+    @keyframes cyberPulse {
+      0% { border-color: #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); }
+      100% { border-color: #3b82f6; box-shadow: 0 0 35px rgba(59, 130, 246, 0.95); }
+    }
+
+    .frame-cosmic {
+      border: 4px solid #a855f7;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.8), inset 0 0 15px rgba(236, 72, 153, 0.5);
+      animation: cosmicShift 4s infinite linear;
+    }
+
+    @keyframes cosmicShift {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    .frame-rainbow {
+      border: 4px solid transparent;
+      background-clip: padding-box, border-box;
+      background-origin: padding-box, border-box;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+      position: relative;
+    }
+    .frame-rainbow::before {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #f43f5e, #fbbf24, #10b981, #06b6d4, #8b5cf6, #f43f5e);
+      background-size: 300% 300%;
+      z-index: -1;
+      animation: rainbowBorder 4s linear infinite;
+    }
+
+    @keyframes rainbowBorder {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .frame-emerald {
+      border: 4px solid #10b981;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.7), inset 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .frame-fire {
+      border: 4px solid #ef4444;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 18px rgba(245, 158, 11, 0.6);
+      animation: firePulse 2s infinite alternate;
+    }
+
+    @keyframes firePulse {
+      0% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.6); }
+      100% { box-shadow: 0 0 35px rgba(249, 115, 22, 0.95); }
+    }
+
+    /* Status Mood Pill */
+    .avatar-mood-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+
+    /* Live Surface Mock Previews */
+    .surface-previews-container {
+      margin-top: var(--space-xl);
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+
+    .surface-preview-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .surface-mock-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .surface-mock-card:hover {
+      border-color: var(--accent-indigo);
+      transform: translateY(-2px);
+    }
+
+    .surface-mock-header {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: var(--space-xs);
+    }
+
+    /* Studio Tab Navigation */
+    .studio-tabs {
+      display: flex;
+      gap: var(--space-sm);
+      overflow-x: auto;
+      padding-bottom: var(--space-xs);
+      margin-bottom: var(--space-xl);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .studio-tab-btn {
+      padding: 10px 18px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .studio-tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .studio-tab-btn.active {
+      color: var(--accent-indigo);
+      border-bottom-color: var(--accent-indigo);
+    }
+
+    /* Mascot & Character Grid */
+    .mascots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .mascot-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md) var(--space-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mascot-card:hover {
+      transform: translateY(-4px) scale(1.03);
+      border-color: var(--accent-indigo);
+      background: var(--bg-glass-hover);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .mascot-card.selected {
+      border-color: var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.12);
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .mascot-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      background: var(--accent-indigo);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mascot-emoji {
+      font-size: 2.4rem;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+      transition: transform 0.2s ease;
+    }
+
+    .mascot-card:hover .mascot-emoji {
+      transform: scale(1.15);
+    }
+
+    .mascot-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90px;
+    }
+
+    /* Category Pill Filter */
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-lg);
+    }
+
+    .filter-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-pill:hover {
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+
+    .filter-pill.active {
+      background: var(--gradient-accent);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Gradient Palettes Grid */
+    .gradient-palettes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .gradient-card {
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-sm);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: var(--bg-card);
+    }
+
+    .gradient-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-indigo);
+    }
+
+    .gradient-card.selected {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.5);
+    }
+
+    .gradient-swatch {
+      width: 100%;
+      height: 44px;
+      border-radius: var(--radius-md);
+      margin-bottom: 6px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .gradient-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Aura Frame Grid */
+    .frames-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    .frame-option-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg) var(--space-md);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .frame-option-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-indigo);
+    }
+
+    .frame-option-card.selected {
+      border-color: var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.08);
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .frame-demo-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    /* Quick Presets Bar */
+    .preset-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .preset-chip:hover {
+      background: var(--bg-glass-hover);
+      border-color: var(--accent-indigo);
+      transform: translateY(-2px);
+    }
+
+    /* Confetti animation */
+    .confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Confetti Canvas for celebration -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>🎨 <span class="text-gradient">Avatar Studio</span></h1>
+            <p class="page-subtitle">Personalize your student identity across CampusNotify — choose mascots, custom monograms, aura frames, and status flair.</p>
+          </div>
+          <div class="flex gap-md" style="flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="randomizeAvatar()" id="btnRandomize" title="Shuffle random combo">
+              🎲 Surprise Me
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="resetToInitials()" id="btnResetInitials" title="Reset to your name initials">
+              ↺ Reset
+            </button>
+            <button class="btn btn-primary" onclick="saveAvatarProfile()" id="btnSaveAvatar">
+              💾 Save Avatar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Student Presets Bar -->
+      <div class="card mb-xl animate-slide-up" style="padding: var(--space-md) var(--space-lg); background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.06)); border-color: rgba(99,102,241,0.2);">
+        <div class="flex items-center gap-md" style="flex-wrap: wrap;">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-indigo); display: flex; align-items: center; gap: 4px;">
+            ✨ Quick Looks:
+          </span>
+          <div class="flex gap-sm" style="flex-wrap: wrap; flex: 1;">
+            <button class="preset-chip" onclick="applyPreset('scholar')">🎓 Dean's Scholar</button>
+            <button class="preset-chip" onclick="applyPreset('coder')">💻 Cyber Hacker</button>
+            <button class="preset-chip" onclick="applyPreset('fox')">🦊 Swift Fox</button>
+            <button class="preset-chip" onclick="applyPreset('gamer')">🎮 Esports Ace</button>
+            <button class="preset-chip" onclick="applyPreset('coffee')">☕ Caffeine Coder</button>
+            <button class="preset-chip" onclick="applyPreset('lion')">🦁 Campus Pride</button>
+            <button class="preset-chip" onclick="applyPreset('creative')">🎨 Digital Artist</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Avatar Studio Main Grid -->
+      <div class="avatar-studio-layout">
+
+        <!-- Left Column: Live Preview Sticky Card -->
+        <aside class="avatar-preview-card animate-scale-in">
+          <div class="surface-mock-header" style="text-align: center; margin-bottom: var(--space-md);">
+            LIVE AVATAR SHOWCASE
+          </div>
+
+          <div class="avatar-stage-container">
+            <div class="avatar-stage-glow" id="stageGlow"></div>
+            <div class="studio-avatar-main frame-none" id="previewAvatarMain" onclick="bounceAvatar()" title="Click to interact!">
+              AR
+            </div>
+          </div>
+
+          <h3 id="previewStudentName" style="margin-bottom: 2px;">Student Name</h3>
+          <p class="text-muted text-sm" id="previewStudentDept" style="margin-bottom: var(--space-sm);">Computer Science · 3rd Year</p>
+
+          <div>
+            <div class="avatar-mood-pill" id="previewMoodPill">
+              <span id="previewMoodIcon">🎓</span>
+              <span id="previewMoodText">Studying Hard</span>
+            </div>
+          </div>
+
+          <!-- Multi-Surface Previews -->
+          <div class="surface-previews-container">
+            <div class="surface-preview-title">
+              <span>Preview Across Campus</span>
+              <span class="badge badge-primary" style="font-size:0.65rem;">Live</span>
+            </div>
+
+            <!-- Preview 1: Sidebar Footer Mock -->
+            <div class="surface-mock-card">
+              <div class="surface-mock-header">1. Navigation Sidebar Tile</div>
+              <div class="sidebar-user" style="padding: 6px 10px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03);">
+                <div class="user-avatar" id="mockSidebarAvatar" style="width: 34px; height: 34px; font-size: 0.85rem;">AR</div>
+                <div class="user-info">
+                  <div class="user-name" id="mockSidebarName" style="font-size: 0.8rem;">Alex Rivera</div>
+                  <div class="user-role" style="font-size: 0.65rem;">🎓 Student</div>
+                </div>
+                <span style="color: var(--text-muted); font-size: 0.75rem;">⏻</span>
+              </div>
+            </div>
+
+            <!-- Preview 2: Campus Games Player Mock -->
+            <div class="surface-mock-card">
+              <div class="surface-mock-header">2. Campus Games Battle Arena</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-md);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div id="mockGameAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--gradient-accent);">AR</div>
+                  <div>
+                    <div style="font-size: 0.75rem; font-weight: 700;" id="mockGameName">You</div>
+                    <div style="font-size: 0.65rem; color: var(--accent-emerald);">● Ready (1,240 pts)</div>
+                  </div>
+                </div>
+                <span class="badge badge-warning" style="font-size: 0.65rem;">VS</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div>
+                    <div style="font-size: 0.75rem; font-weight: 700; text-align: right;">AI Bot</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); text-align: right;">Grandmaster</div>
+                  </div>
+                  <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: #334155;">🤖</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview 3: Campus Discussion Card Mock -->
+            <div class="surface-mock-card">
+              <div class="surface-mock-header">3. Campus Hub Discussion Card</div>
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <div id="mockHubAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--gradient-accent); flex-shrink: 0;">AR</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.75rem; font-weight: 700;" id="mockHubName">Alex Rivera</span>
+                    <span style="font-size: 0.65rem; color: var(--text-muted);">Just now</span>
+                  </div>
+                  <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 2px 0 0; line-height: 1.4;">
+                    Check out the CS capstone showcase tomorrow at the auditorium! 🔥
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-sm);">
+            <button class="btn btn-primary" style="flex: 1;" onclick="saveAvatarProfile()">
+              💾 Apply Avatar
+            </button>
+          </div>
+        </aside>
+
+        <!-- Right Column: Customization Controls & Studio Tabs -->
+        <section class="card animate-fade-in" style="transform: none;">
+          <!-- Studio Tabs -->
+          <div class="studio-tabs" id="studioTabs">
+            <button class="studio-tab-btn active" data-tab="mascots" onclick="switchStudioTab('mascots')">
+              <span>🎭</span> Mascots & Characters
+            </button>
+            <button class="studio-tab-btn" data-tab="monogram" onclick="switchStudioTab('monogram')">
+              <span>✍️</span> Monogram & Colors
+            </button>
+            <button class="studio-tab-btn" data-tab="frames" onclick="switchStudioTab('frames')">
+              <span>🖼️</span> Aura & Frames
+            </button>
+            <button class="studio-tab-btn" data-tab="mood" onclick="switchStudioTab('mood')">
+              <span>💬</span> Campus Mood
+            </button>
+          </div>
+
+          <!-- TAB 1: Mascots & Characters -->
+          <div class="studio-tab-content" id="tabContent-mascots">
+            <div class="flex items-center justify-between mb-md">
+              <div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Campus Mascot & Icon Gallery</h3>
+                <p class="text-muted text-sm">Select an emoji or illustrated avatar that represents your campus persona.</p>
+              </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="filter-pills" id="mascotFilters">
+              <button class="filter-pill active" onclick="filterMascots('all')">All</button>
+              <button class="filter-pill" onclick="filterMascots('academic')">🎓 Academic</button>
+              <button class="filter-pill" onclick="filterMascots('tech')">💻 Tech & Science</button>
+              <button class="filter-pill" onclick="filterMascots('mascot')">🦁 Mascots</button>
+              <button class="filter-pill" onclick="filterMascots('creative')">🎨 Creative</button>
+              <button class="filter-pill" onclick="filterMascots('sports')">🏆 Sports</button>
+              <button class="filter-pill" onclick="filterMascots('chill')">☕ Lifestyle</button>
+            </div>
+
+            <!-- Mascots Grid -->
+            <div class="mascots-grid" id="mascotsContainer"></div>
+          </div>
+
+          <!-- TAB 2: Monogram & Gradients -->
+          <div class="studio-tab-content" id="tabContent-monogram" style="display: none;">
+            <div class="mb-lg">
+              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Custom Letter Monogram</h3>
+              <p class="text-muted text-sm">Craft a sleek, modern monogram with custom initials, vibrant gradient palettes, and typography.</p>
+            </div>
+
+            <div class="grid-2 mb-xl">
+              <div class="form-group">
+                <label class="form-label" for="monogramTextInput">Monogram Characters (1-3 letters)</label>
+                <div class="flex gap-sm">
+                  <input type="text" id="monogramTextInput" class="form-input" maxlength="3" value="AR" style="font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;" placeholder="e.g. AR">
+                  <button class="btn btn-secondary" onclick="useNameInitials()">Use Initials</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="monogramFontSelect">Typography Font Family</label>
+                <select id="monogramFontSelect" class="form-input" onchange="updateMonogramFont(this.value)">
+                  <option value="system-ui, sans-serif">Modern Sans (Default)</option>
+                  <option value="'Courier New', monospace">Tech Mono (Terminal)</option>
+                  <option value="Georgia, serif">Classic University Serif</option>
+                  <option value="'Impact', sans-serif">Chunky Bold Impact</option>
+                  <option value="'Trebuchet MS', sans-serif">Dynamic Modern</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-md">
+              <h4 style="font-size: 0.95rem; margin-bottom: var(--space-sm);">Vibrant Color Schemes & Gradients</h4>
+            </div>
+
+            <div class="gradient-palettes-grid" id="gradientsContainer"></div>
+          </div>
+
+          <!-- TAB 3: Aura & Frames -->
+          <div class="studio-tab-content" id="tabContent-frames" style="display: none;">
+            <div class="mb-lg">
+              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Avatar Border Auras & Effects</h3>
+              <p class="text-muted text-sm">Add glowing energy, championship rings, and animated frames to your profile.</p>
+            </div>
+
+            <div class="frames-grid" id="framesContainer"></div>
+          </div>
+
+          <!-- TAB 4: Campus Mood & Flair -->
+          <div class="studio-tab-content" id="tabContent-mood" style="display: none;">
+            <div class="mb-lg">
+              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Campus Mood & Activity Badge</h3>
+              <p class="text-muted text-sm">Display your current mindset or study vibe right alongside your avatar.</p>
+            </div>
+
+            <div class="form-group mb-xl">
+              <label class="form-label" for="customMoodInput">Custom Status Text</label>
+              <div class="flex gap-sm">
+                <input type="text" id="customMoodInput" class="form-input" placeholder="e.g. Preparing for Midterms..." maxlength="30">
+                <button class="btn btn-secondary" onclick="applyCustomMood()">Set Custom</button>
+              </div>
+            </div>
+
+            <div class="mb-sm">
+              <h4 style="font-size: 0.95rem; margin-bottom: var(--space-sm);">Popular Student Status Badges</h4>
+            </div>
+
+            <div class="flex gap-md" style="flex-wrap: wrap;" id="moodsContainer"></div>
+          </div>
+
+        </section>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+  <script src="stores.js"></script>
+  <script>
+    // ─── Mascot & Character Definitions ───
+    const MASCOTS = [
+      // Academic
+      { id: 'grad', emoji: '🎓', name: 'Scholar', category: 'academic' },
+      { id: 'books', emoji: '📚', name: 'Bookworm', category: 'academic' },
+      { id: 'microscope', emoji: '🔬', name: 'Researcher', category: 'academic' },
+      { id: 'law', emoji: '⚖️', name: 'Jurist', category: 'academic' },
+      { id: 'flask', emoji: '🧪', name: 'Chemist', category: 'academic' },
+      { id: 'stethoscope', emoji: '🩺', name: 'Pre-Med', category: 'academic' },
+      { id: 'ruler', emoji: '📐', name: 'Architect', category: 'academic' },
+      { id: 'brain', emoji: '🧠', name: 'Prodigy', category: 'academic' },
+
+      // Tech & Science
+      { id: 'coder', emoji: '💻', name: 'Hacker', category: 'tech' },
+      { id: 'bot', emoji: '🤖', name: 'AI Bot', category: 'tech' },
+      { id: 'zap', emoji: '⚡', name: 'Circuit', category: 'tech' },
+      { id: 'rocket', emoji: '🚀', name: 'Cosmonaut', category: 'tech' },
+      { id: 'alien', emoji: '👾', name: '8-Bit Alien', category: 'tech' },
+      { id: 'satellite', emoji: '🛰️', name: 'Satellite', category: 'tech' },
+      { id: 'gear', emoji: '⚙️', name: 'Engineer', category: 'tech' },
+      { id: 'telescope', emoji: '🔭', name: 'Stargazer', category: 'tech' },
+
+      // Mascots & Animals
+      { id: 'lion', emoji: '🦁', name: 'Campus Lion', category: 'mascot' },
+      { id: 'fox', emoji: '🦊', name: 'Swift Fox', category: 'mascot' },
+      { id: 'owl', emoji: '🦉', name: 'Wise Owl', category: 'mascot' },
+      { id: 'eagle', emoji: '🦅', name: 'Falcon', category: 'mascot' },
+      { id: 'wolf', emoji: '🐺', name: 'Alpha Wolf', category: 'mascot' },
+      { id: 'tiger', emoji: '🐯', name: 'Bengal Tiger', category: 'mascot' },
+      { id: 'panda', emoji: '🐼', name: 'Zen Panda', category: 'mascot' },
+      { id: 'shark', emoji: '🦈', name: 'Tech Shark', category: 'mascot' },
+      { id: 'dragon', emoji: '🐉', name: 'Fire Drake', category: 'mascot' },
+      { id: 'unicorn', emoji: '🦄', name: 'Mythic', category: 'mascot' },
+
+      // Creative
+      { id: 'art', emoji: '🎨', name: 'Artist', category: 'creative' },
+      { id: 'headphones', emoji: '🎧', name: 'DJ Producer', category: 'creative' },
+      { id: 'camera', emoji: '📸', name: 'Shutterbug', category: 'creative' },
+      { id: 'pen', emoji: '✍️', name: 'Author', category: 'creative' },
+      { id: 'theatre', emoji: '🎭', name: 'Thespian', category: 'creative' },
+      { id: 'guitar', emoji: '🎸', name: 'Rocker', category: 'creative' },
+      { id: 'film', emoji: '🎬', name: 'Director', category: 'creative' },
+
+      // Sports
+      { id: 'soccer', emoji: '⚽', name: 'Striker', category: 'sports' },
+      { id: 'basketball', emoji: '🏀', name: 'Baller', category: 'sports' },
+      { id: 'karate', emoji: '🥋', name: 'Black Belt', category: 'sports' },
+      { id: 'swimmer', emoji: '🏊', name: 'Swimmer', category: 'sports' },
+      { id: 'cycling', emoji: '🚴', name: 'Cyclist', category: 'sports' },
+      { id: 'trophy', emoji: '🏆', name: 'Champion', category: 'sports' },
+      { id: 'tennis', emoji: '🎾', name: 'Ace', category: 'sports' },
+
+      // Lifestyle & Chill
+      { id: 'coffee', emoji: '☕', name: 'Barista', category: 'chill' },
+      { id: 'pizza', emoji: '🍕', name: 'Snack Master', category: 'chill' },
+      { id: 'zen', emoji: '🧘', name: 'Mindful', category: 'chill' },
+      { id: 'plant', emoji: '🌿', name: 'Eco Cadet', category: 'chill' },
+      { id: 'night', emoji: '🌙', name: 'Night Owl', category: 'chill' },
+      { id: 'sun', emoji: '☀️', name: 'Early Bird', category: 'chill' },
+      { id: 'fire', emoji: '🔥', name: 'On Fire', category: 'chill' },
+      { id: 'diamond', emoji: '💎', name: 'Gemstone', category: 'chill' }
+    ];
+
+    // ─── Color Gradient Palettes ───
+    const GRADIENTS = [
+      { id: 'indigo', name: 'Cosmic Violet', bg: 'linear-gradient(135deg, #6366f1, #a855f7)', glow: '#6366f1' },
+      { id: 'cyan', name: 'Electric Cyan', bg: 'linear-gradient(135deg, #06b6d4, #3b82f6)', glow: '#06b6d4' },
+      { id: 'emerald', name: 'Emerald Pulse', bg: 'linear-gradient(135deg, #10b981, #059669)', glow: '#10b981' },
+      { id: 'amber', name: 'Sunset Blaze', bg: 'linear-gradient(135deg, #f59e0b, #ef4444)', glow: '#f59e0b' },
+      { id: 'rose', name: 'Rose Quartz', bg: 'linear-gradient(135deg, #ec4899, #f43f5e)', glow: '#ec4899' },
+      { id: 'midnight', name: 'Midnight Nebula', bg: 'linear-gradient(135deg, #1e1b4b, #4338ca)', glow: '#4338ca' },
+      { id: 'gold', name: 'Golden Trophy', bg: 'linear-gradient(135deg, #fbbf24, #d97706)', glow: '#fbbf24' },
+      { id: 'matrix', name: 'Cyber Neon', bg: 'linear-gradient(135deg, #00f2fe, #4facfe)', glow: '#00f2fe' },
+      { id: 'aurora', name: 'Aurora Borealis', bg: 'linear-gradient(135deg, #43e97b, #38f9d7)', glow: '#43e97b' },
+      { id: 'cyberpunk', name: 'Cyberpunk Pink', bg: 'linear-gradient(135deg, #ff007f, #7928ca)', glow: '#ff007f' },
+      { id: 'charcoal', name: 'Dark Slate', bg: 'linear-gradient(135deg, #334155, #0f172a)', glow: '#334155' },
+      { id: 'crimson', name: 'Crimson Flame', bg: 'linear-gradient(135deg, #b91c1c, #dc2626)', glow: '#ef4444' }
+    ];
+
+    // ─── Frame Aura Definitions ───
+    const FRAMES = [
+      { id: 'none', name: 'Clean Minimal', class: 'frame-none', desc: 'No special aura effect' },
+      { id: 'gold', name: '🌟 Golden Honor', class: 'frame-gold', desc: 'Prestige gold aura for top achievers' },
+      { id: 'cyber', name: '⚡ Cyber Pulse', class: 'frame-cyber', desc: 'Electric blue digital neon border' },
+      { id: 'cosmic', name: '🔮 Cosmic Void', class: 'frame-cosmic', desc: 'Rotating celestial aura glow' },
+      { id: 'rainbow', name: '🌈 Rainbow Spectrum', class: 'frame-rainbow', desc: 'Iridescent animated gradient ring' },
+      { id: 'emerald', name: '🌿 Emerald Vitality', class: 'frame-emerald', desc: 'Lush glowing green aura' },
+      { id: 'fire', name: '🔥 Fire Ember', class: 'frame-fire', desc: 'Warm pulsing ember radiance' }
+    ];
+
+    // ─── Student Mood Status Options ───
+    const MOODS = [
+      { icon: '🎓', text: 'Studying Hard' },
+      { icon: '💻', text: 'In The Zone' },
+      { icon: '📚', text: 'Library Grind' },
+      { icon: '☕', text: 'Running on Coffee' },
+      { icon: '🎮', text: 'Game Break' },
+      { icon: '⚡', text: 'Unstoppable' },
+      { icon: '🚀', text: 'Project Mode' },
+      { icon: '✨', text: 'Open to Team Up' },
+      { icon: '😴', text: 'Need Sleep' },
+      { icon: '🏆', text: 'Aiming for 4.0' }
+    ];
+
+    // ─── Current State ───
+    let currentAvatarType = 'emoji'; // 'emoji' or 'monogram'
+    let currentAvatarVal = '🎓';
+    let currentGradient = GRADIENTS[0];
+    let currentFrame = FRAMES[0];
+    let currentMood = MOODS[0];
+    let currentFont = 'system-ui, sans-serif';
+    let currentUser = null;
+
+    // ─── Initialize Page ───
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Role Guard: Student Only
+      if (!Auth.requireAuth()) return;
+      const role = Auth.getRole();
+      if (role !== 'student') {
+        alert('Access Denied: Avatar Studio is available for students only.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // 2. Initialize layout & sidebar with active page 'avatar'
+      if (!initPage('avatar')) return;
+
+      currentUser = Auth.getUser();
+      loadUserConfig();
+
+      // 3. Render gallery grids
+      renderMascotsGrid('all');
+      renderGradientsGrid();
+      renderFramesGrid();
+      renderMoodsGrid();
+
+      // 4. Update preview display
+      updateLivePreview();
+    });
+
+    // ─── Load Saved Config from Storage or User Profile ───
+    function loadUserConfig() {
+      if (!currentUser) return;
+
+      document.getElementById('previewStudentName').textContent = currentUser.name || 'Alex Rivera';
+      document.getElementById('mockSidebarName').textContent = currentUser.name || 'Alex Rivera';
+      document.getElementById('mockHubName').textContent = currentUser.name || 'Alex Rivera';
+      document.getElementById('previewStudentDept').textContent = `${currentUser.department || 'Computer Science'} · ${currentUser.year || '3rd Year'}`;
+
+      // Set monogram default to user initials
+      const initials = Auth.getInitials(currentUser.name);
+      document.getElementById('monogramTextInput').value = initials;
+
+      // Check saved custom config
+      const savedKey = 'campusnotify_avatar_config_' + currentUser.id;
+      const saved = localStorage.getItem(savedKey);
+
+      if (saved) {
+        try {
+          const cfg = JSON.parse(saved);
+          currentAvatarType = cfg.type || 'emoji';
+          currentAvatarVal = cfg.val || currentUser.avatar || '🎓';
+          currentGradient = GRADIENTS.find(g => g.id === cfg.gradientId) || GRADIENTS[0];
+          currentFrame = FRAMES.find(f => f.id === cfg.frameId) || FRAMES[0];
+          currentMood = cfg.mood || MOODS[0];
+          currentFont = cfg.font || 'system-ui, sans-serif';
+          document.getElementById('monogramFontSelect').value = currentFont;
+          if (currentAvatarType === 'monogram') {
+            document.getElementById('monogramTextInput').value = currentAvatarVal;
+          }
+          return;
+        } catch (e) {
+          console.error('Failed to parse avatar config:', e);
+        }
+      }
+
+      // Default to user's existing avatar
+      if (currentUser.avatar) {
+        currentAvatarVal = currentUser.avatar;
+        // Check if it's emoji or monogram initials
+        const isEmoji = /\p{Extended_Pictographic}/u.test(currentUser.avatar);
+        currentAvatarType = isEmoji ? 'emoji' : 'monogram';
+      }
+    }
+
+    // ─── Render Mascots ───
+    function renderMascotsGrid(category = 'all') {
+      const container = document.getElementById('mascotsContainer');
+      const filtered = category === 'all' ? MASCOTS : MASCOTS.filter(m => m.category === category);
+
+      container.innerHTML = filtered.map(m => {
+        const isSelected = (currentAvatarType === 'emoji' && currentAvatarVal === m.emoji);
+        return `
+          <div class="mascot-card ${isSelected ? 'selected' : ''}" onclick="selectMascot('${m.emoji}')">
+            <div class="mascot-emoji">${m.emoji}</div>
+            <div class="mascot-name" title="${m.name}">${m.name}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterMascots(category) {
+      document.querySelectorAll('#mascotFilters .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(category) || (category === 'all' && btn.textContent.trim() === 'All'));
+      });
+      renderMascotsGrid(category);
+    }
+
+    function selectMascot(emoji) {
+      currentAvatarType = 'emoji';
+      currentAvatarVal = emoji;
+      renderMascotsGrid();
+      updateLivePreview();
+      bounceAvatar();
+    }
+
+    // ─── Render Gradients ───
+    function renderGradientsGrid() {
+      const container = document.getElementById('gradientsContainer');
+      container.innerHTML = GRADIENTS.map(g => {
+        const isSelected = currentGradient.id === g.id;
+        return `
+          <div class="gradient-card ${isSelected ? 'selected' : ''}" onclick="selectGradient('${g.id}')">
+            <div class="gradient-swatch" style="background: ${g.bg};"></div>
+            <div class="gradient-name">${g.name}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectGradient(id) {
+      const found = GRADIENTS.find(g => g.id === id);
+      if (found) {
+        currentGradient = found;
+        renderGradientsGrid();
+        updateLivePreview();
+      }
+    }
+
+    // ─── Render Frames ───
+    function renderFramesGrid() {
+      const container = document.getElementById('framesContainer');
+      container.innerHTML = FRAMES.map(f => {
+        const isSelected = currentFrame.id === f.id;
+        return `
+          <div class="frame-option-card ${isSelected ? 'selected' : ''}" onclick="selectFrame('${f.id}')">
+            <div class="frame-demo-circle ${f.class}">
+              ${currentAvatarVal}
+            </div>
+            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 2px;">${f.name}</div>
+            <div class="text-muted text-xs">${f.desc}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectFrame(id) {
+      const found = FRAMES.find(f => f.id === id);
+      if (found) {
+        currentFrame = found;
+        renderFramesGrid();
+        updateLivePreview();
+        bounceAvatar();
+      }
+    }
+
+    // ─── Render Moods ───
+    function renderMoodsGrid() {
+      const container = document.getElementById('moodsContainer');
+      container.innerHTML = MOODS.map(m => {
+        const isSelected = currentMood.text === m.text;
+        return `
+          <button class="preset-chip ${isSelected ? 'active' : ''}" style="${isSelected ? 'background: var(--gradient-accent); color: white; border-color: transparent;' : ''}" onclick="selectMood('${m.icon}', '${m.text}')">
+            <span>${m.icon}</span>
+            <span>${m.text}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectMood(icon, text) {
+      currentMood = { icon, text };
+      renderMoodsGrid();
+      updateLivePreview();
+    }
+
+    function applyCustomMood() {
+      const input = document.getElementById('customMoodInput');
+      const val = input.value.trim();
+      if (!val) {
+        UI.toast('Please enter a status message.', 'warning');
+        return;
+      }
+      currentMood = { icon: '💬', text: val };
+      renderMoodsGrid();
+      updateLivePreview();
+      input.value = '';
+      UI.toast('Custom mood badge set!', 'success');
+    }
+
+    // ─── Monogram Handlers ───
+    const monogramInput = document.getElementById('monogramTextInput');
+    monogramInput.addEventListener('input', function() {
+      const text = this.value.trim().toUpperCase();
+      if (text.length > 0) {
+        currentAvatarType = 'monogram';
+        currentAvatarVal = text;
+        updateLivePreview();
+      }
+    });
+
+    function useNameInitials() {
+      if (!currentUser) return;
+      const initials = Auth.getInitials(currentUser.name);
+      document.getElementById('monogramTextInput').value = initials;
+      currentAvatarType = 'monogram';
+      currentAvatarVal = initials;
+      updateLivePreview();
+      bounceAvatar();
+    }
+
+    function updateMonogramFont(font) {
+      currentFont = font;
+      updateLivePreview();
+    }
+
+    // ─── Live Preview Update ───
+    function updateLivePreview() {
+      const mainEl = document.getElementById('previewAvatarMain');
+      const stageGlow = document.getElementById('stageGlow');
+      const moodPill = document.getElementById('previewMoodPill');
+      const moodIcon = document.getElementById('previewMoodIcon');
+      const moodText = document.getElementById('previewMoodText');
+
+      // Update Main Big Avatar
+      mainEl.textContent = currentAvatarVal;
+      mainEl.style.background = currentGradient.bg;
+      mainEl.style.fontFamily = currentAvatarType === 'monogram' ? currentFont : 'inherit';
+      mainEl.className = `studio-avatar-main ${currentFrame.class}`;
+
+      // Update stage aura glow
+      stageGlow.style.background = currentGradient.bg;
+
+      // Update mood pill
+      moodIcon.textContent = currentMood.icon;
+      moodText.textContent = currentMood.text;
+
+      // Update mock previews
+      const mockSidebar = document.getElementById('mockSidebarAvatar');
+      const mockGame = document.getElementById('mockGameAvatar');
+      const mockHub = document.getElementById('mockHubAvatar');
+
+      [mockSidebar, mockGame, mockHub].forEach(el => {
+        if (!el) return;
+        el.textContent = currentAvatarVal;
+        el.style.background = currentGradient.bg;
+        el.style.fontFamily = currentAvatarType === 'monogram' ? currentFont : 'inherit';
+      });
+
+      // Update frame preview circles if rendered
+      document.querySelectorAll('.frame-demo-circle').forEach(circle => {
+        circle.textContent = currentAvatarVal;
+        circle.style.background = currentGradient.bg;
+        circle.style.fontFamily = currentAvatarType === 'monogram' ? currentFont : 'inherit';
+      });
+    }
+
+    function bounceAvatar() {
+      const mainEl = document.getElementById('previewAvatarMain');
+      mainEl.style.transform = 'scale(1.15) rotate(5deg)';
+      setTimeout(() => {
+        mainEl.style.transform = '';
+      }, 250);
+    }
+
+    // ─── Switch Studio Tabs ───
+    function switchStudioTab(tab) {
+      document.querySelectorAll('#studioTabs .studio-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      document.querySelectorAll('.studio-tab-content').forEach(content => {
+        content.style.display = content.id === `tabContent-${tab}` ? 'block' : 'none';
+      });
+    }
+
+    // ─── Quick Looks Presets ───
+    function applyPreset(preset) {
+      if (preset === 'scholar') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '🎓';
+        currentGradient = GRADIENTS.find(g => g.id === 'gold') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'gold') || FRAMES[0];
+        currentMood = { icon: '🎓', text: 'Dean\'s Honor List' };
+      } else if (preset === 'coder') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '💻';
+        currentGradient = GRADIENTS.find(g => g.id === 'cyan') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'cyber') || FRAMES[0];
+        currentMood = { icon: '⚡', text: 'Debugging Neural Net' };
+      } else if (preset === 'fox') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '🦊';
+        currentGradient = GRADIENTS.find(g => g.id === 'amber') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'fire') || FRAMES[0];
+        currentMood = { icon: '🔥', text: 'Fast & Focused' };
+      } else if (preset === 'gamer') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '🎮';
+        currentGradient = GRADIENTS.find(g => g.id === 'cyberpunk') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'rainbow') || FRAMES[0];
+        currentMood = { icon: '🏆', text: 'Arena Grandmaster' };
+      } else if (preset === 'coffee') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '☕';
+        currentGradient = GRADIENTS.find(g => g.id === 'charcoal') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'none') || FRAMES[0];
+        currentMood = { icon: '☕', text: 'Fueled by Caffeine' };
+      } else if (preset === 'lion') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '🦁';
+        currentGradient = GRADIENTS.find(g => g.id === 'indigo') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'cosmic') || FRAMES[0];
+        currentMood = { icon: '✨', text: 'Campus Spirit' };
+      } else if (preset === 'creative') {
+        currentAvatarType = 'emoji';
+        currentAvatarVal = '🎨';
+        currentGradient = GRADIENTS.find(g => g.id === 'rose') || GRADIENTS[0];
+        currentFrame = FRAMES.find(f => f.id === 'rainbow') || FRAMES[0];
+        currentMood = { icon: '🎨', text: 'Creative Flow' };
+      }
+
+      renderMascotsGrid();
+      renderGradientsGrid();
+      renderFramesGrid();
+      renderMoodsGrid();
+      updateLivePreview();
+      bounceAvatar();
+      UI.toast(`Applied "${preset}" style preset!`, 'info');
+    }
+
+    // ─── Randomizer / Shuffle ───
+    function randomizeAvatar() {
+      const useEmoji = Math.random() > 0.3;
+      if (useEmoji) {
+        const randMascot = MASCOTS[Math.floor(Math.random() * MASCOTS.length)];
+        currentAvatarType = 'emoji';
+        currentAvatarVal = randMascot.emoji;
+      } else {
+        currentAvatarType = 'monogram';
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        currentAvatarVal = letters[Math.floor(Math.random() * letters.length)] + letters[Math.floor(Math.random() * letters.length)];
+        document.getElementById('monogramTextInput').value = currentAvatarVal;
+      }
+
+      currentGradient = GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
+      currentFrame = FRAMES[Math.floor(Math.random() * FRAMES.length)];
+      currentMood = MOODS[Math.floor(Math.random() * MOODS.length)];
+
+      renderMascotsGrid();
+      renderGradientsGrid();
+      renderFramesGrid();
+      renderMoodsGrid();
+      updateLivePreview();
+      bounceAvatar();
+      UI.toast('Random avatar combination generated! 🎲', 'info');
+    }
+
+    // ─── Reset to Initials ───
+    function resetToInitials() {
+      if (!currentUser) return;
+      const initials = Auth.getInitials(currentUser.name);
+      currentAvatarType = 'monogram';
+      currentAvatarVal = initials;
+      currentGradient = GRADIENTS[0];
+      currentFrame = FRAMES[0];
+      currentMood = MOODS[0];
+      currentFont = 'system-ui, sans-serif';
+
+      document.getElementById('monogramTextInput').value = initials;
+      document.getElementById('monogramFontSelect').value = currentFont;
+
+      renderMascotsGrid();
+      renderGradientsGrid();
+      renderFramesGrid();
+      renderMoodsGrid();
+      updateLivePreview();
+      bounceAvatar();
+      UI.toast('Reset to default initials style.', 'info');
+    }
+
+    // ─── Save Avatar to User Profile & Storage ───
+    function saveAvatarProfile() {
+      if (!currentUser) return;
+
+      const avatarConfig = {
+        type: currentAvatarType,
+        val: currentAvatarVal,
+        gradientId: currentGradient.id,
+        bg: currentGradient.bg,
+        frameId: currentFrame.id,
+        frameClass: currentFrame.class,
+        mood: currentMood,
+        font: currentFont,
+        updatedAt: new Date().toISOString()
+      };
+
+      // 1. Save detailed avatar config
+      const savedKey = 'campusnotify_avatar_config_' + currentUser.id;
+      localStorage.setItem(savedKey, JSON.stringify(avatarConfig));
+
+      // 2. Update user profile via Auth.updateUser
+      const updated = Auth.updateUser({
+        avatar: currentAvatarVal,
+        avatarBg: currentGradient.bg,
+        avatarBorder: currentFrame.id !== 'none' ? `0 0 10px ${currentGradient.glow}` : '',
+        avatarConfig: avatarConfig
+      });
+
+      if (updated) {
+        currentUser = updated;
+
+        // 3. Update actual sidebar avatar element immediately
+        const sidebarAvatar = document.querySelector('.sidebar-user .user-avatar');
+        if (sidebarAvatar) {
+          sidebarAvatar.textContent = currentAvatarVal;
+          sidebarAvatar.style.background = currentGradient.bg;
+          if (currentFrame.id !== 'none') {
+            sidebarAvatar.style.boxShadow = `0 0 12px ${currentGradient.glow}`;
+          } else {
+            sidebarAvatar.style.boxShadow = '';
+          }
+        }
+      }
+
+      // 4. Confetti Celebration
+      launchConfetti();
+
+      // 5. Success Toast
+      UI.toast('🎉 Avatar updated successfully! Your new identity is live across CampusNotify.', 'success');
+    }
+
+    // ─── Simple Confetti Celebration ───
+    function launchConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#6366f1', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#ffffff'];
+
+      for (let i = 0; i < 90; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          r: Math.random() * 6 + 4,
+          dx: (Math.random() - 0.5) * 14,
+          dy: (Math.random() - 0.7) * 14,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          tilt: Math.random() * 10,
+          tiltAngle: 0,
+          tiltAngleIncremental: (Math.random() * 0.07) + 0.05,
+          opacity: 1
+        });
+      }
+
+      let animationFrame;
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let activeCount = 0;
+
+        particles.forEach(p => {
+          p.x += p.dx;
+          p.y += p.dy;
+          p.dy += 0.25; // gravity
+          p.opacity -= 0.015;
+          p.tiltAngle += p.tiltAngleIncremental;
+          p.tilt = Math.sin(p.tiltAngle) * 12;
+
+          if (p.opacity > 0) {
+            activeCount++;
+            ctx.beginPath();
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = Math.max(0, p.opacity);
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, false);
+            ctx.fill();
+          }
+        });
+
+        if (activeCount > 0) {
+          animationFrame = requestAnimationFrame(render);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          cancelAnimationFrame(animationFrame);
+        }
+      }
+
+      render();
+    }
+  </script>
+</body>
+
+</html>

@@ -1295,6 +1295,10 @@ function renderSidebar(activePage) {
             <span class="nav-icon">🎮</span>
             Games
           </a>
+          <a href="avatar.html" class="nav-item ${activePage === 'avatar' ? 'active' : ''}" id="nav-avatar">
+            <span class="nav-icon">🎨</span>
+            Customize Avatar
+          </a>
           `}
         </div>
 
@@ -1319,7 +1323,7 @@ function renderSidebar(activePage) {
 
       <div class="sidebar-footer">
         <div class="sidebar-user" onclick="Auth.logout()" title="Click to logout">
-          <div class="user-avatar">${user.avatar}</div>
+          <div class="user-avatar" id="sidebarUserAvatar" style="${user.avatarBg ? `background:${user.avatarBg};` : ''}${user.avatarBorder ? `box-shadow:${user.avatarBorder};` : ''}">${user.avatar}</div>
           <div class="user-info">
             <div class="user-name">${user.name}</div>
             <div class="user-role">${role === 'admin' ? '🛡️ Admin/Staff' : '🎓 Student'}</div>
