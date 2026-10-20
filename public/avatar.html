@@ -3,29 +3,30 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="description"
     content="CampusNotify Avatar Studio — Customize your student avatar, choose mascots, monogram styles, frames, and campus mood badges.">
   <title>Customize Avatar — CampusNotify</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     /* ======================================================
-       Avatar Studio Custom Styles & Micro-Animations
+       Avatar Studio Mobile-First & Responsive Styles
        ====================================================== */
+    
+    /* Prevent page horizontal scrollbar */
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
     .avatar-studio-layout {
       display: grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 360px 1fr;
       gap: var(--space-xl);
       align-items: start;
     }
 
-    @media (max-width: 1024px) {
-      .avatar-studio-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Live Preview Sticky Sidebar Card */
+    /* Live Preview Card */
     .avatar-preview-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
@@ -41,9 +42,9 @@
 
     .avatar-stage-container {
       position: relative;
-      width: 180px;
-      height: 180px;
-      margin: 0 auto var(--space-lg);
+      width: 170px;
+      height: 170px;
+      margin: 0 auto var(--space-md);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -52,10 +53,10 @@
     /* Stage Background Aura */
     .avatar-stage-glow {
       position: absolute;
-      inset: -15px;
+      inset: -12px;
       border-radius: 50%;
       background: var(--gradient-accent);
-      filter: blur(28px);
+      filter: blur(24px);
       opacity: 0.35;
       transition: all 0.5s ease;
       z-index: 0;
@@ -71,28 +72,25 @@
     .studio-avatar-main {
       position: relative;
       z-index: 2;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       background: var(--gradient-accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 4rem;
+      font-size: 3.8rem;
       font-weight: 800;
       color: #ffffff;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       cursor: pointer;
       user-select: none;
       transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-    }
-
-    .studio-avatar-main:hover {
-      transform: scale(1.06) rotate(3deg);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .studio-avatar-main:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
     }
 
     /* Aura / Frame Styles */
@@ -136,8 +134,6 @@
 
     .frame-rainbow {
       border: 4px solid transparent;
-      background-clip: padding-box, border-box;
-      background-origin: padding-box, border-box;
       box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
       position: relative;
     }
@@ -192,21 +188,21 @@
       transition: all 0.3s ease;
     }
 
-    /* Live Surface Mock Previews */
+    /* Multi-Surface Mock Previews */
     .surface-previews-container {
-      margin-top: var(--space-xl);
-      padding-top: var(--space-lg);
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
       border-top: 1px solid var(--border-subtle);
       text-align: left;
     }
 
     .surface-preview-title {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-muted);
       font-weight: 700;
-      margin-bottom: var(--space-md);
+      margin-bottom: var(--space-sm);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -216,36 +212,36 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: var(--space-md);
-      margin-bottom: var(--space-md);
+      padding: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-sm);
       transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
-    .surface-mock-card:hover {
-      border-color: var(--accent-indigo);
-      transform: translateY(-2px);
-    }
-
     .surface-mock-header {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
       font-weight: 600;
-      margin-bottom: var(--space-xs);
+      margin-bottom: 4px;
     }
 
-    /* Studio Tab Navigation */
+    /* Studio Tab Navigation (Scrollable on touch) */
     .studio-tabs {
       display: flex;
-      gap: var(--space-sm);
+      gap: var(--space-xs);
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
       padding-bottom: var(--space-xs);
-      margin-bottom: var(--space-xl);
+      margin-bottom: var(--space-lg);
       border-bottom: 1px solid var(--border-subtle);
+    }
+    .studio-tabs::-webkit-scrollbar {
+      display: none;
     }
 
     .studio-tab-btn {
-      padding: 10px 18px;
-      font-size: 0.92rem;
+      padding: 10px 16px;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-muted);
       background: none;
@@ -253,10 +249,12 @@
       border-bottom: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;
+      flex-shrink: 0;
       transition: all var(--transition-fast);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .studio-tab-btn:hover {
@@ -268,86 +266,18 @@
       border-bottom-color: var(--accent-indigo);
     }
 
-    /* Mascot & Character Grid */
-    .mascots-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
-      gap: var(--space-md);
-    }
-
-    .mascot-card {
-      background: var(--bg-card);
-      border: 2px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-md) var(--space-sm);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mascot-card:hover {
-      transform: translateY(-4px) scale(1.03);
-      border-color: var(--accent-indigo);
-      background: var(--bg-glass-hover);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-    }
-
-    .mascot-card.selected {
-      border-color: var(--accent-indigo);
-      background: rgba(99, 102, 241, 0.12);
-      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
-    }
-
-    .mascot-card.selected::after {
-      content: '✓';
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 20px;
-      height: 20px;
-      background: var(--accent-indigo);
-      color: white;
-      border-radius: 50%;
-      font-size: 0.7rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mascot-emoji {
-      font-size: 2.4rem;
-      line-height: 1.1;
-      margin-bottom: 6px;
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
-      transition: transform 0.2s ease;
-    }
-
-    .mascot-card:hover .mascot-emoji {
-      transform: scale(1.15);
-    }
-
-    .mascot-name {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 90px;
-    }
-
-    /* Category Pill Filter */
+    /* Filter Pills (Swipeable on touch) */
     .filter-pills {
       display: flex;
-      flex-wrap: wrap;
       gap: var(--space-xs);
-      margin-bottom: var(--space-lg);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .filter-pills::-webkit-scrollbar {
+      display: none;
     }
 
     .filter-pill {
@@ -359,7 +289,10 @@
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .filter-pill:hover {
@@ -374,11 +307,85 @@
       box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
     }
 
+    /* Mascots Grid */
+    .mascots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: var(--space-sm);
+    }
+
+    .mascot-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-sm) 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 80px;
+    }
+
+    .mascot-card:hover {
+      border-color: var(--accent-indigo);
+      background: var(--bg-glass-hover);
+    }
+
+    .mascot-card:active {
+      transform: scale(0.96);
+    }
+
+    .mascot-card.selected {
+      border-color: var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.12);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .mascot-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      background: var(--accent-indigo);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mascot-emoji {
+      font-size: 2.2rem;
+      line-height: 1.1;
+      margin-bottom: 4px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      transition: transform 0.2s ease;
+    }
+
+    .mascot-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 85px;
+    }
+
     /* Gradient Palettes Grid */
     .gradient-palettes-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: var(--space-md);
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: var(--space-sm);
     }
 
     .gradient-card {
@@ -389,28 +396,32 @@
       text-align: center;
       transition: all 0.2s ease;
       background: var(--bg-card);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .gradient-card:hover {
-      transform: translateY(-2px);
       border-color: var(--accent-indigo);
+    }
+
+    .gradient-card:active {
+      transform: scale(0.97);
     }
 
     .gradient-card.selected {
       border-color: var(--accent-indigo);
-      box-shadow: 0 0 14px rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.45);
     }
 
     .gradient-swatch {
       width: 100%;
-      height: 44px;
+      height: 40px;
       border-radius: var(--radius-md);
       margin-bottom: 6px;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .gradient-name {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: var(--text-secondary);
     }
@@ -418,65 +429,145 @@
     /* Aura Frame Grid */
     .frames-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: var(--space-lg);
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--space-md);
     }
 
     .frame-option-card {
       background: var(--bg-card);
       border: 2px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: var(--space-lg) var(--space-md);
+      padding: var(--space-md) var(--space-sm);
       text-align: center;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .frame-option-card:hover {
-      transform: translateY(-3px);
       border-color: var(--accent-indigo);
+    }
+
+    .frame-option-card:active {
+      transform: scale(0.97);
     }
 
     .frame-option-card.selected {
       border-color: var(--accent-indigo);
       background: rgba(99, 102, 241, 0.08);
-      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.4);
     }
 
     .frame-demo-circle {
-      width: 60px;
-      height: 60px;
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
       background: var(--gradient-accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: var(--space-sm);
+      font-size: 1.4rem;
+      margin-bottom: var(--space-xs);
     }
 
-    /* Quick Presets Bar */
+    /* Swipeable Preset Chips Bar */
+    .preset-scroll-container {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 2px 0;
+    }
+    .preset-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
     .preset-chip {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-full);
-      padding: 6px 14px;
-      font-size: 0.85rem;
+      padding: 6px 12px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .preset-chip:hover {
-      background: var(--bg-glass-hover);
-      border-color: var(--accent-indigo);
-      transform: translateY(-2px);
+    .preset-chip:active {
+      transform: scale(0.96);
+    }
+
+    /* Mobile Sticky Bottom Floating Action Bar */
+    .mobile-avatar-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-subtle);
+      padding: 10px 16px;
+      z-index: 150;
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.4);
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .mobile-bar-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    .mobile-bar-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mobile-bar-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mobile-bar-status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mobile-bar-save-btn {
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
     }
 
     /* Confetti animation */
@@ -488,6 +579,157 @@
       height: 100vh;
       pointer-events: none;
       z-index: 9999;
+    }
+
+    /* ======================================================
+       RESPONSIVE BREAKPOINTS (Tablet & Mobile)
+       ====================================================== */
+    @media (max-width: 1024px) {
+      .avatar-studio-layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+      }
+
+      .avatar-preview-card {
+        position: static;
+        top: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* Add extra padding at the bottom of the main content so the floating mobile bar doesn't obscure content */
+      .main-content {
+        padding-bottom: 95px !important;
+      }
+
+      /* Show the sticky mobile bottom quick-bar */
+      .mobile-avatar-bar {
+        display: flex;
+      }
+
+      /* Header actions stack nicely */
+      .page-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-md);
+      }
+
+      .page-header-actions {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .page-header-actions .btn {
+        flex: 1;
+        justify-content: center;
+        padding: 9px 8px;
+        font-size: 0.8rem;
+        min-height: 42px;
+      }
+
+      /* Compact Preview Card for Mobile */
+      .avatar-preview-card {
+        padding: var(--space-md) var(--space-sm);
+        border-radius: var(--radius-lg);
+      }
+
+      .avatar-stage-container {
+        width: 130px;
+        height: 130px;
+        margin-bottom: var(--space-sm);
+      }
+
+      .studio-avatar-main {
+        width: 100px;
+        height: 100px;
+        font-size: 3rem;
+      }
+
+      /* Multi-surface previews accordion toggle for mobile */
+      .surface-previews-content {
+        display: none;
+      }
+
+      .surface-previews-content.expanded {
+        display: block;
+      }
+
+      .surface-toggle-btn {
+        display: flex !important;
+      }
+
+      /* Mobile 4-column Mascot Grid */
+      .mascots-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+
+      .mascot-card {
+        padding: 8px 2px;
+        min-height: 72px;
+      }
+
+      .mascot-emoji {
+        font-size: 1.85rem;
+      }
+
+      .mascot-name {
+        font-size: 0.65rem;
+        max-width: 70px;
+      }
+
+      /* 3-column Gradients */
+      .gradient-palettes-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .gradient-swatch {
+        height: 34px;
+      }
+
+      .gradient-name {
+        font-size: 0.68rem;
+      }
+
+      /* 2-column Frames */
+      .frames-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .frame-option-card {
+        padding: var(--space-sm) 4px;
+      }
+
+      .frame-demo-circle {
+        width: 46px;
+        height: 46px;
+        font-size: 1.2rem;
+      }
+
+      /* Stacking form inputs */
+      .studio-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-md) !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mascots-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+      }
+
+      .mascot-emoji {
+        font-size: 1.65rem;
+      }
+
+      .studio-tab-btn {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+      }
     }
   </style>
 </head>
@@ -507,56 +749,54 @@
             <h1>🎨 <span class="text-gradient">Avatar Studio</span></h1>
             <p class="page-subtitle">Personalize your student identity across CampusNotify — choose mascots, custom monograms, aura frames, and status flair.</p>
           </div>
-          <div class="flex gap-md" style="flex-wrap: wrap;">
+          <div class="page-header-actions">
             <button class="btn btn-secondary btn-sm" onclick="randomizeAvatar()" id="btnRandomize" title="Shuffle random combo">
-              🎲 Surprise Me
+              🎲 Random
             </button>
             <button class="btn btn-ghost btn-sm" onclick="resetToInitials()" id="btnResetInitials" title="Reset to your name initials">
               ↺ Reset
             </button>
-            <button class="btn btn-primary" onclick="saveAvatarProfile()" id="btnSaveAvatar">
-              💾 Save Avatar
+            <button class="btn btn-primary btn-sm" onclick="saveAvatarProfile()" id="btnSaveAvatar">
+              💾 Save
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Quick Student Presets Bar -->
-      <div class="card mb-xl animate-slide-up" style="padding: var(--space-md) var(--space-lg); background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.06)); border-color: rgba(99,102,241,0.2);">
-        <div class="flex items-center gap-md" style="flex-wrap: wrap;">
-          <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-indigo); display: flex; align-items: center; gap: 4px;">
-            ✨ Quick Looks:
+      <!-- Quick Student Presets Bar (Horizontal Swipeable Strip) -->
+      <div class="card mb-lg animate-slide-up" style="padding: var(--space-sm) var(--space-md); background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.06)); border-color: rgba(99,102,241,0.2);">
+        <div class="preset-scroll-container">
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-indigo); white-space: nowrap; margin-right: 4px; display: inline-flex; align-items: center; gap: 3px;">
+            ✨ Presets:
           </span>
-          <div class="flex gap-sm" style="flex-wrap: wrap; flex: 1;">
-            <button class="preset-chip" onclick="applyPreset('scholar')">🎓 Dean's Scholar</button>
-            <button class="preset-chip" onclick="applyPreset('coder')">💻 Cyber Hacker</button>
-            <button class="preset-chip" onclick="applyPreset('fox')">🦊 Swift Fox</button>
-            <button class="preset-chip" onclick="applyPreset('gamer')">🎮 Esports Ace</button>
-            <button class="preset-chip" onclick="applyPreset('coffee')">☕ Caffeine Coder</button>
-            <button class="preset-chip" onclick="applyPreset('lion')">🦁 Campus Pride</button>
-            <button class="preset-chip" onclick="applyPreset('creative')">🎨 Digital Artist</button>
-          </div>
+          <button class="preset-chip" onclick="applyPreset('scholar')">🎓 Dean's Scholar</button>
+          <button class="preset-chip" onclick="applyPreset('coder')">💻 Cyber Hacker</button>
+          <button class="preset-chip" onclick="applyPreset('fox')">🦊 Swift Fox</button>
+          <button class="preset-chip" onclick="applyPreset('gamer')">🎮 Esports Ace</button>
+          <button class="preset-chip" onclick="applyPreset('coffee')">☕ Caffeine Coder</button>
+          <button class="preset-chip" onclick="applyPreset('lion')">🦁 Campus Pride</button>
+          <button class="preset-chip" onclick="applyPreset('creative')">🎨 Digital Artist</button>
         </div>
       </div>
 
       <!-- Avatar Studio Main Grid -->
       <div class="avatar-studio-layout">
 
-        <!-- Left Column: Live Preview Sticky Card -->
+        <!-- Left Column: Live Preview Card -->
         <aside class="avatar-preview-card animate-scale-in">
-          <div class="surface-mock-header" style="text-align: center; margin-bottom: var(--space-md);">
+          <div class="surface-mock-header" style="text-align: center; margin-bottom: var(--space-xs);">
             LIVE AVATAR SHOWCASE
           </div>
 
           <div class="avatar-stage-container">
             <div class="avatar-stage-glow" id="stageGlow"></div>
-            <div class="studio-avatar-main frame-none" id="previewAvatarMain" onclick="bounceAvatar()" title="Click to interact!">
+            <div class="studio-avatar-main frame-none" id="previewAvatarMain" onclick="bounceAvatar()" title="Tap to interact!">
               AR
             </div>
           </div>
 
-          <h3 id="previewStudentName" style="margin-bottom: 2px;">Student Name</h3>
-          <p class="text-muted text-sm" id="previewStudentDept" style="margin-bottom: var(--space-sm);">Computer Science · 3rd Year</p>
+          <h3 id="previewStudentName" style="margin-bottom: 2px; font-size: 1.15rem;">Student Name</h3>
+          <p class="text-muted text-sm" id="previewStudentDept" style="margin-bottom: var(--space-xs);">Computer Science · 3rd Year</p>
 
           <div>
             <div class="avatar-mood-pill" id="previewMoodPill">
@@ -565,85 +805,92 @@
             </div>
           </div>
 
-          <!-- Multi-Surface Previews -->
+          <!-- Multi-Surface Previews (Collapsible on mobile) -->
           <div class="surface-previews-container">
-            <div class="surface-preview-title">
-              <span>Preview Across Campus</span>
-              <span class="badge badge-primary" style="font-size:0.65rem;">Live</span>
-            </div>
+            <button class="btn btn-ghost btn-sm surface-toggle-btn" id="btnToggleSurface" onclick="toggleSurfacePreviews()" style="display: none; width: 100%; justify-content: space-between; align-items: center; padding: 6px 8px; margin-bottom: 4px;">
+              <span style="font-size: 0.78rem; font-weight: 700;">📱 Previews across Campus (3)</span>
+              <span id="surfaceToggleIcon" style="font-size: 0.8rem;">▾</span>
+            </button>
 
-            <!-- Preview 1: Sidebar Footer Mock -->
-            <div class="surface-mock-card">
-              <div class="surface-mock-header">1. Navigation Sidebar Tile</div>
-              <div class="sidebar-user" style="padding: 6px 10px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03);">
-                <div class="user-avatar" id="mockSidebarAvatar" style="width: 34px; height: 34px; font-size: 0.85rem;">AR</div>
-                <div class="user-info">
-                  <div class="user-name" id="mockSidebarName" style="font-size: 0.8rem;">Alex Rivera</div>
-                  <div class="user-role" style="font-size: 0.65rem;">🎓 Student</div>
-                </div>
-                <span style="color: var(--text-muted); font-size: 0.75rem;">⏻</span>
+            <div class="surface-previews-content" id="surfacePreviewsContent">
+              <div class="surface-preview-title" style="display: none;" id="surfaceDesktopHeader">
+                <span>Preview Across Campus</span>
+                <span class="badge badge-primary" style="font-size:0.65rem;">Live</span>
               </div>
-            </div>
 
-            <!-- Preview 2: Campus Games Player Mock -->
-            <div class="surface-mock-card">
-              <div class="surface-mock-header">2. Campus Games Battle Arena</div>
-              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-md);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <div id="mockGameAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--gradient-accent);">AR</div>
-                  <div>
-                    <div style="font-size: 0.75rem; font-weight: 700;" id="mockGameName">You</div>
-                    <div style="font-size: 0.65rem; color: var(--accent-emerald);">● Ready (1,240 pts)</div>
+              <!-- Preview 1: Sidebar Footer Mock -->
+              <div class="surface-mock-card">
+                <div class="surface-mock-header">1. Navigation Sidebar Tile</div>
+                <div class="sidebar-user" style="padding: 6px 10px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03);">
+                  <div class="user-avatar" id="mockSidebarAvatar" style="width: 34px; height: 34px; font-size: 0.85rem;">AR</div>
+                  <div class="user-info">
+                    <div class="user-name" id="mockSidebarName" style="font-size: 0.8rem;">Alex Rivera</div>
+                    <div class="user-role" style="font-size: 0.65rem;">🎓 Student</div>
                   </div>
-                </div>
-                <span class="badge badge-warning" style="font-size: 0.65rem;">VS</span>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <div>
-                    <div style="font-size: 0.75rem; font-weight: 700; text-align: right;">AI Bot</div>
-                    <div style="font-size: 0.65rem; color: var(--text-muted); text-align: right;">Grandmaster</div>
-                  </div>
-                  <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: #334155;">🤖</div>
+                  <span style="color: var(--text-muted); font-size: 0.75rem;">⏻</span>
                 </div>
               </div>
-            </div>
 
-            <!-- Preview 3: Campus Discussion Card Mock -->
-            <div class="surface-mock-card">
-              <div class="surface-mock-header">3. Campus Hub Discussion Card</div>
-              <div style="display: flex; gap: 10px; align-items: flex-start;">
-                <div id="mockHubAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--gradient-accent); flex-shrink: 0;">AR</div>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.75rem; font-weight: 700;" id="mockHubName">Alex Rivera</span>
-                    <span style="font-size: 0.65rem; color: var(--text-muted);">Just now</span>
+              <!-- Preview 2: Campus Games Player Mock -->
+              <div class="surface-mock-card">
+                <div class="surface-mock-header">2. Campus Games Battle Arena</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-md);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div id="mockGameAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--gradient-accent);">AR</div>
+                    <div>
+                      <div style="font-size: 0.75rem; font-weight: 700;" id="mockGameName">You</div>
+                      <div style="font-size: 0.65rem; color: var(--accent-emerald);">● Ready (1,240 pts)</div>
+                    </div>
                   </div>
-                  <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 2px 0 0; line-height: 1.4;">
-                    Check out the CS capstone showcase tomorrow at the auditorium! 🔥
-                  </p>
+                  <span class="badge badge-warning" style="font-size: 0.65rem;">VS</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div>
+                      <div style="font-size: 0.75rem; font-weight: 700; text-align: right;">AI Bot</div>
+                      <div style="font-size: 0.65rem; color: var(--text-muted); text-align: right;">Grandmaster</div>
+                    </div>
+                    <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; background: #334155;">🤖</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preview 3: Campus Discussion Card Mock -->
+              <div class="surface-mock-card">
+                <div class="surface-mock-header">3. Campus Hub Discussion Card</div>
+                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                  <div id="mockHubAvatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--gradient-accent); flex-shrink: 0;">AR</div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                      <span style="font-size: 0.75rem; font-weight: 700;" id="mockHubName">Alex Rivera</span>
+                      <span style="font-size: 0.65rem; color: var(--text-muted);">Just now</span>
+                    </div>
+                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 2px 0 0; line-height: 1.4;">
+                      Check out the CS capstone showcase tomorrow at the auditorium! 🔥
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-sm);">
-            <button class="btn btn-primary" style="flex: 1;" onclick="saveAvatarProfile()">
+          <div style="margin-top: var(--space-md); display: flex; gap: var(--space-sm);">
+            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveAvatarProfile()">
               💾 Apply Avatar
             </button>
           </div>
         </aside>
 
         <!-- Right Column: Customization Controls & Studio Tabs -->
-        <section class="card animate-fade-in" style="transform: none;">
-          <!-- Studio Tabs -->
+        <section class="card animate-fade-in" style="transform: none; padding: var(--space-lg) var(--space-md);">
+          <!-- Studio Tabs (Swipeable on touch) -->
           <div class="studio-tabs" id="studioTabs">
             <button class="studio-tab-btn active" data-tab="mascots" onclick="switchStudioTab('mascots')">
-              <span>🎭</span> Mascots & Characters
+              <span>🎭</span> Mascots
             </button>
             <button class="studio-tab-btn" data-tab="monogram" onclick="switchStudioTab('monogram')">
-              <span>✍️</span> Monogram & Colors
+              <span>✍️</span> Monogram
             </button>
             <button class="studio-tab-btn" data-tab="frames" onclick="switchStudioTab('frames')">
-              <span>🖼️</span> Aura & Frames
+              <span>🖼️</span> Aura Frames
             </button>
             <button class="studio-tab-btn" data-tab="mood" onclick="switchStudioTab('mood')">
               <span>💬</span> Campus Mood
@@ -652,18 +899,18 @@
 
           <!-- TAB 1: Mascots & Characters -->
           <div class="studio-tab-content" id="tabContent-mascots">
-            <div class="flex items-center justify-between mb-md">
+            <div class="flex items-center justify-between mb-sm">
               <div>
-                <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Campus Mascot & Icon Gallery</h3>
-                <p class="text-muted text-sm">Select an emoji or illustrated avatar that represents your campus persona.</p>
+                <h3 style="font-size: 1.05rem; margin-bottom: 2px;">Campus Mascot & Icon Gallery</h3>
+                <p class="text-muted text-xs">Tap any character to set it as your student avatar.</p>
               </div>
             </div>
 
-            <!-- Filter Pills -->
+            <!-- Filter Pills (Swipeable on touch) -->
             <div class="filter-pills" id="mascotFilters">
               <button class="filter-pill active" onclick="filterMascots('all')">All</button>
               <button class="filter-pill" onclick="filterMascots('academic')">🎓 Academic</button>
-              <button class="filter-pill" onclick="filterMascots('tech')">💻 Tech & Science</button>
+              <button class="filter-pill" onclick="filterMascots('tech')">💻 Tech</button>
               <button class="filter-pill" onclick="filterMascots('mascot')">🦁 Mascots</button>
               <button class="filter-pill" onclick="filterMascots('creative')">🎨 Creative</button>
               <button class="filter-pill" onclick="filterMascots('sports')">🏆 Sports</button>
@@ -676,34 +923,34 @@
 
           <!-- TAB 2: Monogram & Gradients -->
           <div class="studio-tab-content" id="tabContent-monogram" style="display: none;">
-            <div class="mb-lg">
-              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Custom Letter Monogram</h3>
-              <p class="text-muted text-sm">Craft a sleek, modern monogram with custom initials, vibrant gradient palettes, and typography.</p>
+            <div class="mb-md">
+              <h3 style="font-size: 1.05rem; margin-bottom: 2px;">Custom Letter Monogram</h3>
+              <p class="text-muted text-xs">Craft a monogram with custom initials, typography, and vibrant gradients.</p>
             </div>
 
-            <div class="grid-2 mb-xl">
+            <div class="grid-2 studio-form-grid mb-lg" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
               <div class="form-group">
-                <label class="form-label" for="monogramTextInput">Monogram Characters (1-3 letters)</label>
-                <div class="flex gap-sm">
-                  <input type="text" id="monogramTextInput" class="form-input" maxlength="3" value="AR" style="font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;" placeholder="e.g. AR">
-                  <button class="btn btn-secondary" onclick="useNameInitials()">Use Initials</button>
+                <label class="form-label" for="monogramTextInput">Initials / Letters (1-3 chars)</label>
+                <div class="flex gap-xs">
+                  <input type="text" id="monogramTextInput" class="form-input" maxlength="3" value="AR" style="font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; flex: 1;" placeholder="AR">
+                  <button class="btn btn-secondary btn-sm" onclick="useNameInitials()" style="white-space: nowrap; padding: 0 10px;">Initials</button>
                 </div>
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="monogramFontSelect">Typography Font Family</label>
+                <label class="form-label" for="monogramFontSelect">Typography Font</label>
                 <select id="monogramFontSelect" class="form-input" onchange="updateMonogramFont(this.value)">
-                  <option value="system-ui, sans-serif">Modern Sans (Default)</option>
-                  <option value="'Courier New', monospace">Tech Mono (Terminal)</option>
-                  <option value="Georgia, serif">Classic University Serif</option>
-                  <option value="'Impact', sans-serif">Chunky Bold Impact</option>
-                  <option value="'Trebuchet MS', sans-serif">Dynamic Modern</option>
+                  <option value="system-ui, sans-serif">Modern Sans</option>
+                  <option value="'Courier New', monospace">Tech Mono</option>
+                  <option value="Georgia, serif">University Serif</option>
+                  <option value="'Impact', sans-serif">Bold Impact</option>
+                  <option value="'Trebuchet MS', sans-serif">Modern Dynamic</option>
                 </select>
               </div>
             </div>
 
-            <div class="mb-md">
-              <h4 style="font-size: 0.95rem; margin-bottom: var(--space-sm);">Vibrant Color Schemes & Gradients</h4>
+            <div class="mb-sm">
+              <h4 style="font-size: 0.9rem; margin-bottom: var(--space-xs);">Gradient Color Palette</h4>
             </div>
 
             <div class="gradient-palettes-grid" id="gradientsContainer"></div>
@@ -711,9 +958,9 @@
 
           <!-- TAB 3: Aura & Frames -->
           <div class="studio-tab-content" id="tabContent-frames" style="display: none;">
-            <div class="mb-lg">
-              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Avatar Border Auras & Effects</h3>
-              <p class="text-muted text-sm">Add glowing energy, championship rings, and animated frames to your profile.</p>
+            <div class="mb-md">
+              <h3 style="font-size: 1.05rem; margin-bottom: 2px;">Avatar Border Auras & Effects</h3>
+              <p class="text-muted text-xs">Add championship rings and glowing aura effects around your profile.</p>
             </div>
 
             <div class="frames-grid" id="framesContainer"></div>
@@ -721,30 +968,42 @@
 
           <!-- TAB 4: Campus Mood & Flair -->
           <div class="studio-tab-content" id="tabContent-mood" style="display: none;">
-            <div class="mb-lg">
-              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">Campus Mood & Activity Badge</h3>
-              <p class="text-muted text-sm">Display your current mindset or study vibe right alongside your avatar.</p>
+            <div class="mb-md">
+              <h3 style="font-size: 1.05rem; margin-bottom: 2px;">Campus Mood & Activity Badge</h3>
+              <p class="text-muted text-xs">Display your current study mindset right alongside your avatar.</p>
             </div>
 
-            <div class="form-group mb-xl">
-              <label class="form-label" for="customMoodInput">Custom Status Text</label>
-              <div class="flex gap-sm">
-                <input type="text" id="customMoodInput" class="form-input" placeholder="e.g. Preparing for Midterms..." maxlength="30">
-                <button class="btn btn-secondary" onclick="applyCustomMood()">Set Custom</button>
+            <div class="form-group mb-lg">
+              <label class="form-label" for="customMoodInput">Custom Status Message</label>
+              <div class="flex gap-xs">
+                <input type="text" id="customMoodInput" class="form-input" placeholder="e.g. Preparing for Midterms..." maxlength="30" style="flex: 1;">
+                <button class="btn btn-secondary btn-sm" onclick="applyCustomMood()" style="white-space: nowrap; padding: 0 12px;">Set</button>
               </div>
             </div>
 
-            <div class="mb-sm">
-              <h4 style="font-size: 0.95rem; margin-bottom: var(--space-sm);">Popular Student Status Badges</h4>
+            <div class="mb-xs">
+              <h4 style="font-size: 0.9rem; margin-bottom: var(--space-xs);">Popular Student Badges</h4>
             </div>
 
-            <div class="flex gap-md" style="flex-wrap: wrap;" id="moodsContainer"></div>
+            <div class="flex gap-sm" style="flex-wrap: wrap;" id="moodsContainer"></div>
           </div>
 
         </section>
       </div>
 
     </main>
+  </div>
+
+  <!-- Mobile Floating Sticky Bottom Action Bar -->
+  <div class="mobile-avatar-bar" id="mobileAvatarBar">
+    <div class="mobile-bar-avatar" id="mobileBarAvatar" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Scroll to top preview">AR</div>
+    <div class="mobile-bar-info" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <div class="mobile-bar-name" id="mobileBarName">Alex Rivera</div>
+      <div class="mobile-bar-status" id="mobileBarStatus">🎓 Studying Hard</div>
+    </div>
+    <button class="btn btn-primary mobile-bar-save-btn" onclick="saveAvatarProfile()" id="btnMobileSave">
+      💾 Save
+    </button>
   </div>
 
   <div id="toast-container" class="toast-container"></div>
@@ -864,6 +1123,7 @@
     let currentMood = MOODS[0];
     let currentFont = 'system-ui, sans-serif';
     let currentUser = null;
+    let surfacePreviewsExpanded = false;
 
     // ─── Initialize Page ───
     document.addEventListener('DOMContentLoaded', () => {
@@ -888,21 +1148,58 @@
       renderFramesGrid();
       renderMoodsGrid();
 
-      // 4. Update preview display
+      // 4. Handle surface previews layout based on screen width
+      initSurfacePreviewsResponsiveness();
+
+      // 5. Update preview display
       updateLivePreview();
     });
+
+    function initSurfacePreviewsResponsiveness() {
+      const isMobile = window.innerWidth <= 768;
+      const content = document.getElementById('surfacePreviewsContent');
+      const desktopHeader = document.getElementById('surfaceDesktopHeader');
+
+      if (!isMobile) {
+        content.classList.add('expanded');
+        desktopHeader.style.display = 'flex';
+      } else {
+        content.classList.remove('expanded');
+        desktopHeader.style.display = 'none';
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      initSurfacePreviewsResponsiveness();
+    });
+
+    function toggleSurfacePreviews() {
+      const content = document.getElementById('surfacePreviewsContent');
+      const icon = document.getElementById('surfaceToggleIcon');
+      surfacePreviewsExpanded = !surfacePreviewsExpanded;
+
+      if (surfacePreviewsExpanded) {
+        content.classList.add('expanded');
+        icon.textContent = '▴';
+      } else {
+        content.classList.remove('expanded');
+        icon.textContent = '▾';
+      }
+    }
 
     // ─── Load Saved Config from Storage or User Profile ───
     function loadUserConfig() {
       if (!currentUser) return;
 
-      document.getElementById('previewStudentName').textContent = currentUser.name || 'Alex Rivera';
-      document.getElementById('mockSidebarName').textContent = currentUser.name || 'Alex Rivera';
-      document.getElementById('mockHubName').textContent = currentUser.name || 'Alex Rivera';
+      const studentName = currentUser.name || 'Alex Rivera';
+      document.getElementById('previewStudentName').textContent = studentName;
+      document.getElementById('mockSidebarName').textContent = studentName;
+      document.getElementById('mockHubName').textContent = studentName;
+      document.getElementById('mobileBarName').textContent = studentName;
       document.getElementById('previewStudentDept').textContent = `${currentUser.department || 'Computer Science'} · ${currentUser.year || '3rd Year'}`;
 
       // Set monogram default to user initials
-      const initials = Auth.getInitials(currentUser.name);
+      const initials = Auth.getInitials(studentName);
       document.getElementById('monogramTextInput').value = initials;
 
       // Check saved custom config
@@ -931,7 +1228,6 @@
       // Default to user's existing avatar
       if (currentUser.avatar) {
         currentAvatarVal = currentUser.avatar;
-        // Check if it's emoji or monogram initials
         const isEmoji = /\p{Extended_Pictographic}/u.test(currentUser.avatar);
         currentAvatarType = isEmoji ? 'emoji' : 'monogram';
       }
@@ -1001,7 +1297,7 @@
             <div class="frame-demo-circle ${f.class}">
               ${currentAvatarVal}
             </div>
-            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 2px;">${f.name}</div>
+            <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 2px;">${f.name}</div>
             <div class="text-muted text-xs">${f.desc}</div>
           </div>
         `;
@@ -1082,7 +1378,6 @@
     function updateLivePreview() {
       const mainEl = document.getElementById('previewAvatarMain');
       const stageGlow = document.getElementById('stageGlow');
-      const moodPill = document.getElementById('previewMoodPill');
       const moodIcon = document.getElementById('previewMoodIcon');
       const moodText = document.getElementById('previewMoodText');
 
@@ -1098,6 +1393,23 @@
       // Update mood pill
       moodIcon.textContent = currentMood.icon;
       moodText.textContent = currentMood.text;
+
+      // Update mobile floating action bar
+      const mobileBarAvatar = document.getElementById('mobileBarAvatar');
+      const mobileBarStatus = document.getElementById('mobileBarStatus');
+      if (mobileBarAvatar) {
+        mobileBarAvatar.textContent = currentAvatarVal;
+        mobileBarAvatar.style.background = currentGradient.bg;
+        mobileBarAvatar.style.fontFamily = currentAvatarType === 'monogram' ? currentFont : 'inherit';
+        if (currentFrame.id !== 'none') {
+          mobileBarAvatar.style.boxShadow = `0 0 10px ${currentGradient.glow}`;
+        } else {
+          mobileBarAvatar.style.boxShadow = '';
+        }
+      }
+      if (mobileBarStatus) {
+        mobileBarStatus.textContent = `${currentMood.icon} ${currentMood.text}`;
+      }
 
       // Update mock previews
       const mockSidebar = document.getElementById('mockSidebarAvatar');
@@ -1327,7 +1639,7 @@
         particles.forEach(p => {
           p.x += p.dx;
           p.y += p.dy;
-          p.dy += 0.25; // gravity
+          p.dy += 0.25;
           p.opacity -= 0.015;
           p.tiltAngle += p.tiltAngleIncremental;
           p.tilt = Math.sin(p.tiltAngle) * 12;
