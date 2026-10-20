@@ -8018,3 +8018,805 @@ body.no-animations *::after {
   background: rgba(99, 102, 241, 0.2);
   border-color: var(--primary-400);
 }
+
+/* ==========================================================================
+   COMPREHENSIVE MOBILE RESPONSIVE — Dashboard, Games, Profile & Settings
+   Targets: ≤768px (tablet), ≤480px (phone), ≤390px (small phone)
+   ========================================================================== */
+
+/* ─────────────────────────────────────────────
+   DASHBOARD MOBILE
+   ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* For You section title row */
+  .foryou-profile-badge {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.7rem;
+  }
+
+  /* For You filters — horizontal scroll */
+  .foryou-filters {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .foryou-filters::-webkit-scrollbar {
+    display: none;
+  }
+  .foryou-chip {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Admin poll items — stack on mobile */
+  .admin-poll-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+  }
+  .admin-poll-badge-box {
+    width: 44px;
+    height: 44px;
+  }
+  .admin-poll-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .admin-poll-title {
+    white-space: normal;
+  }
+
+  /* Poll form grid */
+  .poll-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  /* For You feed items */
+  .foryou-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+  .foryou-item-actions {
+    flex-wrap: wrap;
+  }
+  .foryou-item-meta {
+    flex-wrap: wrap;
+  }
+
+  /* Admin poll badge box — inline horizontal */
+  .admin-poll-item {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .admin-poll-info {
+    min-width: 0;
+    flex: 1 1 60%;
+  }
+  .admin-poll-actions {
+    width: auto;
+  }
+}
+
+
+/* ─────────────────────────────────────────────
+   GAMES PAGE MOBILE
+   ───────────────────────────────────────────── */
+
+/* --- Tablet & below (≤768px) --- */
+@media (max-width: 768px) {
+
+  /* Games box — less padding */
+  .games-box {
+    padding: var(--space-lg);
+  }
+
+  /* Games box header — stack */
+  .games-box-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .games-box-title h2 {
+    font-size: 1.25rem;
+  }
+  .games-box-title p {
+    font-size: 0.82rem;
+  }
+
+  /* Games status pills — wrap */
+  .games-status-pills {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  /* Games grid — single column */
+  .games-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  /* Game cards — reduce height */
+  .game-card {
+    min-height: 260px;
+    padding: var(--space-lg);
+  }
+
+  /* Game hover description — always hidden on touch, keep cards tappable */
+  .game-hover-desc {
+    display: none;
+  }
+
+  .game-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .game-card-meta {
+    font-size: 0.72rem;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  /* Achievements grid */
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .achievement-badge {
+    padding: var(--space-md);
+  }
+  .achievement-icon {
+    font-size: 1.5rem;
+  }
+  .achievement-name {
+    font-size: 0.78rem;
+  }
+  .achievement-desc {
+    font-size: 0.68rem;
+  }
+
+  /* Arena topbar — wrap all elements */
+  .arena-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  .arena-back-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  /* Arena skin pill — full width */
+  .arena-skin-pill {
+    margin-left: 0 !important;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  /* Chess / Sudoku / Billiards mode pills — horizontal scroll */
+  .chess-mode-pills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    gap: 0.3rem;
+    padding: 0.3rem;
+  }
+  .chess-mode-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .chess-mode-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  /* Mode description banner — stack on mobile */
+  .mode-description-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    font-size: 0.78rem;
+    padding: 0.5rem 0.9rem;
+  }
+
+  /* Chess side panel — full width */
+  .chess-side-panel {
+    width: 100%;
+  }
+
+  /* Player strips */
+  .player-strip {
+    max-width: 100%;
+  }
+
+  /* Chess actions grid */
+  .chess-actions-grid {
+    gap: var(--space-xs);
+  }
+
+  .chess-btn {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  /* Chess status card */
+  .chess-status-card {
+    padding: var(--space-md);
+  }
+
+  /* Moves log */
+  .moves-log-box {
+    max-height: 180px;
+  }
+
+  /* Quiz wrapper */
+  .quiz-card-box {
+    padding: var(--space-lg);
+  }
+  .quiz-question-text {
+    font-size: 1.1rem;
+  }
+  .quiz-opt-btn {
+    padding: var(--space-md);
+    font-size: 0.9rem;
+  }
+  .quiz-score-badge {
+    font-size: 2.5rem;
+  }
+
+  /* Typing racer */
+  .typing-passage {
+    font-size: 1rem;
+    padding: var(--space-lg);
+    line-height: 1.8;
+  }
+  .typing-input {
+    font-size: 0.95rem;
+    padding: var(--space-md);
+  }
+  .typing-config-group {
+    margin-bottom: var(--space-md);
+  }
+  .typing-selector-row {
+    justify-content: flex-start;
+  }
+  .typing-pill-btn {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  /* Memory grid — tighter gaps */
+  .memory-grid {
+    gap: var(--space-sm);
+  }
+  .memory-card-front,
+  .memory-card-back {
+    font-size: 2rem;
+    border-width: 1.5px;
+  }
+
+  /* Sudoku layout — already collapses at 900px, refine */
+  .sudoku-board-frame {
+    padding: 8px;
+  }
+  .sudoku-toolbar {
+    gap: 6px;
+  }
+  .sudoku-tool-btn {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .sudoku-tool-btn span:first-child {
+    font-size: 0.95rem !important;
+  }
+  .sudoku-numpad {
+    gap: 6px;
+  }
+  .sudoku-num-btn {
+    padding: 0.55rem 0.3rem;
+    font-size: 1.15rem;
+  }
+
+  /* Billiards */
+  .billiards-table-container {
+    border-width: 6px;
+    padding: 4px;
+    border-radius: 16px;
+  }
+  .billiards-canvas {
+    border-radius: 10px;
+  }
+  .billiards-racks {
+    gap: var(--space-xs);
+  }
+  .billiards-rack-row {
+    padding: 0.45rem 0.6rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .billiards-cue-power-wrap {
+    padding: var(--space-sm);
+  }
+  .billiards-mini-ball {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  /* Billiards pocket picker grid */
+  #billiardsPocketButtons {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  /* Locker modal — fit mobile */
+  .locker-modal-dialog {
+    max-width: 100%;
+    padding: var(--space-lg);
+    margin: var(--space-sm);
+  }
+  .locker-grid {
+    grid-template-columns: 1fr;
+  }
+  .locker-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .locker-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .locker-tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.85rem;
+  }
+
+  /* Student daily banner — stack on mobile */
+  .student-daily-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+  .student-daily-banner-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* --- Small Phones (≤480px) --- */
+@media (max-width: 480px) {
+
+  /* Games grid */
+  .game-card {
+    min-height: 220px;
+    padding: var(--space-md);
+  }
+
+  .game-card-body h3 {
+    font-size: 1.05rem;
+  }
+  .game-tagline {
+    font-size: 0.82rem;
+  }
+  .game-card-top .game-card-icon {
+    font-size: 2rem;
+  }
+  .game-card-badge {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+  }
+
+  /* Games box */
+  .games-box {
+    padding: var(--space-md);
+  }
+
+  /* Arena topbar pills & badges — smaller */
+  .games-pill {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.55rem;
+  }
+
+  /* Chess board — even smaller */
+  .chess-board {
+    grid-template-columns: repeat(8, calc((100vw - 80px) / 8));
+    grid-template-rows: repeat(8, calc((100vw - 80px) / 8));
+  }
+  .chess-board-frame {
+    padding: 10px;
+  }
+  .chess-piece {
+    font-size: 1.5rem;
+  }
+
+  /* Player strip */
+  .player-strip {
+    padding: 0.45rem 0.65rem;
+  }
+  .player-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+  .player-meta h4 {
+    font-size: 0.78rem;
+  }
+  .player-meta span {
+    font-size: 0.68rem;
+  }
+  .captured-pieces {
+    font-size: 0.9rem;
+    max-width: 120px;
+  }
+
+  /* Moves log — more compact */
+  .moves-log-box {
+    max-height: 140px;
+    padding: var(--space-sm);
+  }
+  .moves-log-list {
+    font-size: 0.78rem;
+  }
+
+  /* Quiz — compact */
+  .quiz-card-box {
+    padding: var(--space-md);
+  }
+  .quiz-question-text {
+    font-size: 1rem;
+    margin-bottom: var(--space-md);
+  }
+  .quiz-opt-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.85rem;
+  }
+  .opt-letter {
+    font-size: 1.1rem;
+  }
+  .quiz-header-bar {
+    margin-bottom: var(--space-md);
+  }
+  .quiz-score-badge {
+    font-size: 2rem;
+  }
+  .quiz-category-tag {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+  }
+  .quiz-streak-badge {
+    font-size: 0.75rem;
+  }
+
+  /* Typing racer */
+  .typing-passage {
+    font-size: 0.9rem;
+    padding: var(--space-md);
+    max-height: 160px !important;
+    line-height: 1.7;
+  }
+  .typing-input {
+    font-size: 0.88rem;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  /* Memory grid — 3 columns on very small */
+  .memory-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xs);
+  }
+  .memory-card-front,
+  .memory-card-back {
+    font-size: 1.6rem;
+  }
+
+  /* Sudoku — smaller cells */
+  .sudoku-cell {
+    font-size: clamp(0.85rem, 2.2vw, 1.2rem);
+  }
+  .sudoku-note-num {
+    font-size: clamp(0.4rem, 0.8vw, 0.55rem);
+  }
+  .sudoku-numpad {
+    gap: 4px;
+  }
+  .sudoku-num-btn {
+    padding: 0.4rem 0.2rem;
+    font-size: 1.05rem;
+  }
+  .sudoku-num-btn .sudoku-remaining {
+    font-size: 0.55rem;
+  }
+
+  /* Billiards — compact side panel */
+  .billiards-table-container {
+    border-width: 4px;
+    border-radius: 12px;
+    padding: 3px;
+  }
+  .billiards-canvas {
+    border-radius: 8px;
+  }
+  .billiards-mini-ball {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+
+  /* Achievements grid — 2 cols */
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  /* Locker modal */
+  .locker-modal-dialog {
+    padding: var(--space-md);
+    margin: var(--space-xs);
+  }
+  .skin-card {
+    padding: var(--space-md);
+  }
+  .skin-card-preview {
+    height: 80px;
+  }
+  .skin-card-name {
+    font-size: 0.9rem;
+  }
+  .skin-card-desc {
+    font-size: 0.75rem;
+  }
+}
+
+
+/* --- Ultra-small phones (≤390px) — narrow screens --- */
+@media (max-width: 390px) {
+
+  /* Games page header buttons */
+  .page-header-row .games-status-pills {
+    width: 100%;
+  }
+  .page-header-row .games-status-pills .btn {
+    flex: 1;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  /* Game cards */
+  .game-card {
+    min-height: 200px;
+  }
+
+  /* Chess board — fit 375px - padding */
+  .chess-board {
+    grid-template-columns: repeat(8, calc((100vw - 64px) / 8));
+    grid-template-rows: repeat(8, calc((100vw - 64px) / 8));
+  }
+  .chess-board-frame {
+    padding: 8px;
+  }
+  .chess-piece {
+    font-size: 1.35rem;
+  }
+
+  /* Mode pills — even smaller */
+  .chess-mode-pill {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  /* Quiz — very compact */
+  .quiz-card-box {
+    padding: var(--space-sm) var(--space-md);
+  }
+  .quiz-question-text {
+    font-size: 0.92rem;
+  }
+
+  /* Typing selector */
+  .typing-pill-btn {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  /* Sudoku board */
+  .sudoku-board-frame {
+    padding: 4px;
+  }
+
+  /* Billiards */
+  .billiards-table-container {
+    border-width: 3px;
+    border-radius: 10px;
+  }
+
+  /* Memory — keep 4 cols but very tight */
+  .memory-card-front,
+  .memory-card-back {
+    font-size: 1.4rem;
+    border-radius: var(--radius-md);
+  }
+}
+
+
+/* ─────────────────────────────────────────────
+   PROFILE & SETTINGS MOBILE
+   ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Profile header — already stacked via existing rules, refine */
+  .profile-header {
+    gap: var(--space-md);
+  }
+
+  .profile-info .flex.gap-md {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  /* Settings tabs — full width scroll */
+  .tabs {
+    width: 100%;
+  }
+
+  /* Settings sections — full bleed feel */
+  .settings-section {
+    border-radius: var(--radius-md);
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  /* Toggle wrappers — ensure text doesn't overflow */
+  .toggle-wrapper {
+    gap: var(--space-md);
+  }
+  .toggle-wrapper > div:first-child .font-semibold {
+    font-size: 0.85rem;
+  }
+  .toggle-wrapper > div:first-child .text-muted {
+    font-size: 0.75rem;
+  }
+
+  /* Theme / appearance role selector */
+  .role-selector {
+    max-width: 100% !important;
+  }
+
+  /* Accent color buttons */
+  .flex.gap-md .accent-btn {
+    margin-bottom: 0;
+  }
+
+  /* Notification item in security tab */
+  .notification-item {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* Danger zone */
+  .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* Sidebar user footer */
+  .sidebar-user {
+    padding: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Profile header — tighter */
+  .profile-header {
+    padding: var(--space-lg) var(--space-md);
+    gap: var(--space-sm);
+  }
+  .profile-avatar-lg {
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
+  }
+  .profile-info h2 {
+    font-size: 1.15rem;
+  }
+  .profile-info .profile-role {
+    font-size: 0.82rem;
+  }
+  .profile-info .profile-email {
+    font-size: 0.78rem;
+  }
+
+  /* Settings tabs */
+  .tab-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* Form inputs — compact */
+  .settings-section .form-input,
+  .settings-section .form-select,
+  .settings-section .form-textarea {
+    font-size: 0.85rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .settings-section .form-label {
+    font-size: 0.8rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  /* Toggle — slightly smaller */
+  .toggle {
+    width: 42px;
+    height: 24px;
+  }
+  .toggle-slider::before {
+    width: 18px;
+    height: 18px;
+  }
+  .toggle input:checked + .toggle-slider::before {
+    transform: translateX(18px);
+  }
+}
+
+@media (max-width: 390px) {
+  /* Profile */
+  .profile-avatar-lg {
+    width: 56px;
+    height: 56px;
+    font-size: 1.4rem;
+  }
+  .profile-info .badge {
+    font-size: 0.6rem;
+  }
+
+  /* Settings */
+  .settings-section {
+    padding: var(--space-md) var(--space-sm);
+  }
+}
+
+
+/* ─────────────────────────────────────────────
+   GLOBAL MOBILE OVERFLOW PREVENTION
+   ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Prevent any horizontal overflow on the page */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .app-layout {
+    overflow-x: hidden;
+  }
+
+  .main-content {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Fix flex containers that might overflow */
+  .flex.items-center.justify-between {
+    flex-wrap: wrap;
+  }
+
+  /* Billiards hint text — compact on mobile */
+  .billiards-layout > div:first-child > div:last-child {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
