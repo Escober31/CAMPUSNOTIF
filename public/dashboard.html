@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="CampusNotify Dashboard — Overview of announcements, events, and campus activity at a glance.">
-  <title>Dashboard — CampusNotify</title>
+    content="CampusNotify Admin Dashboard — Overview of campus announcements, events, polls, and administrative activity.">
+  <title>Admin Dashboard — CampusNotify</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -19,9 +19,9 @@
       <div class="page-header animate-fade-in">
         <div class="page-header-row">
           <div>
-            <h1>Good <span class="text-gradient" id="greeting">afternoon</span>, <span id="userName">Student</span> 👋
+            <h1>Good <span class="text-gradient" id="greeting">afternoon</span>, <span id="userName">Administrator</span> 👋
             </h1>
-            <p class="page-subtitle">Here's what's happening on campus today.</p>
+            <p class="page-subtitle">Here's an overview of campus activity and administrative operations.</p>
           </div>
           <div class="flex gap-md">
             <div class="search-bar">
@@ -31,9 +31,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Student Daily Login Reward Banner (Students Only) -->
-      <div id="studentDailyBannerContainer"></div>
 
       <!-- Stats Grid -->
       <div class="stats-grid stagger" id="statsGrid">
@@ -45,7 +42,7 @@
         </div>
         <div class="stat-card animate-scale-in">
           <div class="stat-icon cyan">📅</div>
-          <div class="stat-value" id="statEvents">5</div>
+          <div class="stat-value" id="statEvents">0</div>
           <div class="stat-label">Upcoming Events</div>
           <div class="stat-trend up">↑ 2 new</div>
         </div>
@@ -83,41 +80,8 @@
         </div>
       </div>
 
-      <!-- ✨ For You — Personalized Feed (students only) -->
-      <div id="forYouSection" class="foryou-section mt-xl" style="display:none;">
-        <!-- Student Daily Login Reward Banner (Students Only) -->
-        <div id="studentDailyBannerContainer"></div>
-        <div class="foryou-header">
-          <div class="foryou-title-row">
-            <div>
-              <h2 class="foryou-title">✨ <span class="text-gradient">For You</span></h2>
-              <p class="foryou-subtitle" id="forYouSubtitle">Content curated for your department and year level.</p>
-            </div>
-            <div class="foryou-header-actions">
-              <div class="foryou-profile-badge" id="forYouBadge">
-                <span class="foryou-badge-icon">🎓</span>
-                <span class="foryou-badge-text" id="forYouBadgeText">Computer Science · 3rd Year</span>
-              </div>
-            </div>
-          </div>
-          <div class="foryou-filters" id="forYouFilters">
-            <button class="foryou-chip active" data-fy-type="all">All</button>
-            <button class="foryou-chip" data-fy-type="announcement">📢 Announcements</button>
-            <button class="foryou-chip" data-fy-type="event">📅 Events</button>
-            <button class="foryou-chip" data-fy-type="notification">🔔 Notifications</button>
-          </div>
-        </div>
-        <div id="forYouFeed" class="foryou-feed"></div>
-        <div id="forYouEmpty" class="foryou-empty" style="display:none;">
-          <div class="foryou-empty-icon">🎯</div>
-          <h3>All caught up!</h3>
-          <p>No personalized content for your profile right now. Check the <a href="campus-hub.html">Campus Hub</a> for
-            campus-wide updates.</p>
-        </div>
-      </div>
-
-      <!-- Admin Campus Polls Section (matches Pic 1) -->
-      <div class="admin-only-block mt-xl" id="adminPollsSection">
+      <!-- Admin Campus Polls Section -->
+      <div class="mt-xl" id="adminPollsSection">
         <!-- Success Banner -->
         <div id="pollSuccessBanner" class="poll-success-banner" style="display:none;">
           <div class="poll-success-banner-content">
@@ -136,7 +100,6 @@
               <span class="poll-section-icon">📊</span>
               <h3 style="margin:0;">Campus Polls</h3>
             </div>
-            <!-- Replaced 'View All ->' with '+ Create Poll' as requested -->
             <button class="btn btn-primary btn-sm" id="btnCreatePoll" onclick="openCreatePollModal()">
               + Create Poll
             </button>
@@ -151,7 +114,7 @@
       </div>
 
       <!-- Admin Reports Section -->
-      <div class="admin-only-block mt-xl">
+      <div class="mt-xl">
         <div class="card" style="transform:none;">
           <div class="flex items-center justify-between mb-lg">
             <h3>📊 Quick Reports</h3>
@@ -177,7 +140,7 @@
     </main>
   </div>
 
-  <!-- Create Poll Modal (matches Pic 1 Step 2) -->
+  <!-- Create Poll Modal -->
   <div class="modal-overlay" id="createPollModal">
     <div class="modal" style="max-width: 680px; width: 95%;">
       <div class="modal-header">
@@ -333,7 +296,17 @@
 
       const user = Auth.getUser();
       const role = Auth.getRole();
-      const announcements = (role === 'admin') ? AnnouncementsStore.getAll() : AnnouncementsStore.getForHub();
+
+      if (role !== 'admin') {
+        UI.toast('Administrator access required.', 'warning');
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 1000);
+        return;
+      }
+
+      const announcements = AnnouncementsStore.getAll();
+      const allEvents = EventsStore.getAll();
 
       // Greeting
       const hour = new Date().getHours();
@@ -342,215 +315,30 @@
       else if (hour >= 17) greet = 'evening';
       document.getElementById('greeting').textContent = greet;
       const nameParts = (user.name || '').trim().split(/\s+/);
-      let displayGreetingName = nameParts[0] || 'User';
+      let displayGreetingName = nameParts[0] || 'Administrator';
       if (['dr.', 'dr', 'prof.', 'prof', 'mr.', 'mr', 'ms.', 'ms', 'mrs.', 'mrs'].includes(nameParts[0].toLowerCase()) && nameParts.length > 1) {
         displayGreetingName = nameParts.length > 2 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : nameParts[1];
       }
       document.getElementById('userName').textContent = displayGreetingName;
 
-      // Events
-      const allEvents = (role === 'admin') ? EventsStore.getAll() : EventsStore.getForHub();
-      document.getElementById('statEvents').textContent = allEvents.length;
-
       // Stats
+      document.getElementById('statEvents').textContent = allEvents.length;
       document.getElementById('statAnnouncements').textContent = announcements.length;
-      document.getElementById('statNotifications').textContent = (role === 'admin')
-        ? NotificationsStore.getUnreadCount()
-        : NotificationsStore.getForHub().filter(n => !n.read).length;
+      document.getElementById('statNotifications').textContent = NotificationsStore.getUnreadCount();
       document.getElementById('statPinned').textContent = announcements.filter(a => a.pinned).length;
 
-      // Role-aware navigation links
+      // Direct Admin Navigation Links
       const annViewAll = document.getElementById('linkViewAllAnnouncements');
-      if (annViewAll) {
-        annViewAll.href = role === 'admin' ? 'announcements.html' : 'campus-hub.html?type=announcement';
-      }
+      if (annViewAll) annViewAll.href = 'announcements.html';
       const evViewAll = document.getElementById('linkViewAllEvents');
-      if (evViewAll) {
-        evViewAll.href = role === 'admin' ? 'events-notifications.html' : 'campus-hub.html?type=event';
-      }
+      if (evViewAll) evViewAll.href = 'events-notifications.html';
 
       // Notification stat card navigation
       const notifStatCard = document.getElementById('statNotifications').closest('.stat-card');
       if (notifStatCard) {
         notifStatCard.onclick = () => {
-          window.location.href = role === 'admin' ? 'events-notifications.html?tab=notifications' : 'campus-hub.html?type=notification';
+          window.location.href = 'events-notifications.html?tab=notifications';
         };
-      }
-
-      // ✨ For You Feed
-      const forYouSection = document.getElementById('forYouSection');
-      if (forYouSection && role !== 'admin') {
-        forYouSection.style.display = 'block';
-
-        // Render Student Daily Login Banner
-        if (typeof DailyLoginUI !== 'undefined') {
-          DailyLoginUI.renderBanner('studentDailyBannerContainer');
-        }
-
-        // Set profile badge
-        const badgeText = document.getElementById('forYouBadgeText');
-        if (badgeText) {
-          const parts = [];
-          if (user.department) parts.push(user.department);
-          if (user.year) parts.push(user.year);
-          badgeText.textContent = parts.join(' · ') || 'Student';
-        }
-
-        const subtitle = document.getElementById('forYouSubtitle');
-        if (subtitle) {
-          subtitle.textContent = `Announcements, events & alerts targeted to ${user.department || 'your department'} ${user.year ? '— ' + user.year : ''}.`;
-        }
-
-        // Filter chips
-        let fyTypeFilter = 'all';
-        document.querySelectorAll('.foryou-chip').forEach(chip => {
-          chip.addEventListener('click', () => {
-            document.querySelectorAll('.foryou-chip').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            fyTypeFilter = chip.dataset.fyType;
-            renderForYouFeed(fyTypeFilter);
-          });
-        });
-
-        renderForYouFeed('all');
-
-        function renderForYouFeed(typeFilter) {
-          const feed = ForYouFeed.buildFeed(user);
-          const filtered = typeFilter === 'all' ? feed : feed.filter(f => f.feedType === typeFilter);
-          const container = document.getElementById('forYouFeed');
-          const empty = document.getElementById('forYouEmpty');
-
-          if (filtered.length === 0) {
-            container.innerHTML = '';
-            empty.style.display = 'block';
-            return;
-          }
-
-          empty.style.display = 'none';
-          container.innerHTML = filtered.map(item => renderForYouItem(item)).join('');
-        }
-
-        function renderForYouItem(item) {
-          const targetLabel = ForYouFeed.getTargetLabel(item);
-          const targetBadge = targetLabel ? `<span class="foryou-target-badge">🎯 ${targetLabel}</span>` : '';
-
-          if (item.feedType === 'announcement') {
-            const a = item.data;
-            const isSaved = typeof SavedStore !== 'undefined' && SavedStore.isSaved('announcement', a.id);
-
-            return `
-              <div class="foryou-item foryou-item-announcement animate-slide-up">
-                <div class="foryou-item-stripe stripe-announcement"></div>
-                <div class="foryou-item-content">
-                  <div class="foryou-item-header">
-                    <span class="foryou-type-label type-announcement">📢 ANNOUNCEMENT</span>
-                    ${targetBadge}
-                    ${a.pinned ? '<span class="badge badge-primary" style="font-size:0.7rem;">📌 Pinned</span>' : ''}
-                  </div>
-                  <h3 class="foryou-item-title">${a.title}</h3>
-                  <p class="foryou-item-body">${a.body}</p>
-                  <div class="foryou-item-meta">
-                    <span>✍️ ${a.author}</span>
-                    <span>📅 ${UI.formatDate(a.date)}</span>
-                    ${UI.priorityBadge(a.priority)}
-                    ${UI.categoryBadge(a.category)}
-                  </div>
-                  <div class="foryou-item-actions">
-                    <button class="hub-action-btn" onclick="window.location.href='campus-hub.html?highlight=ann-${a.id}'">Read More →</button>
-                    <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="fyToggleSave('announcement', ${a.id}, this)">
-                      ${isSaved ? '✓ Saved' : '🔖 Save'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-
-          if (item.feedType === 'event') {
-            const ev = item.data;
-            const d = new Date(ev.date + 'T00:00:00');
-            const day = d.getDate();
-            const month = d.toLocaleDateString('en-US', { month: 'short' });
-            const isInterested = typeof EventInterestStore !== 'undefined' && EventInterestStore.isInterested(ev.id);
-            const isSaved = typeof SavedStore !== 'undefined' && SavedStore.isSaved('event', ev.id);
-            const reminder = typeof ReminderStore !== 'undefined' ? ReminderStore.getReminder('event', ev.id) : null;
-
-            return `
-              <div class="foryou-item foryou-item-event animate-slide-up">
-                <div class="foryou-item-stripe stripe-event"></div>
-                <div class="foryou-item-content">
-                  <div class="foryou-item-header">
-                    <span class="foryou-type-label type-event">📅 EVENT</span>
-                    ${targetBadge}
-                  </div>
-                  <div class="foryou-event-layout">
-                    <div class="event-date-badge" style="width:48px; height:54px; flex-shrink:0;">
-                      <span class="day" style="font-size:1.1rem;">${day}</span>
-                      <span class="month" style="font-size:0.6rem;">${month}</span>
-                    </div>
-                    <div style="flex:1; min-width:0;">
-                      <h3 class="foryou-item-title" style="margin-bottom:4px;">${ev.title}</h3>
-                      <p class="foryou-item-body">${ev.description}</p>
-                      <div class="foryou-item-meta" style="margin-top:var(--space-sm);">
-                        <span>📍 ${ev.location}</span>
-                        <span>🕐 ${ev.time}</span>
-                        <span class="tag">${ev.category}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="foryou-item-actions">
-                    <button class="hub-action-btn" onclick="window.location.href='campus-hub.html?highlight=ev-${ev.id}'">Read More →</button>
-                    <button class="hub-action-btn interest-btn ${isInterested ? 'active' : ''}" onclick="fyToggleInterest(${ev.id}, this)">
-                      ${isInterested ? '✓ Interested' : '👍 Interested'}
-                    </button>
-                    <button class="hub-action-btn save-btn ${isSaved ? 'active' : ''}" onclick="fyToggleSave('event', ${ev.id}, this)">
-                      ${isSaved ? '✓ Saved' : '🔖 Save'}
-                    </button>
-                    <div class="reminder-wrapper">
-                      <button class="hub-action-btn reminder-btn ${reminder ? 'active' : ''}" onclick="fyToggleReminderMenu(this, 'event', ${ev.id})">
-                        ${reminder ? '🔔 ' + ReminderStore.getTimingLabel(reminder.timing) : '🔔 Remind Me'}
-                      </button>
-                      <div class="reminder-menu" id="fy-reminder-menu-event-${ev.id}">
-                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '10min')">⏰ 10 minutes before</div>
-                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '1hour')">⏰ 1 hour before</div>
-                        <div class="reminder-option" onclick="fySetReminder('event', ${ev.id}, '1day')">⏰ 1 day before</div>
-                        ${reminder ? '<div class="reminder-option remove" onclick="fyRemoveReminder(\'event\', ' + ev.id + ')">❌ Remove Reminder</div>' : ''}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-
-          if (item.feedType === 'notification') {
-            const n = item.data;
-            return `
-              <div class="foryou-item foryou-item-notification ${!n.read ? 'foryou-item-unread' : ''} animate-slide-up">
-                <div class="foryou-item-stripe stripe-notification"></div>
-                <div class="foryou-item-content">
-                  <div class="foryou-item-header">
-                    <span class="foryou-type-label type-notification">🔔 NOTIFICATION</span>
-                    ${targetBadge}
-                    ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
-                  </div>
-                  <div class="flex items-center gap-md">
-                    <div class="notification-dot ${n.type}">${n.icon}</div>
-                    <div style="flex:1; min-width:0;">
-                      <div class="font-semibold text-sm">${n.title}</div>
-                      <div class="text-secondary" style="font-size:0.83rem; margin-top:2px;">${n.message}</div>
-                      <div class="text-muted" style="font-size:0.75rem; margin-top:4px;">${n.time}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-
-          return '';
-        }
-      } else if (forYouSection) {
-        forYouSection.style.display = 'none';
       }
 
       // Recent Announcements (top 4)
@@ -561,24 +349,21 @@
           <div class="empty-state">
             <div class="empty-icon">📭</div>
             <h3>No announcements yet</h3>
-            <p>Check back later for updates.</p>
+            <p>Create an announcement to keep the campus informed.</p>
           </div>`;
       } else {
-        recentContainer.innerHTML = recent.map(a => {
-          const targetUrl = role === 'admin' ? `announcements.html?highlight=${a.id}` : `campus-hub.html?highlight=ann-${a.id}`;
-          return `
-            <div class="notification-item ${a.pinned ? 'unread' : ''}" style="cursor:pointer;" onclick="window.location.href='${targetUrl}'">
-              <div class="notification-dot ${a.priority === 'urgent' ? 'alert' : a.priority === 'important' ? 'warning' : 'info'}">
-                ${a.priority === 'urgent' ? '🔴' : a.priority === 'important' ? '🟡' : '🔵'}
-              </div>
-              <div style="flex:1; min-width:0;">
-                <div class="font-semibold text-sm" style="margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.title}</div>
-                <div class="text-muted" style="font-size:0.78rem;">${a.author} · ${UI.formatDate(a.date)}</div>
-              </div>
-              ${a.pinned ? '<span class="badge badge-primary">Pinned</span>' : ''}
+        recentContainer.innerHTML = recent.map(a => `
+          <div class="notification-item ${a.pinned ? 'unread' : ''}" style="cursor:pointer;" onclick="window.location.href='announcements.html?highlight=${a.id}'">
+            <div class="notification-dot ${a.priority === 'urgent' ? 'alert' : a.priority === 'important' ? 'warning' : 'info'}">
+              ${a.priority === 'urgent' ? '🔴' : a.priority === 'important' ? '🟡' : '🔵'}
             </div>
-          `;
-        }).join('');
+            <div style="flex:1; min-width:0;">
+              <div class="font-semibold text-sm" style="margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.title}</div>
+              <div class="text-muted" style="font-size:0.78rem;">${a.author} · ${UI.formatDate(a.date)}</div>
+            </div>
+            ${a.pinned ? '<span class="badge badge-primary">Pinned</span>' : ''}
+          </div>
+        `).join('');
       }
 
       // Upcoming Events (top 3)
@@ -589,16 +374,15 @@
           <div class="empty-state">
             <div class="empty-icon">📅</div>
             <h3>No events yet</h3>
-            <p>Check back later for updates.</p>
+            <p>Schedule an event for students and faculty.</p>
           </div>`;
       } else {
         eventsContainer.innerHTML = upcomingEvents.map(ev => {
           const d = new Date(ev.date + 'T00:00:00');
           const day = d.getDate();
           const month = d.toLocaleDateString('en-US', { month: 'short' });
-          const targetUrl = role === 'admin' ? `events-notifications.html?highlight=${ev.id}` : `campus-hub.html?highlight=ev-${ev.id}`;
           return `
-            <div class="event-card" style="padding:var(--space-lg); cursor:pointer;" onclick="window.location.href='${targetUrl}'">
+            <div class="event-card" style="padding:var(--space-lg); cursor:pointer;" onclick="window.location.href='events-notifications.html?highlight=${ev.id}'">
               <div class="event-date-badge" style="width:52px; height:58px;">
                 <span class="day" style="font-size:1.2rem;">${day}</span>
                 <span class="month" style="font-size:0.6rem;">${month}</span>
@@ -612,17 +396,16 @@
       }
 
       // Admin Charts & Polls
-      if (Auth.getRole() === 'admin') {
-        renderCharts(announcements);
-        renderAdminPolls();
-      }
+      renderCharts(announcements);
+      renderAdminPolls();
 
-      // ─── Dashboard Search ───
+      // Dashboard Search
       initDashboardSearch();
     });
 
     function initDashboardSearch() {
       const searchInput = document.getElementById('dashSearch');
+      if (!searchInput) return;
       const searchBar = searchInput.closest('.search-bar');
 
       // Create dropdown container
@@ -638,34 +421,8 @@
           return;
         }
 
-        const isStudent = Auth.getRole() !== 'admin';
-        const user = Auth.getUser();
-
-        let announcements, events;
-        if (isStudent) {
-          // For students: search hub items + ForYouFeed items (no duplicates)
-          const hubAnnouncements = AnnouncementsStore.getForHub();
-          const hubEvents = EventsStore.getForHub();
-          const allAnnouncements = AnnouncementsStore.getAll();
-          const allEvents = EventsStore.getAll();
-
-          const hubAnnIds = new Set(hubAnnouncements.map(a => String(a.id)));
-          const hubEvIds = new Set(hubEvents.map(e => String(e.id)));
-
-          // Add ForYou items that aren't already in hub
-          const forYouAnnouncements = allAnnouncements.filter(a =>
-            !hubAnnIds.has(String(a.id)) && typeof ForYouFeed !== 'undefined' && ForYouFeed.isForYou && ForYouFeed.isForYou(a, user)
-          );
-          const forYouEvents = allEvents.filter(e =>
-            !hubEvIds.has(String(e.id)) && typeof ForYouFeed !== 'undefined' && ForYouFeed.isForYou && ForYouFeed.isForYou(e, user)
-          );
-
-          announcements = [...hubAnnouncements, ...forYouAnnouncements];
-          events = [...hubEvents, ...forYouEvents];
-        } else {
-          announcements = AnnouncementsStore.getAll();
-          events = EventsStore.getAll();
-        }
+        const announcements = AnnouncementsStore.getAll();
+        const events = EventsStore.getAll();
 
         const matchedAnnouncements = announcements.filter(a =>
           a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query)
@@ -684,36 +441,30 @@
 
         if (matchedAnnouncements.length > 0) {
           html += `<div class="search-section-title">📢 Announcements</div>`;
-          html += matchedAnnouncements.slice(0, 5).map(a => {
-            const linkUrl = isStudent ? `campus-hub.html?highlight=ann-${a.id}` : `announcements.html?highlight=${a.id}`;
-            return `
-              <div class="search-result-item" onclick="window.location.href='${linkUrl}'">
-                <div class="result-icon announcement">📢</div>
-                <div style="flex:1; min-width:0;">
-                  <div class="result-title">${highlightMatch(a.title, query)}</div>
-                  <div class="result-meta">${a.author} · ${UI.formatDate(a.date)}</div>
-                </div>
-                <span class="text-muted" style="font-size:0.7rem;">→</span>
+          html += matchedAnnouncements.slice(0, 5).map(a => `
+            <div class="search-result-item" onclick="window.location.href='announcements.html?highlight=${a.id}'">
+              <div class="result-icon announcement">📢</div>
+              <div style="flex:1; min-width:0;">
+                <div class="result-title">${highlightMatch(a.title, query)}</div>
+                <div class="result-meta">${a.author} · ${UI.formatDate(a.date)}</div>
               </div>
-            `;
-          }).join('');
+              <span class="text-muted" style="font-size:0.7rem;">→</span>
+            </div>
+          `).join('');
         }
 
         if (matchedEvents.length > 0) {
           html += `<div class="search-section-title">📅 Events</div>`;
-          html += matchedEvents.slice(0, 5).map(ev => {
-            const linkUrl = isStudent ? `campus-hub.html?highlight=ev-${ev.id}` : `events-notifications.html?highlight=${ev.id}`;
-            return `
-              <div class="search-result-item" onclick="window.location.href='${linkUrl}'">
-                <div class="result-icon event">📅</div>
-                <div style="flex:1; min-width:0;">
-                  <div class="result-title">${highlightMatch(ev.title, query)}</div>
-                  <div class="result-meta">📍 ${ev.location} · ${UI.formatDate(ev.date)}</div>
-                </div>
-                <span class="text-muted" style="font-size:0.7rem;">→</span>
+          html += matchedEvents.slice(0, 5).map(ev => `
+            <div class="search-result-item" onclick="window.location.href='events-notifications.html?highlight=${ev.id}'">
+              <div class="result-icon event">📅</div>
+              <div style="flex:1; min-width:0;">
+                <div class="result-title">${highlightMatch(ev.title, query)}</div>
+                <div class="result-meta">📍 ${ev.location} · ${UI.formatDate(ev.date)}</div>
               </div>
-            `;
-          }).join('');
+              <span class="text-muted" style="font-size:0.7rem;">→</span>
+            </div>
+          `).join('');
         }
 
         dropdown.innerHTML = html;
@@ -753,99 +504,42 @@
       const categories = {};
       announcements.forEach(a => { categories[a.category] = (categories[a.category] || 0) + 1; });
       const catChart = document.getElementById('chartCategories');
-      const maxCat = Math.max(...Object.values(categories), 1);
-      catChart.innerHTML = Object.entries(categories).map(([cat, count]) => `
-        <div class="bar" style="height: ${(count / maxCat) * 100}%;">
-          <span class="bar-label">${cat}</span>
-        </div>
-      `).join('');
+      if (catChart) {
+        const maxCat = Math.max(...Object.values(categories), 1);
+        catChart.innerHTML = Object.entries(categories).map(([cat, count]) => `
+          <div class="bar" style="height: ${(count / maxCat) * 100}%;">
+            <span class="bar-label">${cat}</span>
+          </div>
+        `).join('');
+      }
 
       // Priority chart
       const priorities = { urgent: 0, important: 0, normal: 0 };
       announcements.forEach(a => { priorities[a.priority] = (priorities[a.priority] || 0) + 1; });
       const priChart = document.getElementById('chartPriority');
-      const maxPri = Math.max(...Object.values(priorities), 1);
-      const priColors = { urgent: 'var(--gradient-danger)', important: 'var(--gradient-warning)', normal: 'var(--gradient-accent)' };
-      priChart.innerHTML = Object.entries(priorities).map(([pri, count]) => `
-        <div class="bar" style="height: ${(count / maxPri) * 100}%; background: ${priColors[pri]};">
-          <span class="bar-label">${pri}</span>
-        </div>
-      `).join('');
+      if (priChart) {
+        const maxPri = Math.max(...Object.values(priorities), 1);
+        const priColors = { urgent: 'var(--gradient-danger)', important: 'var(--gradient-warning)', normal: 'var(--gradient-accent)' };
+        priChart.innerHTML = Object.entries(priorities).map(([pri, count]) => `
+          <div class="bar" style="height: ${(count / maxPri) * 100}%; background: ${priColors[pri]};">
+            <span class="bar-label">${pri}</span>
+          </div>
+        `).join('');
+      }
 
       // Weekly chart (mock)
       const weekData = [3, 5, 2, 7, 4, 6, 3];
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const weekChart = document.getElementById('chartWeekly');
-      const maxWeek = Math.max(...weekData);
-      weekChart.innerHTML = weekData.map((val, i) => `
-        <div class="bar" style="height: ${(val / maxWeek) * 100}%;">
-          <span class="bar-label">${days[i]}</span>
-        </div>
-      `).join('');
-    }
-
-    // ─── For You Action Handlers ───
-    function fyToggleSave(type, id, btn) {
-      if (typeof SavedStore === 'undefined') return;
-      const isSaved = SavedStore.isSaved(type, id);
-      if (isSaved) { SavedStore.remove(type, id); } else { SavedStore.add(type, id); }
-      const nowSaved = !isSaved;
-      if (btn) {
-        btn.innerHTML = nowSaved ? '✓ Saved' : '🔖 Save';
-        btn.classList.toggle('active', nowSaved);
+      if (weekChart) {
+        const maxWeek = Math.max(...weekData);
+        weekChart.innerHTML = weekData.map((val, i) => `
+          <div class="bar" style="height: ${(val / maxWeek) * 100}%;">
+            <span class="bar-label">${days[i]}</span>
+          </div>
+        `).join('');
       }
-      UI.toast(nowSaved ? 'Saved to My Activity!' : 'Removed from saved.', nowSaved ? 'success' : 'info');
     }
-
-    function fyToggleInterest(eventId, btn) {
-      if (typeof EventInterestStore === 'undefined') return;
-      const result = EventInterestStore.toggle(eventId);
-      if (btn) {
-        btn.innerHTML = result.interested ? '✓ Interested' : '👍 Interested';
-        btn.classList.toggle('active', result.interested);
-      }
-      UI.toast(result.interested ? 'Marked as interested!' : 'Removed interest.', result.interested ? 'success' : 'info');
-    }
-
-    function fyToggleReminderMenu(btn, type, id) {
-      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
-      if (!menu) return;
-      document.querySelectorAll('.reminder-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
-      menu.classList.toggle('open');
-    }
-
-    function fySetReminder(type, id, timing) {
-      if (typeof ReminderStore === 'undefined') return;
-      ReminderStore.set(type, id, timing);
-      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
-      if (menu) menu.classList.remove('open');
-      const btn = menu?.previousElementSibling;
-      if (btn) {
-        btn.innerHTML = '🔔 ' + ReminderStore.getTimingLabel(timing);
-        btn.classList.add('active');
-      }
-      UI.toast('🔔 Reminder set: ' + ReminderStore.getTimingLabel(timing), 'success');
-    }
-
-    function fyRemoveReminder(type, id) {
-      if (typeof ReminderStore === 'undefined') return;
-      ReminderStore.remove(type, id);
-      const menu = document.getElementById('fy-reminder-menu-' + type + '-' + id);
-      if (menu) menu.classList.remove('open');
-      const btn = menu?.previousElementSibling;
-      if (btn) {
-        btn.innerHTML = '🔔 Remind Me';
-        btn.classList.remove('active');
-      }
-      UI.toast('Reminder removed.', 'info');
-    }
-
-    // Close reminder menus on outside click
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.reminder-wrapper')) {
-        document.querySelectorAll('.reminder-menu.open').forEach(m => m.classList.remove('open'));
-      }
-    });
 
     // ─── Admin Campus Polls Logic ───
     function renderAdminPolls() {
@@ -939,14 +633,12 @@
       const choicesList = document.getElementById('createPollChoicesList');
       if (choicesList) {
         choicesList.innerHTML = '';
-        // Seed default choices matching Pic 1 Step 2
         const defaultChoices = ['Concert', 'Sports Tournament', 'Cultural Night', 'Gaming Event'];
         defaultChoices.forEach(ch => addChoiceRow('createPollChoicesList', ch));
       }
 
       const closingDateInput = document.getElementById('pollClosingDate');
       if (closingDateInput) {
-        // Default to Oct 20, 2026 or 14 days in future
         closingDateInput.value = '2026-10-20';
       }
 
@@ -987,7 +679,6 @@
       UI.closeModal('createPollModal');
       renderAdminPolls();
 
-      // Show success banner matching Pic 1 Step 3
       const banner = document.getElementById('pollSuccessBanner');
       if (banner) {
         banner.style.display = 'flex';

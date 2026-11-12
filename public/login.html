@@ -166,11 +166,11 @@
           <span id="loginBtnText">Sign In</span>
         </button>
 
-        <!-- Create Account link for both Student & Admin -->
+        <!-- Create Admin Account link -->
         <div id="createAccountRow"
           style="text-align:center; margin-top:0.6rem; margin-bottom:0.5rem; animation: fadeIn 300ms ease;">
           <p style="font-size:0.82rem; color:var(--text-secondary);" id="createAccountPrompt">
-            Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Account →</a>
+            Need an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>
           </p>
         </div>
       </form>
@@ -221,12 +221,14 @@
         target.setAttribute('aria-selected', 'true');
       }
 
-      // Update create account text to reflect selected role
+      // Update create account text to reflect admin account creation
       const prompt = document.getElementById('createAccountPrompt');
-      if (role === 'admin') {
-        prompt.innerHTML = `Don't have an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Account →</a>`;
-      } else {
-        prompt.innerHTML = `Don't have a student account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Account →</a>`;
+      if (prompt) {
+        if (role === 'admin') {
+          prompt.innerHTML = `Don't have an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>`;
+        } else {
+          prompt.innerHTML = `Need an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>`;
+        }
       }
     }
 
@@ -295,20 +297,6 @@
 
     function openCreateAccountModal(e) {
       if (e) e.preventDefault();
-      const modalTitle = document.getElementById('createModalTitle');
-      const studentFields = document.getElementById('studentSpecificFields');
-      const nameInput = document.getElementById('newName');
-
-      if (selectedRole === 'admin') {
-        modalTitle.innerHTML = '🛡️ Create Admin / Staff Account';
-        nameInput.placeholder = 'Dr. Jane Smith';
-        studentFields.style.display = 'none';
-      } else {
-        modalTitle.innerHTML = '🎓 Create Student Account';
-        nameInput.placeholder = 'Alex Rivera';
-        studentFields.style.display = 'grid';
-      }
-
       document.getElementById('createAccountForm').reset();
       UI.openModal('createAccountModal');
     }
@@ -319,8 +307,8 @@
       const email = document.getElementById('newEmail').value.trim();
       const pw = document.getElementById('newPw').value;
       const pwConfirm = document.getElementById('newPwConfirm').value;
-      const dept = document.getElementById('newDept')?.value || 'Computer Science';
-      const year = document.getElementById('newYear')?.value || '1st Year';
+      const dept = document.getElementById('newDept')?.value || 'Administration';
+      const title = document.getElementById('newTitle')?.value.trim() || '';
 
       if (!name || !email || !pw) {
         UI.toast('Please fill in all required fields.', 'warning');
@@ -332,23 +320,23 @@
         return;
       }
 
-      const roleLabel = selectedRole === 'admin' ? 'Admin' : 'Student';
       const newUser = Auth.registerUser({
         name,
         email,
         password: pw,
-        role: selectedRole,
+        role: 'admin',
         department: dept,
-        year: selectedRole === 'student' ? year : '',
-        title: selectedRole === 'admin' ? (name.toLowerCase().startsWith('dr.') ? 'Dean of Students' : 'Administrator') : ''
+        year: '',
+        title: title || (name.toLowerCase().startsWith('dr.') ? 'Dean of Students' : 'Administrator')
       });
 
       UI.closeModal('createAccountModal');
-      UI.toast(`${roleLabel} account created for ${name}! Signing in...`, 'success');
+      UI.toast(`Admin account created for ${name}! Signing in...`, 'success');
 
-      // Pre-fill fields on login form
+      // Pre-fill fields on login form and switch to admin role
       document.getElementById('email').value = email;
       document.getElementById('password').value = pw;
+      selectRole('admin');
 
       // Automatically sign in with the newly created profile
       setTimeout(() => {
@@ -439,46 +427,39 @@
     });
   </script>
 
-  <!-- Create Account Modal (Adapts to Student or Admin) -->
+  <!-- Create Account Modal (Admin Account Only) -->
   <div class="modal-overlay" id="createAccountModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="createModalTitle">🎓 Create Student Account</h3>
+        <h3 id="createModalTitle">🛡️ Create Admin Account</h3>
         <button class="btn btn-ghost btn-icon sm" onclick="UI.closeModal('createAccountModal')">✕</button>
       </div>
       <div class="modal-body">
         <form id="createAccountForm" onsubmit="handleCreateAccount(event)">
           <div class="form-group">
             <label class="form-label" for="newName">Full Name</label>
-            <input type="text" id="newName" class="form-input" placeholder="Alex Rivera" required>
+            <input type="text" id="newName" class="form-input" placeholder="Dr. Jane Smith" required>
           </div>
           <div class="form-group">
             <label class="form-label" for="newEmail">Email Address</label>
-            <input type="email" id="newEmail" class="form-input" placeholder="alex.rivera@campus.edu" required>
+            <input type="email" id="newEmail" class="form-input" placeholder="jane.smith@campus.edu" required>
           </div>
 
-          <!-- Student specific fields -->
-          <div class="grid-2" id="studentSpecificFields">
+          <!-- Admin specific fields -->
+          <div class="grid-2" id="adminSpecificFields">
             <div class="form-group">
-              <label class="form-label" for="newDept">Department</label>
+              <label class="form-label" for="newDept">Department / Office</label>
               <select id="newDept" class="form-select">
-                <option value="Computer Science" selected>Computer Science</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Business">Business</option>
-                <option value="Arts & Sciences">Arts & Sciences</option>
-                <option value="Medicine">Medicine</option>
-                <option value="Law">Law</option>
+                <option value="Administration" selected>Administration</option>
+                <option value="Academic Affairs">Academic Affairs</option>
+                <option value="Student Affairs">Student Affairs</option>
+                <option value="IT Services">IT Services</option>
+                <option value="Faculty & Staff">Faculty & Staff</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label" for="newYear">Academic Year</label>
-              <select id="newYear" class="form-select">
-                <option value="1st Year" selected>1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-                <option value="Graduate">Graduate</option>
-              </select>
+              <label class="form-label" for="newTitle">Admin Title / Position</label>
+              <input type="text" id="newTitle" class="form-input" placeholder="e.g. Dean of Students">
             </div>
           </div>
 
@@ -524,8 +505,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="UI.closeModal('createAccountModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="document.getElementById('createAccountForm').requestSubmit()">Create
-          Account</button>
+        <button class="btn btn-primary" onclick="document.getElementById('createAccountForm').requestSubmit()">Create Admin Account</button>
       </div>
     </div>
   </div>
