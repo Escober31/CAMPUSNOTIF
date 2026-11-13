@@ -2,6 +2,11 @@
    CampusNotify — Shared Application Logic
    ======================================== */
 
+// Firebase Modular SDK imports
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
 // ─── Mock Data ───
 const MOCK_USERS = {
   student: {
@@ -490,7 +495,28 @@ const Auth = {
     }
   },
 
-  updateUser(updatedFields) {
+  cacheUser(user, remember = true) {
+    if (!user) return;
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('campusnotify_user', JSON.stringify(user));
+    storage.setItem('campusnotify_role', user.role || 'admin');
+    if (remember) {
+      sessionStorage.removeItem('campusnotify_user');
+      sessionStorage.removeItem('campusnotify_role');
+    } else {
+      localStorage.removeItem('campusnotify_user');
+      localStorage.removeItem('campusnotify_role');
+    }
+  },
+
+  clearCache() {
+    localStorage.removeItem('campusnotify_user');
+    localStorage.removeItem('campusnotify_role');
+    sessionStorage.removeItem('campusnotify_user');
+    sessionStorage.removeItem('campusnotify_role');
+  },
+
+  async updateUser(updatedFields) {
     const current = this.getUser();
     if (!current) return null;
     const merged = { ...current, ...updatedFields };
@@ -501,15 +527,47 @@ const Auth = {
       sessionStorage.setItem('campusnotify_user', JSON.stringify(merged));
     }
     this.updateUserInStore(merged);
+
+    // Sync to Firestore admin_account doc if signed in
+    if (auth && auth.currentUser) {
+      try {
+        const docRef = doc(db, "admin_account", auth.currentUser.uid);
+        const updateData = {};
+        if (updatedFields.name) updateData.fullName = updatedFields.name;
+        if (updatedFields.department) updateData.department = updatedFields.department;
+        if (updatedFields.position || updatedFields.title) updateData.position = updatedFields.position || updatedFields.title;
+        if (updatedFields.phone) updateData.phone = updatedFields.phone;
+        if (updatedFields.bio) updateData.bio = updatedFields.bio;
+        await updateDoc(docRef, updateData);
+      } catch (e) {
+        console.warn("Could not sync profile update to Firestore:", e);
+      }
+    }
+
     return merged;
   },
 
-  logout() {
-    localStorage.removeItem('campusnotify_user');
-    localStorage.removeItem('campusnotify_role');
-    sessionStorage.removeItem('campusnotify_user');
-    sessionStorage.removeItem('campusnotify_role');
-    window.location.href = 'login.html';
+  async logout() {
+    try {
+      if (auth) {
+        await signOut(auth);
+      }
+    } catch (err) {
+      console.warn("Firebase signOut error:", err);
+    }
+    this.clearCache();
+    window.location.replace('login.html');
+  },
+
+  async logoutAndStay() {
+    try {
+      if (auth) {
+        await signOut(auth);
+      }
+    } catch (err) {
+      console.warn("Firebase signOut error:", err);
+    }
+    this.clearCache();
   },
 
   getUser() {
@@ -518,19 +576,75 @@ const Auth = {
   },
 
   getRole() {
-    return sessionStorage.getItem('campusnotify_role') || localStorage.getItem('campusnotify_role') || 'student';
+    const user = this.getUser();
+    return (user && user.role) ? user.role : (sessionStorage.getItem('campusnotify_role') || localStorage.getItem('campusnotify_role') || 'admin');
   },
 
   isLoggedIn() {
-    return !!(sessionStorage.getItem('campusnotify_user') || localStorage.getItem('campusnotify_user'));
+    const user = this.getUser();
+    return !!(user && user.role === 'admin');
   },
 
   requireAuth() {
     if (!this.isLoggedIn()) {
-      window.location.href = 'login.html';
+      window.location.replace('login.html');
       return false;
     }
     return true;
+  },
+
+  // Session guard: uses Firebase onAuthStateChanged to verify valid sign-in and admin_account document
+  _sessionGuardStarted: false,
+  initSessionGuard() {
+    if (this._sessionGuardStarted) return;
+    this._sessionGuardStarted = true;
+
+    // Do not guard login page
+    const pathname = (window.location.pathname || '').toLowerCase();
+    if (pathname.endsWith('login.html')) return;
+
+    if (!auth) return;
+
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        console.warn("onAuthStateChanged: No Firebase user detected. Redirecting to login.html");
+        Auth.clearCache();
+        window.location.replace('login.html');
+        return;
+      }
+
+      // Verify admin_account/{uid} document exists in Firestore
+      try {
+        const adminDocRef = doc(db, "admin_account", firebaseUser.uid);
+        const docSnap = await getDoc(adminDocRef);
+
+        if (!docSnap.exists()) {
+          console.warn("onAuthStateChanged: No admin_account document for user:", firebaseUser.uid);
+          await signOut(auth);
+          Auth.clearCache();
+          window.location.replace('login.html');
+          return;
+        }
+
+        // Keep local cache synced with Firestore
+        const data = docSnap.data();
+        const profile = {
+          uid: firebaseUser.uid,
+          id: firebaseUser.uid,
+          name: data.fullName || data.name || firebaseUser.email,
+          fullName: data.fullName || data.name || firebaseUser.email,
+          email: data.email || firebaseUser.email,
+          role: "admin",
+          department: data.department || "Administration",
+          position: data.position || data.title || "Administrator",
+          title: data.position || data.title || "Administrator",
+          avatar: Auth.getInitials(data.fullName || firebaseUser.email)
+        };
+        Auth.cacheUser(profile);
+      } catch (err) {
+        console.error("onAuthStateChanged verification error:", err);
+      }
+    });
   }
 };
 
@@ -1307,7 +1421,7 @@ function renderSidebar(activePage) {
           <div class="nav-section-title">Administration</div>
           <a href="user-management.html" class="nav-item ${activePage === 'users' ? 'active' : ''}" id="nav-users">
             <span class="nav-icon">👥</span>
-            Users & Sign-ins
+            User Management
           </a>
         </div>
         ` : ''}
@@ -1425,6 +1539,10 @@ function initPage(activePage) {
     sidebarTarget.innerHTML = renderSidebar(activePage);
     initSidebar();
   }
+
+  // Enforce Firebase session and admin_account document verification
+  Auth.initSessionGuard();
+
   return true;
 }
 
@@ -2234,12 +2352,21 @@ const DailyLoginUI = {
   }
 };
 
-// Auto-initialize when DOM ready
+// Auto-initialize when DOM ready & expose globally for HTML handlers
 if (typeof window !== 'undefined') {
+  window.Auth = Auth;
+  window.UI = UI;
+  window.initPage = initPage;
+  window.AppearancePrefs = AppearancePrefs;
+  window.renderSidebar = renderSidebar;
+  window.initSidebar = initSidebar;
+  window.applyRole = applyRole;
   window.ForYouFeed = ForYouFeed;
   window.DailyLoginUI = DailyLoginUI;
   window.addEventListener('DOMContentLoaded', () => {
     DailyLoginUI.init();
   });
 }
+
+export { Auth, UI, initPage, AppearancePrefs, renderSidebar, initSidebar, applyRole };
 

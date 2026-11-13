@@ -123,7 +123,7 @@
           <a href="#" class="login-inline-link" onclick="handleForgotPassword(event)">Forgot Password?</a>
         </div>
 
-        <div class="role-toggle-wrapper">
+        <div class="role-toggle-wrapper" style="display:none;">
           <div class="role-selector" id="roleSelector" role="tablist" aria-label="Select role">
             <button type="button" class="role-option selected" data-role="student" id="role-student" onclick="selectRole('student')" role="tab" aria-selected="true">
               <span class="role-icon">
@@ -176,7 +176,7 @@
       </form>
 
       <!-- Compact Demo Logins Bar -->
-      <div class="login-demo-bar">
+      <div class="login-demo-bar" style="display:none;">
         <div class="login-demo-header">
           <span>⚡ Quick Demo Logins</span>
           <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400;">(Click to fill)</span>
@@ -205,9 +205,23 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
-  <script>
-    let selectedRole = 'student';
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import {
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut,
+      deleteUser
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+      doc,
+      getDoc,
+      setDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    let selectedRole = 'admin';
 
     function selectRole(role) {
       selectedRole = role;
@@ -221,14 +235,9 @@
         target.setAttribute('aria-selected', 'true');
       }
 
-      // Update create account text to reflect admin account creation
       const prompt = document.getElementById('createAccountPrompt');
       if (prompt) {
-        if (role === 'admin') {
-          prompt.innerHTML = `Don't have an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>`;
-        } else {
-          prompt.innerHTML = `Need an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>`;
-        }
+        prompt.innerHTML = `Need an admin account? <a href="#" onclick="openCreateAccountModal(event)" class="auth-link">Create Admin Account →</a>`;
       }
     }
 
@@ -259,7 +268,7 @@
 
     function handleForgotPassword(e) {
       if (e) e.preventDefault();
-      UI.toast('Forgot Password request received. For this demo, please click any Demo Login pill below or use password123.', 'info');
+      UI.toast('Please contact your system administrator or check Firebase Authentication to reset credentials.', 'info');
     }
 
     function fillDemo(email, pwd, role) {
@@ -267,7 +276,7 @@
       document.getElementById('email').value = email;
       document.getElementById('password').value = pwd;
       selectRole(role);
-      UI.toast(`Filled demo credentials for ${role === 'admin' ? 'Admin' : 'Student'}!`, 'info');
+      UI.toast(`Filled credentials for ${role === 'admin' ? 'Admin' : 'Student'}!`, 'info');
     }
 
     function togglePasswordVisibility(inputId, btn) {
@@ -285,11 +294,15 @@
       btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
     }
 
-    function handleLogoutAndStay() {
-      localStorage.removeItem('campusnotify_user');
-      localStorage.removeItem('campusnotify_role');
-      sessionStorage.removeItem('campusnotify_user');
-      sessionStorage.removeItem('campusnotify_role');
+    async function handleLogoutAndStay() {
+      try {
+        if (auth) {
+          await signOut(auth);
+        }
+      } catch (err) {
+        console.warn("Sign out error:", err);
+      }
+      Auth.clearCache();
       const badge = document.getElementById('activeSessionBadge');
       if (badge) badge.style.display = 'none';
       UI.toast('Signed out. Please enter credentials to sign in.', 'info');
@@ -301,50 +314,116 @@
       UI.openModal('createAccountModal');
     }
 
-    function handleCreateAccount(e) {
+    async function handleCreateAccount(e) {
       e.preventDefault();
       const name = document.getElementById('newName').value.trim();
       const email = document.getElementById('newEmail').value.trim();
+      const dept = document.getElementById('newDept')?.value || 'Administration';
+      const title = document.getElementById('newTitle')?.value.trim() || 'Administrator';
       const pw = document.getElementById('newPw').value;
       const pwConfirm = document.getElementById('newPwConfirm').value;
-      const dept = document.getElementById('newDept')?.value || 'Administration';
-      const title = document.getElementById('newTitle')?.value.trim() || '';
 
       if (!name || !email || !pw) {
         UI.toast('Please fill in all required fields.', 'warning');
         return;
       }
 
+      // Password confirmation check
       if (pw !== pwConfirm) {
         UI.toast('Passwords do not match!', 'error');
         return;
       }
 
-      const newUser = Auth.registerUser({
-        name,
-        email,
-        password: pw,
-        role: 'admin',
-        department: dept,
-        year: '',
-        title: title || (name.toLowerCase().startsWith('dr.') ? 'Dean of Students' : 'Administrator')
-      });
+      // Minimum 6 characters check
+      if (pw.length < 6) {
+        UI.toast('Password must be at least 6 characters long.', 'warning');
+        return;
+      }
 
-      UI.closeModal('createAccountModal');
-      UI.toast(`Admin account created for ${name}! Signing in...`, 'success');
+      const submitBtn = document.querySelector('#createAccountModal .btn-primary');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account...';
+      }
 
-      // Pre-fill fields on login form and switch to admin role
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = pw;
-      selectRole('admin');
+      try {
+        // Step 1: Create auth user with email and password
+        const cred = await createUserWithEmailAndPassword(auth, email, pw);
+        const user = cred.user;
 
-      // Automatically sign in with the newly created profile
-      setTimeout(() => {
-        Auth.loginWithUser(newUser);
-      }, 700);
+        // Step 2: Save document at admin_account/{uid}
+        // (NOTE: This site must never write to student_account)
+        try {
+          await setDoc(doc(db, "admin_account", user.uid), {
+            uid: user.uid,
+            fullName: name,
+            email: email,
+            department: dept,
+            position: title,
+            role: "admin",
+            createdAt: serverTimestamp()
+          });
+        } catch (firestoreErr) {
+          console.error("Firestore write failed, rolling back newly created auth user:", firestoreErr);
+          // If saving the document fails after the auth user was created, delete that new auth user
+          try {
+            await deleteUser(user);
+          } catch (delErr) {
+            console.error("Failed to delete auth user during rollback:", delErr);
+          }
+          throw firestoreErr;
+        }
+
+        // Cache the newly created admin profile so synchronous getters work
+        const profile = {
+          uid: user.uid,
+          id: user.uid,
+          name: name,
+          fullName: name,
+          email: email,
+          role: "admin",
+          department: dept,
+          position: title,
+          title: title,
+          avatar: Auth.getInitials(name)
+        };
+        Auth.cacheUser(profile, true);
+
+        UI.closeModal('createAccountModal');
+        UI.toast(`Admin account created for ${name}! Signing in...`, 'success');
+
+        // Pre-fill fields on login form
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = pw;
+
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 700);
+
+      } catch (error) {
+        console.error("Error creating admin account:", error);
+        let msg = 'Failed to create admin account. Please try again.';
+        if (error.code === 'auth/email-already-in-use') {
+          msg = 'This email is already in use by another account.';
+        } else if (error.code === 'auth/weak-password') {
+          msg = 'Password is too weak. Please choose a stronger password (at least 6 characters).';
+        } else if (error.code === 'auth/invalid-email') {
+          msg = 'Please enter a valid email address.';
+        } else if (error.code === 'auth/network-request-failed') {
+          msg = 'Network error. Please check your internet connection.';
+        } else if (error.message) {
+          msg = error.message;
+        }
+        UI.toast(msg, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Admin Account';
+        }
+      }
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       clearErrors();
       const emailInput = document.getElementById('email');
@@ -375,43 +454,78 @@
       if (btnText) btnText.textContent = 'Verifying...';
       btn.disabled = true;
 
-      setTimeout(() => {
-        // Strict credential validation
-        const authResult = Auth.authenticate(email, password, selectedRole, remember);
+      try {
+        // Step 1: Sign in with Firebase Authentication
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
 
-        if (!authResult.success) {
-          if (spinner) spinner.style.display = 'none';
-          if (btnText) btnText.textContent = 'Sign In';
-          btn.disabled = false;
+        // Step 2: Check that admin_account/{uid} exists
+        const adminDocRef = doc(db, "admin_account", user.uid);
+        const docSnap = await getDoc(adminDocRef);
 
-          const msg = (authResult.message || '').toLowerCase();
-          if (msg.includes('incorrect password') || msg.includes('password')) {
-            showFieldError('password', authResult.message);
-            passwordInput.focus();
-          } else if (msg.includes('email') || msg.includes('account') || msg.includes('user')) {
-            showFieldError('email', authResult.message);
-            emailInput.focus();
-          } else {
-            showFieldError('email', authResult.message);
-          }
-          UI.toast(authResult.message, 'error');
+        if (!docSnap.exists()) {
+          // Immediately signOut and block non-admin accounts
+          await signOut(auth);
+          Auth.clearCache();
+          const notAdminMsg = "This is not an admin account. Please use the student website.";
+          showFieldError('email', notAdminMsg);
+          UI.toast(notAdminMsg, 'error');
           return;
         }
 
+        // Step 3: Verified admin - cache profile
+        const adminData = docSnap.data();
+        const profile = {
+          uid: user.uid,
+          id: user.uid,
+          name: adminData.fullName || adminData.name || user.email,
+          fullName: adminData.fullName || adminData.name || user.email,
+          email: adminData.email || user.email,
+          role: "admin",
+          department: adminData.department || "Administration",
+          position: adminData.position || adminData.title || "Administrator",
+          title: adminData.position || adminData.title || "Administrator",
+          avatar: Auth.getInitials(adminData.fullName || user.email)
+        };
+
+        Auth.cacheUser(profile, remember);
+
         if (btnText) btnText.textContent = 'Signing in...';
-        UI.toast(`Welcome, ${authResult.user.name}!`, 'success');
-        // Set flag for daily login reward auto-prompt (students only)
-        if (authResult.user.role === 'student') {
-          localStorage.setItem('campusnotify_just_logged_in', 'true');
-        }
+        UI.toast(`Welcome back, ${profile.name}!`, 'success');
+
         setTimeout(() => {
           window.location.href = 'dashboard.html';
         }, 500);
-      }, 550);
+
+      } catch (error) {
+        console.error("Login error:", error);
+        let msg = 'Invalid email or password.';
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          msg = 'Incorrect email or password. Please verify your credentials and try again.';
+          showFieldError('password', msg);
+        } else if (error.code === 'auth/invalid-email') {
+          msg = 'Please enter a valid email address.';
+          showFieldError('email', msg);
+        } else if (error.code === 'auth/user-disabled') {
+          msg = 'This account has been disabled. Please contact the administrator.';
+          showFieldError('email', msg);
+        } else if (error.code === 'auth/too-many-requests') {
+          msg = 'Too many failed attempts. Please wait a few minutes and try again.';
+          showFieldError('password', msg);
+        } else if (error.code === 'auth/network-request-failed') {
+          msg = 'Network error. Please check your internet connection.';
+        } else if (error.message) {
+          msg = error.message;
+        }
+        UI.toast(msg, 'error');
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+        if (btnText) btnText.textContent = 'Sign In';
+        btn.disabled = false;
+      }
     }
 
-    // Display active session if user is logged in, but DO NOT auto-redirect away
-    // so that opening the website always displays the Login page first.
+    // Display active session if user is logged in
     window.addEventListener('DOMContentLoaded', () => {
       if (Auth.isLoggedIn()) {
         const user = Auth.getUser();
@@ -419,12 +533,25 @@
           const badge = document.getElementById('activeSessionBadge');
           const userSpan = document.getElementById('activeSessionUser');
           if (badge && userSpan) {
-            userSpan.textContent = `${user.name} (${user.role === 'admin' ? 'Admin' : 'Student'})`;
+            userSpan.textContent = `${user.name} (Admin)`;
             badge.style.display = 'block';
           }
         }
       }
     });
+
+    // Expose handlers globally on window for inline HTML onclick/onsubmit attributes
+    window.handleLogin = handleLogin;
+    window.handleCreateAccount = handleCreateAccount;
+    window.openCreateAccountModal = openCreateAccountModal;
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.clearFieldError = clearFieldError;
+    window.clearErrors = clearErrors;
+    window.showFieldError = showFieldError;
+    window.handleForgotPassword = handleForgotPassword;
+    window.handleLogoutAndStay = handleLogoutAndStay;
+    window.selectRole = selectRole;
+    window.fillDemo = fillDemo;
   </script>
 
   <!-- Create Account Modal (Admin Account Only) -->
