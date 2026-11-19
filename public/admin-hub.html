@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="CampusNotify Admin Hub — Create and send announcements, events, and notifications.">
+  <title>Admin Hub — CampusNotify</title>
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* Admin Hub — form + modal styles (built on the same design tokens as styles.css) */
+    .ah-header-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-md, 16px); }
+    .ah-error { display: none; margin-bottom: var(--space-md, 16px); padding: 12px 16px; border-radius: var(--radius-md, 12px); font-size: .9rem;
+      color: #fca5a5; background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .35); }
+
+    /* Modal layout: wider, with fixed header/footer and a scrolling body */
+    .modal.ah-modal { max-width: 750px; display: flex; flex-direction: column; overflow: hidden; }
+    .ah-modal .modal-header { flex-shrink: 0; }
+    .ah-modal .modal-header h2 { margin: 0; font-size: 1.5rem; }
+    .ah-modal .modal-body { flex: 1; overflow-y: auto; }
+    .ah-modal .modal-footer { flex-shrink: 0; }
+
+    /* Form helpers (inputs themselves use styles.css: .form-input / .form-select / .form-textarea) */
+    .ah-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+    .ah-muted { font-weight: 400; opacity: .7; margin-left: 4px; }
+    .form-textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+    .form-select option { background: var(--bg-surface); color: var(--text-primary); }
+    .form-select:disabled { opacity: .45; cursor: not-allowed; }
+    .form-group.is-disabled .form-label { opacity: .5; }
+    .form-input.invalid, .form-textarea.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .2); }
+    input[type="date"].form-input, input[type="time"].form-input { color-scheme: dark; }
+    body.light-theme input[type="date"].form-input, body.light-theme input[type="time"].form-input { color-scheme: light; }
+
+    /* Sent-items list */
+    .ah-actions-danger:hover { color: #ef4444; border-color: rgba(239, 68, 68, .5); }
+    .ah-audience { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-muted); }
+
+    @media (max-width: 640px) {
+      .ah-header-side { align-items: stretch; width: 100%; }
+      .ah-row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <div id="app-sidebar"></div>
+
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header animate-fade-in">
+        <div class="page-header-row">
+          <div>
+            <h1>🛠️ <span class="text-gradient">Admin Hub</span></h1>
+            <p class="page-subtitle">Create and send announcements, events, and notifications to your campus.</p>
+          </div>
+          <div class="ah-header-side">
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Search sent updates..." id="hubSearch">
+            </div>
+            <button class="btn btn-primary" id="btnCreate" style="white-space:nowrap;">✚ New Announcement</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="hub-filters animate-fade-in">
+        <div class="hub-type-filters" id="typeFilters">
+          <button class="hub-filter-chip active" data-type="all">All</button>
+          <button class="hub-filter-chip" data-type="announcement">📢 Announcements</button>
+          <button class="hub-filter-chip" data-type="event">📅 Events</button>
+          <button class="hub-filter-chip" data-type="notification">🔔 Notifications</button>
+        </div>
+        <div class="hub-category-filters" id="categoryFilters">
+          <button class="hub-cat-chip active" data-cat="all">All</button>
+          <button class="hub-cat-chip" data-cat="Academic">Academic</button>
+          <button class="hub-cat-chip" data-cat="Student Life">Student Life</button>
+          <button class="hub-cat-chip" data-cat="Facilities">Facilities</button>
+          <button class="hub-cat-chip" data-cat="Sports">Sports</button>
+          <button class="hub-cat-chip" data-cat="Career">Career</button>
+        </div>
+      </div>
+
+      <!-- Sent items -->
+      <div id="hubError" class="ah-error" role="alert"></div>
+      <div id="hubFeed" class="hub-feed stagger"></div>
+      <div id="hubEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <h3>Nothing sent yet</h3>
+        <p>Use the buttons above to publish your first announcement, event, or notification.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals are built by script below -->
+  <div id="modalHost"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="app.js"></script>
+  <script src="stores.js"></script>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+    import {
+      collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    (function () {
+      'use strict';
+
+      // ─── Options ───
+      const CATEGORIES = [
+        { value: 'Academic', label: 'Academic' },
+        { value: 'Student Life', label: 'Student Life' },
+        { value: 'Facilities', label: 'Facilities' },
+        { value: 'Sports', label: 'Sports' },
+        { value: 'Career', label: 'Career' }
+      ];
+      const PRIORITIES = [
+        { value: 'normal', label: '🔵 General' },
+        { value: 'important', label: '🟡 Important' },
+        { value: 'urgent', label: '🔴 Urgent' }
+      ];
+      const NOTIF_TYPES = [
+        { value: 'info', label: 'ℹ️ Information', icon: '📢' },
+        { value: 'warning', label: '⚠️ Warning / Reminder', icon: '⚠️' },
+        { value: 'alert', label: '🔴 Urgent Alert', icon: '🔴' },
+        { value: 'success', label: '✅ Success / Update', icon: '✅' }
+      ];
+      const NOTIF_ICONS = ['📢', '🔔', '⚠️', '🔴', '✅', '📅', '🎉', '💡', '🏫', '💻'];
+      const AUDIENCES = [
+        { value: 'all', label: '👥 All Campus (Student Only)', short: '👥 All Students' },
+        { value: 'students', label: '🎓 Specific Students', short: '🎓 Specific Students' },
+        { value: 'faculty', label: '🧑‍🏫 Faculty & Staff', short: '🧑‍🏫 Faculty & Staff' }
+      ];
+      const DEPARTMENTS = [
+        { value: 'all', label: 'All Departments' },
+        { value: 'Computer Science', label: 'Computer Science' },
+        { value: 'Engineering', label: 'Engineering' },
+        { value: 'Business', label: 'Business' },
+        { value: 'Art and Science', label: 'Art and Science' },
+        { value: 'Medicine', label: 'Medicine' },
+        { value: 'Law', label: 'Law' }
+      ];
+      const YEARS = [
+        { value: 'all', label: 'All Year Level' },
+        { value: '1st Year', label: '1st Year' },
+        { value: '2nd Year', label: '2nd Year' },
+        { value: '3rd Year', label: '3rd Year' },
+        { value: '4th Year', label: '4th Year' },
+        { value: 'Graduated', label: 'Graduated' }
+      ];
+
+      // ─── State ───
+      let typeFilter = 'all';
+      let categoryFilter = 'all';
+      let searchTerm = '';
+
+      // ─── Helpers ───
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (s === null || s === undefined ? '' : String(s)).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const options = (list) => list.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+      const pad = (n) => String(n).padStart(2, '0');
+      const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const today = () => isoDay(new Date());
+
+      function to12h(time24) {
+        const [h, m] = time24.split(':').map(Number);
+        return `${(h % 12) || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+      }
+
+      function currentAuthor() {
+        try {
+          const user = Auth.getUser();
+          return (user && (user.name || user.fullName || user.displayName)) || 'Admin';
+        } catch (e) {
+          return 'Admin';
+        }
+      }
+
+      function audienceLabel(item) {
+        const target = item.target || 'all';
+        let label = (AUDIENCES.find(a => a.value === target) || AUDIENCES[0]).short;
+        if (target === 'students') {
+          if (item.department && item.department !== 'all') label += ' · ' + item.department;
+          if (item.year && item.year !== 'all') label += ' · ' + item.year;
+        }
+        return `<span class="ah-audience">${esc(label)}</span>`;
+      }
+
+      // ─── Modals ───
+      function audienceFields(p, hint = '') {
+        return `
+          <div class="form-group">
+            <label class="form-label" for="${p}Target">Audience Target</label>
+            <select class="form-select" id="${p}Target">${options(AUDIENCES)}</select>
+            ${hint ? `<div class="text-muted" style="font-size:.8rem; margin-top:6px;">${hint}</div>` : ''}
+          </div>
+          <div class="ah-row">
+            <div class="form-group is-disabled" id="${p}DeptField">
+              <label class="form-label" for="${p}Dept">Department <span class="ah-muted" id="${p}DeptHint">(Disabled)</span></label>
+              <select class="form-select" id="${p}Dept" disabled>${options(DEPARTMENTS)}</select>
+            </div>
+            <div class="form-group is-disabled" id="${p}YearField">
+              <label class="form-label" for="${p}Year">Academic Year <span class="ah-muted" id="${p}YearHint">(Disabled)</span></label>
+              <select class="form-select" id="${p}Year" disabled>${options(YEARS)}</select>
+            </div>
+          </div>`;
+      }
+
+      function modal(id, title, body, submitLabel) {
+        return `
+          <div class="modal-overlay" id="${id}">
+            <div class="modal ah-modal" role="dialog" aria-modal="true" aria-labelledby="${id}Title">
+              <div class="modal-header">
+                <h2 id="${id}Title">${title}</h2>
+                <button class="btn btn-ghost btn-icon sm" aria-label="Close" data-close="${id}">✕</button>
+              </div>
+              <div class="modal-body">${body}</div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="${id}">Cancel</button>
+                <button class="btn btn-primary" data-submit="${id}">${submitLabel}</button>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      const FORMS = {
+        announcement: {
+          modalId: 'announcementModal', prefix: 'ann',
+          html: `
+            <div class="form-group">
+              <label class="form-label" for="annTitle">Title</label>
+              <input class="form-input" id="annTitle" type="text" placeholder="Enter announcement title" maxlength="120">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="annBody">Content</label>
+              <textarea class="form-textarea" id="annBody" placeholder="Write your announcement..."></textarea>
+            </div>
+            <div class="ah-row">
+              <div class="form-group">
+                <label class="form-label" for="annCategory">Category</label>
+                <select class="form-select" id="annCategory">${options(CATEGORIES)}</select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="annPriority">Priority</label>
+                <select class="form-select" id="annPriority">${options(PRIORITIES)}</select>
+              </div>
+            </div>
+            ${audienceFields('ann', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}
+            <div class="form-group">
+              <label class="form-checkbox-group"><input type="checkbox" id="annPinned"> 📌 Pin this announcement</label>
+            </div>`
+        },
+        event: {
+          modalId: 'eventModal', prefix: 'ev',
+          html: `
+            <div class="form-group">
+              <label class="form-label" for="evTitle">Title</label>
+              <input class="form-input" id="evTitle" type="text" placeholder="Enter event title" maxlength="120">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="evDesc">Description</label>
+              <textarea class="form-textarea" id="evDesc" placeholder="Describe the event..."></textarea>
+            </div>
+            <div class="ah-row">
+              <div class="form-group">
+                <label class="form-label" for="evDate">Date</label>
+                <input class="form-input" id="evDate" type="date">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="evTime">Time</label>
+                <input class="form-input" id="evTime" type="time">
+              </div>
+            </div>
+            <div class="ah-row">
+              <div class="form-group">
+                <label class="form-label" for="evCategory">Category</label>
+                <select class="form-select" id="evCategory">${options(CATEGORIES)}</select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="evLocation">Location</label>
+                <input class="form-input" id="evLocation" type="text" placeholder="e.g. Main Auditorium">
+              </div>
+            </div>
+            ${audienceFields('ev')}`
+        },
+        notification: {
+          modalId: 'notificationModal', prefix: 'nt',
+          html: `
+            <div class="form-group">
+              <label class="form-label" for="ntTitle">Title</label>
+              <input class="form-input" id="ntTitle" type="text" placeholder="Enter notification title" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ntMessage">Message</label>
+              <textarea class="form-textarea" id="ntMessage" placeholder="Write your notification..." style="min-height:110px;"></textarea>
+            </div>
+            <div class="ah-row">
+              <div class="form-group">
+                <label class="form-label" for="ntType">Type</label>
+                <select class="form-select" id="ntType">${options(NOTIF_TYPES)}</select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ntIcon">Icon</label>
+                <select class="form-select" id="ntIcon">${NOTIF_ICONS.map(i => `<option value="${i}">${i}</option>`).join('')}</select>
+              </div>
+            </div>
+            ${audienceFields('nt')}`
+        }
+      };
+
+      const TITLES = { announcement: ['Create Announcement', 'Publish'], event: ['Create Event', 'Create Event'], notification: ['Send Notification', 'Send'] };
+
+      function buildModals() {
+        $('modalHost').innerHTML = Object.keys(FORMS).map(kind =>
+          modal(FORMS[kind].modalId, TITLES[kind][0], FORMS[kind].html, TITLES[kind][1])
+        ).join('');
+
+        Object.values(FORMS).forEach(f => {
+          $(f.prefix + 'Target').addEventListener('change', () => syncAudience(f.prefix));
+        });
+        $('ntType').addEventListener('change', () => {
+          const t = NOTIF_TYPES.find(x => x.value === $('ntType').value);
+          if (t) $('ntIcon').value = t.icon;
+        });
+        $('modalHost').addEventListener('input', (e) => e.target.classList.remove('invalid'));
+      }
+
+      // Department and Year unlock only for "Specific Students"
+      function syncAudience(p) {
+        const on = $(p + 'Target').value === 'students';
+        ['Dept', 'Year'].forEach(k => {
+          $(p + k).disabled = !on;
+          $(p + k + 'Field').classList.toggle('is-disabled', !on);
+          $(p + k + 'Hint').textContent = on ? '' : '(Disabled)';
+        });
+      }
+
+      function openForm(kind) {
+        const f = FORMS[kind];
+        if (!f) return;
+        const el = $(f.modalId);
+        el.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], textarea').forEach(i => { i.value = ''; i.classList.remove('invalid'); });
+        el.querySelectorAll('select').forEach(i => { i.selectedIndex = 0; });
+        el.querySelectorAll('input[type="checkbox"]').forEach(i => { i.checked = false; });
+        if (kind === 'event') $('evDate').value = today();
+        if (kind === 'notification') $('ntIcon').value = NOTIF_TYPES[0].icon;
+        syncAudience(f.prefix);
+        el.querySelector('.modal-body').scrollTop = 0;
+        UI.openModal(f.modalId);
+        setTimeout(() => { const first = el.querySelector('.form-input'); if (first) first.focus(); }, 150);
+      }
+
+      function validate(ids) {
+        const missing = ids.filter(id => !$(id).value.trim());
+        missing.forEach(id => $(id).classList.add('invalid'));
+        if (missing.length) {
+          $(missing[0]).focus();
+          UI.toast('Please fill in the highlighted fields.', 'warning');
+        }
+        return missing.length === 0;
+      }
+
+      function audience(p) {
+        const target = $(p + 'Target').value;
+        const students = target === 'students';
+        return {
+          target,
+          department: students ? $(p + 'Dept').value : '',
+          year: students ? $(p + 'Year').value : 'all'
+        };
+      }
+
+      // ─── Firebase: announcement_hub ───
+      const HUB_COLLECTION = 'announcement_hub';
+      let hubAnnouncements = [];
+      let hubError = null;
+      let hubReady = false;
+      let hubUnsubscribe = null;
+
+      function toAnnouncement(snapshotDoc) {
+        const data = snapshotDoc.data({ serverTimestamps: 'estimate' });
+        const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
+        return {
+          ...data,
+          id: snapshotDoc.id,
+          createdMs,
+          date: data.date || (createdMs ? isoDay(new Date(createdMs)) : today())
+        };
+      }
+
+      // Wait for the signed-in admin before listening, otherwise Firestore rejects the request.
+      function startAnnouncementSync() {
+        onAuthStateChanged(auth, (user) => {
+          if (hubUnsubscribe) { hubUnsubscribe(); hubUnsubscribe = null; }
+          if (!user) return;
+          hubUnsubscribe = onSnapshot(collection(db, HUB_COLLECTION), (snapshot) => {
+            hubAnnouncements = snapshot.docs.map(toAnnouncement);
+            hubError = null;
+            hubReady = true;
+            renderFeed();
+          }, (err) => {
+            console.error('Admin Hub: announcement_hub listener failed', err);
+            hubAnnouncements = [];
+            hubError = err;
+            hubReady = true;
+            renderFeed();
+          });
+        });
+      }
+
+      // ─── Stores ───
+      const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications' };
+      const CREATE_LABELS = { all: '✚ New Announcement', announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification' };
+
+      function getStore(type) {
+        // Events and notifications still use the local stores; announcements use Firestore.
+        const store = type === 'event'
+          ? (typeof EventsStore !== 'undefined' ? EventsStore : null)
+          : (typeof NotificationsStore !== 'undefined' ? NotificationsStore : null);
+        if (!store) throw new Error(LABELS[type] + ' store is not loaded');
+        return store;
+      }
+
+      // ─── Submit ───
+      let sending = false;
+
+      // Wraps send(): blocks double-clicks, shows progress on the button, and reports any error
+      async function submit(kind) {
+        if (sending) return;
+        sending = true;
+        const button = document.querySelector(`[data-submit="${FORMS[kind].modalId}"]`);
+        const label = button ? button.textContent : '';
+        if (button) { button.disabled = true; button.textContent = 'Sending…'; }
+        try {
+          await send(kind);
+        } catch (err) {
+          console.error('Admin Hub: unexpected error while sending', err);
+          UI.toast('Something went wrong: ' + ((err && err.message) || err), 'error');
+        } finally {
+          sending = false;
+          if (button) { button.disabled = false; button.textContent = label; }
+        }
+      }
+
+      function withTimeout(promise, ms) {
+        let timer;
+        const timeout = new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            const err = new Error('Firebase did not respond after ' + (ms / 1000) + ' seconds. Check your internet connection, then look at the list before trying again, because it may still arrive.');
+            err.code = 'timeout';
+            reject(err);
+          }, ms);
+        });
+        return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+      }
+
+      async function send(kind) {
+        let payload;
+        if (kind === 'announcement') {
+          if (!validate(['annTitle', 'annBody'])) return;
+          if ($('annTarget').value !== 'all') {
+            UI.toast('Only “All Campus (Student Only)” is connected to Firebase right now. Please choose it as the audience.', 'warning');
+            $('annTarget').focus();
+            return;
+          }
+          if (!auth.currentUser) {
+            UI.toast('You are not signed in. Please log in again.', 'error');
+            return;
+          }
+          payload = {
+            title: $('annTitle').value.trim(),
+            body: $('annBody').value.trim(),
+            category: $('annCategory').value,
+            priority: $('annPriority').value,
+            pinned: $('annPinned').checked,
+            author: currentAuthor(),
+            authorId: auth.currentUser.uid,
+            date: today(),
+            createdAt: serverTimestamp(),
+            target: 'all',
+            department: 'all',
+            year: 'all'
+          };
+        } else if (kind === 'event') {
+          if (!validate(['evTitle', 'evDesc', 'evDate', 'evTime', 'evLocation'])) return;
+          payload = {
+            title: $('evTitle').value.trim(),
+            description: $('evDesc').value.trim(),
+            category: $('evCategory').value,
+            date: $('evDate').value,
+            time: to12h($('evTime').value),
+            location: $('evLocation').value.trim(),
+            ...audience('ev')
+          };
+        } else {
+          if (!validate(['ntTitle', 'ntMessage'])) return;
+          payload = {
+            title: $('ntTitle').value.trim(),
+            message: $('ntMessage').value.trim(),
+            type: $('ntType').value,
+            icon: $('ntIcon').value,
+            time: 'Just now',
+            ...audience('nt')
+          };
+        }
+
+        try {
+          if (kind === 'announcement') {
+            console.info('Admin Hub: publishing to ' + HUB_COLLECTION, { ...payload, createdAt: '(server time)' });
+            await withTimeout(addDoc(collection(db, HUB_COLLECTION), payload), 15000);
+          } else {
+            await getStore(kind).add(payload);
+          }
+        } catch (err) {
+          console.error(err);
+          const denied = err && err.code === 'permission-denied';
+          UI.toast(denied
+            ? 'Firebase denied the request. Publish the new Firestore rules, then try again.'
+            : 'Couldn’t send it' + (err && err.code ? ' (' + err.code + ')' : '') + ': ' + ((err && err.message) || 'see the browser console.'), 'error');
+          return;
+        }
+
+        UI.toast({ announcement: 'Announcement published!', event: 'Event created!', notification: 'Notification sent!' }[kind], 'success');
+        UI.closeModal(FORMS[kind].modalId);
+        renderFeed();
+      }
+
+      // ─── Feed ───
+      async function buildFeed() {
+        const failed = [];
+        const load = async (type) => {
+          try {
+            const list = await getStore(type).getAll();
+            return Array.isArray(list) ? list : [];
+          } catch (err) {
+            console.error('Admin Hub: could not load ' + type + 's', err);
+            failed.push(LABELS[type]);
+            return [];
+          }
+        };
+        const [events, notifications] = await Promise.all([load('event'), load('notification')]);
+        const dayMs = (d) => new Date((d || today()) + 'T00:00:00').getTime();
+
+        const feed = [
+          ...hubAnnouncements.map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
+          ...events.map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
+          // Announcements and events create their own notification; list only the ones sent by hand.
+          ...notifications.filter(n => !n.actionType).map(n => ({ type: 'notification', data: n, category: null, rank: 1, sort: Number(n.id) || 0 }))
+        ].sort((a, b) => a.rank - b.rank || b.sort - a.sort);
+
+        return { feed, failed };
+      }
+
+      function applyFilters(feed) {
+        return feed.filter(item => {
+          if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+          if (categoryFilter !== 'all') {
+            // Notifications have no category, so they only show when browsing them directly
+            if (item.type === 'notification') return typeFilter === 'notification';
+            if (item.category !== categoryFilter) return false;
+          }
+          if (!searchTerm) return true;
+          const d = item.data;
+          return [d.title, d.body, d.description, d.message, d.category, d.author, d.location]
+            .some(v => v && String(v).toLowerCase().includes(searchTerm));
+        });
+      }
+
+      let renderToken = 0;
+      async function renderFeed() {
+        const token = ++renderToken;
+        const { feed, failed } = await buildFeed();
+        if (token !== renderToken) return; // a newer render is already running
+
+        if (hubError) {
+          failed.unshift(hubError.code === 'permission-denied'
+            ? 'Announcements (Firebase denied access — publish the new Firestore rules)'
+            : 'Announcements');
+        }
+        const banner = $('hubError');
+        banner.style.display = failed.length ? 'block' : 'none';
+        banner.textContent = failed.length ? `Couldn’t load ${failed.join(', ')}. Open the browser console (F12) for details.` : '';
+
+        const items = applyFilters(feed);
+        const container = $('hubFeed');
+        const empty = $('hubEmpty');
+
+        if (!items.length && !hubReady) {
+          container.innerHTML = '';
+          empty.innerHTML = '<div class="empty-icon">⏳</div><h3>Loading updates…</h3>';
+          empty.style.display = 'block';
+          return;
+        }
+
+        if (!items.length) {
+          const filtering = typeFilter !== 'all' || categoryFilter !== 'all' || searchTerm;
+          container.innerHTML = '';
+          empty.innerHTML = filtering
+            ? '<div class="empty-icon">📭</div><h3>No updates found</h3><p>Try adjusting your search or filter criteria.</p>'
+            : '<div class="empty-icon">📭</div><h3>Nothing sent yet</h3><p>Use the button at the top right to publish your first update.</p>';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+        container.innerHTML = items.map(i => {
+          try {
+            return i.type === 'announcement' ? announcementCard(i.data) :
+                   i.type === 'event' ? eventCard(i.data) : notificationCard(i.data);
+          } catch (err) {
+            console.error('Admin Hub: could not draw an item', i, err);
+            return '';
+          }
+        }).join('');
+      }
+
+      function announcementCard(a) {
+        return `
+          <div class="hub-feed-item hub-item-announcement" id="hub-ann-${esc(a.id)}">
+            <div class="card-priority ${esc(a.priority)}"></div>
+            <div style="padding-left:12px;">
+              <div class="hub-type-label type-announcement">📢 ANNOUNCEMENT</div>
+              <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+                ${a.pinned ? '<span class="badge badge-primary">📌 Pinned</span>' : ''}
+                ${UI.priorityBadge(a.priority)}
+                ${UI.categoryBadge(esc(a.category))}
+              </div>
+              <h3 style="margin-bottom:var(--space-sm);">${esc(a.title)}</h3>
+              <div class="announcement-body">${esc(a.body)}</div>
+              <div class="announcement-meta">
+                <span>✍️ ${esc(a.author)}</span>
+                <span>📅 ${UI.formatDate(a.date)}</span>
+                ${audienceLabel(a)}
+              </div>
+              <div class="hub-actions">
+                <button class="hub-action-btn" data-action="pin" data-id="${esc(a.id)}" data-pinned="${a.pinned ? '1' : '0'}">${a.pinned ? '📌 Unpin' : '📌 Pin'}</button>
+                <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="announcement" data-id="${esc(a.id)}">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      function eventCard(ev) {
+        const d = new Date(ev.date + 'T00:00:00');
+        return `
+          <div class="hub-feed-item hub-item-event" id="hub-ev-${esc(ev.id)}">
+            <div class="hub-type-label type-event">📅 EVENT</div>
+            <div class="hub-event-layout">
+              <div class="event-date-badge" style="width:52px; height:58px;">
+                <span class="day" style="font-size:1.2rem;">${d.getDate()}</span>
+                <span class="month" style="font-size:0.6rem;">${d.toLocaleDateString('en-US', { month: 'short' })}</span>
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+                  <span class="tag">${esc(ev.category)}</span>
+                  <span class="text-muted text-sm">${d.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                </div>
+                <h3 style="margin-bottom:var(--space-sm);">${esc(ev.title)}</h3>
+                <p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${esc(ev.description)}</p>
+                <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
+                  <span class="text-muted text-sm">📍 ${esc(ev.location)}</span>
+                  <span class="text-muted text-sm">🕐 ${esc(ev.time)}</span>
+                  <span class="text-muted text-sm">👥 ${(ev.attendees || 0).toLocaleString()} interested</span>
+                  ${audienceLabel(ev)}
+                </div>
+              </div>
+            </div>
+            <div class="hub-actions">
+              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="event" data-id="${esc(ev.id)}">🗑️ Delete</button>
+            </div>
+          </div>`;
+      }
+
+      function notificationCard(n) {
+        return `
+          <div class="hub-feed-item hub-item-notification" id="hub-notif-${esc(n.id)}">
+            <div class="hub-type-label type-notification">🔔 NOTIFICATION</div>
+            <div class="flex items-center gap-md">
+              <div class="notification-dot ${esc(n.type)}">${esc(n.icon)}</div>
+              <div style="flex:1; min-width:0;">
+                <div class="font-semibold text-sm" style="margin-bottom:2px;">${esc(n.title)}</div>
+                <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px;">${esc(n.message)}</div>
+                <div class="text-muted" style="font-size:0.75rem;">${esc(n.time)} ${audienceLabel(n)}</div>
+              </div>
+            </div>
+            <div class="hub-actions">
+              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="notification" data-id="${esc(n.id)}">🗑️ Delete</button>
+            </div>
+          </div>`;
+      }
+
+      // ─── Actions ───
+      async function deleteItem(type, id) {
+        if (!confirm(`Delete this ${type}? This can’t be undone.`)) return;
+        try {
+          if (type === 'announcement') await deleteDoc(doc(db, HUB_COLLECTION, id));
+          else await getStore(type).delete(id);
+        } catch (err) {
+          console.error(err);
+          UI.toast('Couldn’t delete it: ' + (err.message || 'see the browser console.'), 'error');
+          return;
+        }
+        UI.toast(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted.`, 'warning');
+        renderFeed();
+      }
+
+      async function togglePin(id, pinned) {
+        try {
+          await updateDoc(doc(db, HUB_COLLECTION, id), { pinned: !pinned });
+        } catch (err) {
+          console.error(err);
+          UI.toast('Couldn’t update the pin: ' + (err.message || 'see the browser console.'), 'error');
+          return;
+        }
+        UI.toast(pinned ? 'Announcement unpinned.' : 'Announcement pinned.', 'success');
+        renderFeed();
+      }
+
+      // The create button follows the selected type: All/Announcements → announcement, Events → event, Notifications → notification
+      function updateCreateButton() {
+        $('btnCreate').textContent = CREATE_LABELS[typeFilter];
+      }
+
+      function setChip(selector, attr, value) {
+        document.querySelectorAll(selector).forEach(c => c.classList.toggle('active', c.dataset[attr] === value));
+      }
+
+      // ─── Init ───
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!initPage('admin-hub')) return;
+
+        buildModals();
+        startAnnouncementSync();
+
+        $('btnCreate').addEventListener('click', () => openForm(typeFilter === 'all' ? 'announcement' : typeFilter));
+
+        // Modal buttons and card actions
+        document.addEventListener('click', (e) => {
+          const closeBtn = e.target.closest('[data-close]');
+          if (closeBtn) return UI.closeModal(closeBtn.dataset.close);
+
+          const submitBtn = e.target.closest('[data-submit]');
+          if (submitBtn) {
+            const kind = Object.keys(FORMS).find(k => FORMS[k].modalId === submitBtn.dataset.submit);
+            return submit(kind);
+          }
+
+          const actionBtn = e.target.closest('[data-action]');
+          if (!actionBtn) return;
+          if (actionBtn.dataset.action === 'delete') deleteItem(actionBtn.dataset.type, actionBtn.dataset.id);
+          if (actionBtn.dataset.action === 'pin') togglePin(actionBtn.dataset.id, actionBtn.dataset.pinned === '1');
+        });
+
+        // Filters and search
+        document.querySelectorAll('.hub-filter-chip').forEach(c => c.addEventListener('click', () => {
+          typeFilter = c.dataset.type;
+          setChip('.hub-filter-chip', 'type', typeFilter);
+          updateCreateButton();
+          renderFeed();
+        }));
+        document.querySelectorAll('.hub-cat-chip').forEach(c => c.addEventListener('click', () => {
+          categoryFilter = c.dataset.cat;
+          setChip('.hub-cat-chip', 'cat', categoryFilter);
+          renderFeed();
+        }));
+
+        const search = $('hubSearch');
+        search.addEventListener('input', () => { searchTerm = search.value.trim().toLowerCase(); renderFeed(); });
+        search.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') { search.value = ''; searchTerm = ''; renderFeed(); search.blur(); }
+        });
+
+        // Backdrop click and Escape close any open modal
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+          m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('active'); });
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        });
+
+        // Deep link: admin-hub.html?create=announcement | event | notification
+        const create = new URLSearchParams(window.location.search).get('create');
+        if (FORMS[create]) {
+          typeFilter = create;
+          setChip('.hub-filter-chip', 'type', typeFilter);
+          updateCreateButton();
+          openForm(create);
+        }
+
+        renderFeed();
+      });
+    })();
+  </script>
+</body>
+
+</html>

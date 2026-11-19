@@ -243,10 +243,6 @@ const PollsStore = {
     }
   },
 
-  _getSeedPolls() {
-    return [];
-  },
-
   getAll() {
     const deletedIds = this._getDeletedIds();
     const stored = localStorage.getItem(this._key);
@@ -254,8 +250,7 @@ const PollsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const checkDemo = (typeof window !== 'undefined' && window.isDemoCard) ? window.isDemoCard : (p => Number(p.id) === 1);
-          const filtered = parsed.filter(p => !deletedIds.includes(String(p.id)) && !checkDemo(p));
+          const filtered = parsed.filter(p => !deletedIds.includes(String(p.id)));
           if (filtered.length !== parsed.length) {
             this.save(filtered);
           }

@@ -7,212 +7,10 @@ import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-// ─── Mock Data ───
-const MOCK_USERS = {
-  student: {
-    id: 'STU-2024-0042',
-    name: 'Alex Rivera',
-    email: 'alex.rivera@campus.edu',
-    role: 'student',
-    department: 'Computer Science',
-    year: '3rd Year',
-    avatar: 'AR'
-  },
-  law1: {
-    id: 'STU-2024-1501',
-    name: 'Marcus Vance',
-    email: 'marcus.vance@campus.edu',
-    role: 'student',
-    department: 'Law',
-    year: '1st Year',
-    avatar: 'MV'
-  },
-  law2: {
-    id: 'STU-2024-1502',
-    name: 'Elena Rostova',
-    email: 'elena.rostova@campus.edu',
-    role: 'student',
-    department: 'Law',
-    year: '2nd Year',
-    avatar: 'ER'
-  },
-  admin: {
-    id: 'ADM-2024-0003',
-    name: 'Dr. Sarah Chen',
-    email: 'sarah.chen@campus.edu',
-    role: 'admin',
-    department: 'Administration',
-    title: 'Dean of Students',
-    avatar: 'SC'
-  }
-};
-
-const DEMO_TITLES = new Set([
-  'Fall 2026 Semester Registration Now Open',
-  'Campus Wi-Fi Maintenance — Oct 2',
-  'Annual Science Fair — Call for Entries',
-  'New Library Hours for Midterm Season',
-  'Mental Health Awareness Week — Oct 6–10',
-  'Parking Lot B Closure for Renovation',
-  'CS Department: Capstone Project Proposals Due',
-  'Engineering Lab Safety Recertification',
-  'Business Pitch Competition — $5,000 Prize',
-  'CS Hackathon: Build for Good — Oct 18-19',
-  '3rd Year Internship Prep Workshop',
-  'Law School Moot Court Registration',
-  '1st Year Law Case Briefing Workshop',
-  'Homecoming Football Game',
-  'Guest Lecture: AI in Education',
-  'Fall Career Fair 2026',
-  'Cultural Night: Around the World',
-  'Midterm Study Marathon',
-  'CS Senior Project Showcase',
-  'Engineering Design Sprint',
-  'First Year Orientation Social',
-  'Tech Industry Panel: Careers in CS',
-  'Law Review Annual Symposium',
-  '1st Year Law Legal Research Bootcamp',
-  'New Announcement Posted',
-  'Assignment Submitted',
-  'Payment Reminder',
-  'Emergency Drill',
-  'Event Reminder',
-  'Scholarship Awarded',
-  '1st Year Law Briefing Session',
-  'Law Moot Court Notice',
-  'What activity would you like for Foundation Week?'
-]);
-
-function isDemoCard(item) {
-  if (!item) return false;
-  const numId = Number(item.id);
-  // All demo seeds had IDs 1..13. Admin created items have Date.now() timestamp IDs (> 1,000,000)
-  if (!isNaN(numId) && numId > 0 && numId <= 100) return true;
-  if (item.title && DEMO_TITLES.has(item.title)) return true;
-  if (item.question && DEMO_TITLES.has(item.question)) return true;
-  return false;
-}
-
-if (typeof window !== 'undefined') {
-  window.isDemoCard = isDemoCard;
-  window.DEMO_TITLES = DEMO_TITLES;
-}
-
-// Automatic cleanup of legacy demo cards from localStorage on script load
-try {
-  if (typeof localStorage !== 'undefined') {
-    ['campusnotify_announcements', 'campusnotify_events', 'campusnotify_notifications', 'campusnotify_polls'].forEach(key => {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const items = JSON.parse(raw);
-        if (Array.isArray(items)) {
-          const cleaned = items.filter(it => !isDemoCard(it));
-          if (cleaned.length !== items.length) {
-            localStorage.setItem(key, JSON.stringify(cleaned));
-          }
-        }
-      }
-    });
-  }
-} catch (e) {}
-
-const ANNOUNCEMENTS = [];
-const EVENTS = [];
-const DEFAULT_NOTIFICATIONS = [];
-
 // ─── Auth / Session Utilities ───
 const Auth = {
   _usersKey: 'campusnotify_registered_users',
   _logsKey: 'campusnotify_login_logs',
-
-  _getInitialUsers() {
-    return [
-      {
-        id: 'STU-2024-0042',
-        name: 'Alex Rivera',
-        email: 'alex.rivera@campus.edu',
-        password: 'password123',
-        role: 'student',
-        department: 'Computer Science',
-        year: '3rd Year',
-        avatar: 'AR',
-        phone: '+1 (555) 234-5678',
-        bio: 'Computer Science student interested in AI and modern web architectures.',
-        lastLogin: new Date(Date.now() - 3600000 * 2).toISOString(),
-        createdAt: '2026-08-15'
-      },
-      {
-        id: 'STU-2024-1201',
-        name: 'Jordan Miles',
-        email: 'jordan.miles@campus.edu',
-        password: 'password123',
-        role: 'student',
-        department: 'Engineering',
-        year: '2nd Year',
-        avatar: 'JM',
-        phone: '+1 (555) 234-1201',
-        bio: 'Engineering student focused on robotics and campus events.',
-        lastLogin: new Date(Date.now() - 3600000 * 5).toISOString(),
-        createdAt: '2026-08-20'
-      },
-      {
-        id: 'STU-2024-1288',
-        name: 'Priya Shah',
-        email: 'priya.shah@campus.edu',
-        password: 'password123',
-        role: 'student',
-        department: 'Business',
-        year: '1st Year',
-        avatar: 'PS',
-        phone: '+1 (555) 234-1288',
-        bio: 'Business student exploring internships and campus life.',
-        lastLogin: new Date(Date.now() - 3600000 * 8).toISOString(),
-        createdAt: '2026-08-22'
-      },
-      {
-        id: 'STU-2024-1501',
-        name: 'Marcus Vance',
-        email: 'marcus.vance@campus.edu',
-        password: 'password123',
-        role: 'student',
-        department: 'Law',
-        year: '1st Year',
-        avatar: 'MV',
-        phone: '+1 (555) 345-1501',
-        bio: '1st Year Law student passionate about constitutional jurisprudence.',
-        lastLogin: new Date(Date.now() - 3600000 * 3).toISOString(),
-        createdAt: '2026-08-25'
-      },
-      {
-        id: 'STU-2024-1502',
-        name: 'Elena Rostova',
-        email: 'elena.rostova@campus.edu',
-        password: 'password123',
-        role: 'student',
-        department: 'Law',
-        year: '2nd Year',
-        avatar: 'ER',
-        phone: '+1 (555) 345-1502',
-        bio: '2nd Year Law student focused on civil rights advocacy and moot court.',
-        lastLogin: new Date(Date.now() - 3600000 * 6).toISOString(),
-        createdAt: '2026-08-26'
-      },
-      {
-        id: 'ADM-2024-0003',
-        name: 'Dr. Sarah Chen',
-        email: 'sarah.chen@campus.edu',
-        password: 'password123',
-        role: 'admin',
-        department: 'Administration',
-        title: 'Dean of Students',
-        avatar: 'SC',
-        phone: '+1 (555) 987-6543',
-        bio: 'Dean of Students dedicated to holistic student wellness and campus excellence.',
-        lastLogin: new Date(Date.now() - 1800000).toISOString(),
-        createdAt: '2026-08-01'
-      }
-    ];
-  },
 
   _deletedUsersKey: 'campusnotify_users_deleted',
 
@@ -236,100 +34,26 @@ const Auth = {
 
   getRegisteredUsers() {
     const deletedIds = this._getDeletedUserIds();
-    const initial = this._getInitialUsers().filter(u => !deletedIds.includes(String(u.id)));
-    const stored = localStorage.getItem(this._usersKey);
-    if (stored !== null) {
-      try {
-        let users = JSON.parse(stored);
-        if (Array.isArray(users)) {
-          users = users.filter(u => !deletedIds.includes(String(u.id)));
-          let changed = false;
-          initial.forEach(seed => {
-            const exists = users.some(u => String(u.id) === String(seed.id) || (u.email && u.email.toLowerCase() === seed.email.toLowerCase()));
-            if (!exists) {
-              users.push(seed);
-              changed = true;
-            }
-          });
-          if (changed) this.saveRegisteredUsers(users);
-          return users;
-        }
-      } catch (e) {}
-    }
-    this.saveRegisteredUsers(initial);
-    return initial;
+    try {
+      const users = JSON.parse(localStorage.getItem(this._usersKey) || '[]');
+      if (Array.isArray(users)) {
+        return users.filter(u => !deletedIds.includes(String(u.id)));
+      }
+    } catch (e) {}
+    return [];
   },
 
   saveRegisteredUsers(users) {
     localStorage.setItem(this._usersKey, JSON.stringify(users));
   },
 
-  _getInitialLogs() {
-    return [
-      {
-        id: 1,
-        userId: 'ADM-2024-0003',
-        userName: 'Dr. Sarah Chen',
-        userEmail: 'sarah.chen@campus.edu',
-        userRole: 'admin',
-        userAvatar: 'SC',
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        device: 'Windows 11 / Chrome'
-      },
-      {
-        id: 2,
-        userId: 'STU-2024-0042',
-        userName: 'Alex Rivera',
-        userEmail: 'alex.rivera@campus.edu',
-        userRole: 'student',
-        userAvatar: 'AR',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
-        device: 'macOS / Safari'
-      },
-      {
-        id: 3,
-        userId: 'STU-2024-1201',
-        userName: 'Jordan Miles',
-        userEmail: 'jordan.miles@campus.edu',
-        userRole: 'student',
-        userAvatar: 'JM',
-        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-        device: 'Windows / Chrome'
-      },
-      {
-        id: 4,
-        userId: 'STU-2024-1288',
-        userName: 'Priya Shah',
-        userEmail: 'priya.shah@campus.edu',
-        userRole: 'student',
-        userAvatar: 'PS',
-        timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
-        device: 'Android / Chrome'
-      }
-    ];
-  },
-
   getLoginLogs() {
-    const initialLogs = this._getInitialLogs();
-    const stored = localStorage.getItem(this._logsKey);
-    if (stored) {
-      try {
-        const logs = JSON.parse(stored);
-        if (Array.isArray(logs)) {
-          let changed = false;
-          initialLogs.forEach(seed => {
-            if (!logs.some(l => l.userId === seed.userId)) {
-              logs.push(seed);
-              changed = true;
-            }
-          });
-          if (changed) this.saveLoginLogs(logs);
-          return logs;
-        }
-      } catch (e) {}
+    try {
+      const logs = JSON.parse(localStorage.getItem(this._logsKey) || '[]');
+      return Array.isArray(logs) ? logs : [];
+    } catch (e) {
+      return [];
     }
-    this.saveLoginLogs(initialLogs);
-    return initialLogs;
   },
 
   saveLoginLogs(logs) {
@@ -757,7 +481,7 @@ const AnnouncementsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)));
           if (filtered.length !== parsed.length) {
             this.save(filtered);
           }
@@ -904,7 +628,7 @@ const EventsStore = {
       try {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)));
           if (filtered.length !== parsed.length) {
             this.save(filtered);
           }
@@ -1090,7 +814,7 @@ const NotificationsStore = {
       if (stored !== null) {
         let parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)) && !isDemoCard(item));
+          const filtered = parsed.filter(item => !deletedIds.includes(String(item.id)));
           if (filtered.length !== parsed.length) {
             this._saveMaster(filtered);
           }
@@ -1222,13 +946,13 @@ const NotificationsStore = {
   },
 
   updateSidebarBadge() {
+    // Students see the badge on Campus Hub (hub-visible unread only);
+    // admins see it on Admin Hub (all unread).
     const navCampusHub = document.getElementById('nav-campus-hub');
-    const navEvents = document.getElementById('nav-events');
-    const navTarget = navCampusHub || navEvents;
+    const navAdminHub = document.getElementById('nav-admin-hub');
+    const navTarget = navCampusHub || navAdminHub;
     if (!navTarget) return;
 
-    // For students (nav-campus-hub), count only hub-visible unread notifications
-    // For admin (nav-events), count all unread notifications
     const unread = navCampusHub
       ? this.getForHub().filter(n => !n.read).length
       : this.getUnreadCount();
@@ -1259,7 +983,7 @@ if (typeof window !== 'undefined') {
       configurable: true
     });
   } catch (e) {
-    window.NOTIFICATIONS = DEFAULT_NOTIFICATIONS;
+    window.NOTIFICATIONS = [];
   }
 }
 
@@ -1382,13 +1106,9 @@ function renderSidebar(activePage) {
             Dashboard
           </a>
           ${role === 'admin' ? `
-          <a href="announcements.html" class="nav-item ${activePage === 'announcements' ? 'active' : ''}" id="nav-announcements">
-            <span class="nav-icon">📢</span>
-            Announcements
-          </a>
-          <a href="events-notifications.html" class="nav-item ${activePage === 'events' ? 'active' : ''}" id="nav-events">
-            <span class="nav-icon">📅</span>
-            Events & Alerts
+          <a href="admin-hub.html" class="nav-item ${activePage === 'admin-hub' ? 'active' : ''}" id="nav-admin-hub">
+            <span class="nav-icon">🛠️</span>
+            Admin Hub
             ${unreadCount > 0 ? `<span class="nav-badge">${unreadCount}</span>` : ''}
           </a>
           <a href="games.html" class="nav-item ${activePage === 'games' ? 'active' : ''}" id="nav-games">
@@ -2356,6 +2076,8 @@ const DailyLoginUI = {
 if (typeof window !== 'undefined') {
   window.Auth = Auth;
   window.UI = UI;
+  window.AnnouncementsStore = AnnouncementsStore;
+  window.EventsStore = EventsStore;
   window.initPage = initPage;
   window.AppearancePrefs = AppearancePrefs;
   window.renderSidebar = renderSidebar;
