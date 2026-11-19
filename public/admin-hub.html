@@ -70,8 +70,7 @@
       <!-- Filters -->
       <div class="hub-filters animate-fade-in">
         <div class="hub-type-filters" id="typeFilters">
-          <button class="hub-filter-chip active" data-type="all">All</button>
-          <button class="hub-filter-chip" data-type="announcement">📢 Announcements</button>
+          <button class="hub-filter-chip active" data-type="announcement">📢 Announcements</button>
           <button class="hub-filter-chip" data-type="event">📅 Events</button>
           <button class="hub-filter-chip" data-type="notification">🔔 Notifications</button>
         </div>
@@ -156,7 +155,7 @@
       ];
 
       // ─── State ───
-      let typeFilter = 'all';
+      let typeFilter = 'announcement';
       let categoryFilter = 'all';
       let searchTerm = '';
 
@@ -416,7 +415,7 @@
 
       // ─── Stores ───
       const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications' };
-      const CREATE_LABELS = { all: '✚ New Announcement', announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification' };
+      const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification' };
 
       function getStore(type) {
         // Events and notifications still use the local stores; announcements use Firestore.
@@ -559,7 +558,7 @@
 
       function applyFilters(feed) {
         return feed.filter(item => {
-          if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+          if (item.type !== typeFilter) return false;
           if (categoryFilter !== 'all') {
             // Notifications have no category, so they only show when browsing them directly
             if (item.type === 'notification') return typeFilter === 'notification';
@@ -599,7 +598,7 @@
         }
 
         if (!items.length) {
-          const filtering = typeFilter !== 'all' || categoryFilter !== 'all' || searchTerm;
+          const filtering = categoryFilter !== 'all' || searchTerm;
           container.innerHTML = '';
           empty.innerHTML = filtering
             ? '<div class="empty-icon">📭</div><h3>No updates found</h3><p>Try adjusting your search or filter criteria.</p>'
@@ -738,7 +737,7 @@
         buildModals();
         startAnnouncementSync();
 
-        $('btnCreate').addEventListener('click', () => openForm(typeFilter === 'all' ? 'announcement' : typeFilter));
+        $('btnCreate').addEventListener('click', () => openForm(typeFilter));
 
         // Modal buttons and card actions
         document.addEventListener('click', (e) => {
