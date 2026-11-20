@@ -1075,6 +1075,118 @@ if (typeof window !== 'undefined') {
   window.escapeHtml = escapeHtml;
 }
 
+// ─── Branding ───
+// The site logo is whichever image is named "logo" in the images folder
+// (images/logo.png, .svg, .jpg, .jpeg, .webp or .gif). Any element marked with data-logo
+// shows it in place of its emoji, and the browser tab icon uses it too.
+// When there is no logo file, the emoji simply stays.
+const Branding = {
+  _extensions: ['png', 'svg', 'jpg', 'jpeg', 'webp', 'gif'],
+  _legacyFile: '/images/CampusNotif%20University%20Alert%20Logo.png', // last resort, same as the student site
+  _mimeTypes: { png: 'image/png', svg: 'image/svg+xml', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' },
+  _cacheKey: 'campusnotify_logo_url',
+  _lookup: null,
+
+  _cached() {
+    try { return localStorage.getItem(this._cacheKey); } catch (e) { return null; }
+  },
+
+  _remember(url) {
+    try {
+      if (url) localStorage.setItem(this._cacheKey, url);
+      else localStorage.removeItem(this._cacheKey);
+    } catch (e) {}
+  },
+
+  _canLoad(url) {
+    return new Promise((resolve) => {
+      const probe = new Image();
+      probe.onload = () => resolve(true);
+      probe.onerror = () => resolve(false);
+      probe.src = url;
+    });
+  },
+
+  // Finds the first logo file that exists. The last known logo is tried first, so a normal
+  // page load costs one request. Resolves to the logo's URL, or null when there is none.
+  find() {
+    if (!this._lookup) {
+      this._lookup = (async () => {
+        const candidates = [
+          this._cached(),
+          ...this._extensions.map(ext => '/images/logo.' + ext),
+          this._legacyFile
+        ].filter(Boolean);
+        for (const url of new Set(candidates)) {
+          if (await this._canLoad(url)) return url;
+        }
+        return null;
+      })();
+    }
+    return this._lookup;
+  },
+
+  _injectStyles() {
+    if (document.getElementById('branding-style')) return;
+    const style = document.createElement('style');
+    style.id = 'branding-style';
+    style.textContent =
+      '[data-logo] img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: inherit; }' +
+      '[data-logo].has-logo { background: none !important; box-shadow: none !important; }';
+    document.head.appendChild(style);
+  },
+
+  _setFavicon(url) {
+    let link = document.querySelector('link[rel~="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = this._mimeTypes[url.split('.').pop()] || '';
+    link.href = url;
+  },
+
+  _show(url) {
+    document.querySelectorAll('[data-logo]').forEach((el) => {
+      if (el.dataset.logoSrc === url) return;
+      if (el.dataset.logoFallback === undefined) el.dataset.logoFallback = el.textContent.trim();
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'CampusNotify logo';
+      el.textContent = '';
+      el.appendChild(img);
+      el.classList.add('has-logo');
+      el.dataset.logoSrc = url;
+    });
+    this._setFavicon(url);
+  },
+
+  // No logo file: put the emoji back.
+  _hide() {
+    document.querySelectorAll('[data-logo].has-logo').forEach((el) => {
+      el.textContent = el.dataset.logoFallback || '';
+      el.classList.remove('has-logo');
+      delete el.dataset.logoSrc;
+    });
+  },
+
+  // Safe to call more than once (for example again after the sidebar is drawn).
+  apply() {
+    this._injectStyles();
+
+    const cached = this._cached();
+    if (cached) this._show(cached); // avoids a flash of the emoji on every page
+
+    this.find().then((url) => {
+      this._remember(url);
+      if (url) this._show(url);
+      else this._hide();
+    });
+  }
+};
+
 // ─── Sidebar Component ───
 function renderSidebar(activePage) {
   const user = Auth.getUser();
@@ -1091,7 +1203,7 @@ function renderSidebar(activePage) {
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon">🔔</div>
+        <div class="brand-icon" data-logo>🔔</div>
         <div>
           <h2>CampusNotify</h2>
           <span>School Portal</span>
@@ -1258,6 +1370,7 @@ function initPage(activePage) {
   if (sidebarTarget) {
     sidebarTarget.innerHTML = renderSidebar(activePage);
     initSidebar();
+    Branding.apply();
   }
 
   // Enforce Firebase session and admin_account document verification
@@ -2086,9 +2199,9 @@ if (typeof window !== 'undefined') {
   window.ForYouFeed = ForYouFeed;
   window.DailyLoginUI = DailyLoginUI;
   window.addEventListener('DOMContentLoaded', () => {
+    Branding.apply();
     DailyLoginUI.init();
   });
 }
 
 export { Auth, UI, initPage, AppearancePrefs, renderSidebar, initSidebar, applyRole };
-

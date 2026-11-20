@@ -7,7 +7,6 @@
   <meta name="description"
     content="CampusNotify Admin Hub — Create and send announcements, events, and notifications.">
   <title>Admin Hub — CampusNotify</title>
-  <link rel="icon" type="image/png" href="images/logo.png">
   <link rel="stylesheet" href="styles.css">
 
   <style>
@@ -286,7 +285,7 @@
                 <input class="form-input" id="evLocation" type="text" placeholder="e.g. Main Auditorium">
               </div>
             </div>
-            ${audienceFields('ev')}`
+            ${audienceFields('ev', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
         },
         notification: {
           modalId: 'notificationModal', prefix: 'nt',
@@ -375,14 +374,8 @@
         };
       }
 
-      // ─── Firebase: announcement_hub ───
-      const HUB_COLLECTION = 'announcement_hub';
-      let hubAnnouncements = [];
-      let hubError = null;
-      let hubReady = false;
-      let hubUnsubscribe = null;
-
-      function toAnnouncement(snapshotDoc) {
+      // ─── Firebase: announcement_hub and event_hub ───
+      function toHubDoc(snapshotDoc) {
         const data = snapshotDoc.data({ serverTimestamps: 'estimate' });
         const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
         return {
@@ -393,22 +386,30 @@
         };
       }
 
+      const HUB = {
+        announcement: { collection: 'announcement_hub', items: [], error: null, ready: false, unsubscribe: null },
+        event: { collection: 'event_hub', items: [], error: null, ready: false, unsubscribe: null }
+      };
+
       // Wait for the signed-in admin before listening, otherwise Firestore rejects the request.
-      function startAnnouncementSync() {
+      function startHubSync() {
         onAuthStateChanged(auth, (user) => {
-          if (hubUnsubscribe) { hubUnsubscribe(); hubUnsubscribe = null; }
-          if (!user) return;
-          hubUnsubscribe = onSnapshot(collection(db, HUB_COLLECTION), (snapshot) => {
-            hubAnnouncements = snapshot.docs.map(toAnnouncement);
-            hubError = null;
-            hubReady = true;
-            renderFeed();
-          }, (err) => {
-            console.error('Admin Hub: announcement_hub listener failed', err);
-            hubAnnouncements = [];
-            hubError = err;
-            hubReady = true;
-            renderFeed();
+          Object.entries(HUB).forEach(([type, hub]) => {
+            if (hub.unsubscribe) { hub.unsubscribe(); hub.unsubscribe = null; }
+            if (!user) return;
+
+            hub.unsubscribe = onSnapshot(collection(db, hub.collection), (snapshot) => {
+              hub.items = snapshot.docs.map(toHubDoc);
+              hub.error = null;
+              hub.ready = true;
+              renderFeed();
+            }, (err) => {
+              console.error('Admin Hub: ' + hub.collection + ' listener failed', err);
+              hub.items = [];
+              hub.error = err;
+              hub.ready = true;
+              renderFeed();
+            });
           });
         });
       }
@@ -417,13 +418,12 @@
       const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications' };
       const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification' };
 
+      // Notifications still use the local store; announcements and events use Firestore.
       function getStore(type) {
-        // Events and notifications still use the local stores; announcements use Firestore.
-        const store = type === 'event'
-          ? (typeof EventsStore !== 'undefined' ? EventsStore : null)
-          : (typeof NotificationsStore !== 'undefined' ? NotificationsStore : null);
-        if (!store) throw new Error(LABELS[type] + ' store is not loaded');
-        return store;
+        if (type !== 'notification' || typeof NotificationsStore === 'undefined') {
+          throw new Error(LABELS[type] + ' store is not loaded');
+        }
+        return NotificationsStore;
       }
 
       // ─── Submit ───
@@ -459,35 +459,46 @@
         return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
       }
 
+      // Only "All Campus (Student Only)" is connected to Firebase for announcements and events.
+      function requireAllCampus(prefix) {
+        if ($(prefix + 'Target').value !== 'all') {
+          UI.toast('Only “All Campus (Student Only)” is connected to Firebase right now. Please choose it as the audience.', 'warning');
+          $(prefix + 'Target').focus();
+          return false;
+        }
+        if (!auth.currentUser) {
+          UI.toast('You are not signed in. Please log in again.', 'error');
+          return false;
+        }
+        return true;
+      }
+
+      function hubFields() {
+        return {
+          author: currentAuthor(),
+          authorId: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+          target: 'all',
+          department: 'all',
+          year: 'all'
+        };
+      }
+
       async function send(kind) {
         let payload;
         if (kind === 'announcement') {
-          if (!validate(['annTitle', 'annBody'])) return;
-          if ($('annTarget').value !== 'all') {
-            UI.toast('Only “All Campus (Student Only)” is connected to Firebase right now. Please choose it as the audience.', 'warning');
-            $('annTarget').focus();
-            return;
-          }
-          if (!auth.currentUser) {
-            UI.toast('You are not signed in. Please log in again.', 'error');
-            return;
-          }
+          if (!validate(['annTitle', 'annBody']) || !requireAllCampus('ann')) return;
           payload = {
             title: $('annTitle').value.trim(),
             body: $('annBody').value.trim(),
             category: $('annCategory').value,
             priority: $('annPriority').value,
             pinned: $('annPinned').checked,
-            author: currentAuthor(),
-            authorId: auth.currentUser.uid,
             date: today(),
-            createdAt: serverTimestamp(),
-            target: 'all',
-            department: 'all',
-            year: 'all'
+            ...hubFields()
           };
         } else if (kind === 'event') {
-          if (!validate(['evTitle', 'evDesc', 'evDate', 'evTime', 'evLocation'])) return;
+          if (!validate(['evTitle', 'evDesc', 'evDate', 'evTime', 'evLocation']) || !requireAllCampus('ev')) return;
           payload = {
             title: $('evTitle').value.trim(),
             description: $('evDesc').value.trim(),
@@ -495,7 +506,7 @@
             date: $('evDate').value,
             time: to12h($('evTime').value),
             location: $('evLocation').value.trim(),
-            ...audience('ev')
+            ...hubFields()
           };
         } else {
           if (!validate(['ntTitle', 'ntMessage'])) return;
@@ -510,9 +521,9 @@
         }
 
         try {
-          if (kind === 'announcement') {
-            console.info('Admin Hub: publishing to ' + HUB_COLLECTION, { ...payload, createdAt: '(server time)' });
-            await withTimeout(addDoc(collection(db, HUB_COLLECTION), payload), 15000);
+          if (HUB[kind]) {
+            console.info('Admin Hub: publishing to ' + HUB[kind].collection, { ...payload, createdAt: '(server time)' });
+            await withTimeout(addDoc(collection(db, HUB[kind].collection), payload), 15000);
           } else {
             await getStore(kind).add(payload);
           }
@@ -533,22 +544,19 @@
       // ─── Feed ───
       async function buildFeed() {
         const failed = [];
-        const load = async (type) => {
-          try {
-            const list = await getStore(type).getAll();
-            return Array.isArray(list) ? list : [];
-          } catch (err) {
-            console.error('Admin Hub: could not load ' + type + 's', err);
-            failed.push(LABELS[type]);
-            return [];
-          }
-        };
-        const [events, notifications] = await Promise.all([load('event'), load('notification')]);
+        let notifications = [];
+        try {
+          const list = await getStore('notification').getAll();
+          notifications = Array.isArray(list) ? list : [];
+        } catch (err) {
+          console.error('Admin Hub: could not load notifications', err);
+          failed.push(LABELS.notification);
+        }
         const dayMs = (d) => new Date((d || today()) + 'T00:00:00').getTime();
 
         const feed = [
-          ...hubAnnouncements.map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
-          ...events.map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
+          ...HUB.announcement.items.map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
+          ...HUB.event.items.map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
           // Announcements and events create their own notification; list only the ones sent by hand.
           ...notifications.filter(n => !n.actionType).map(n => ({ type: 'notification', data: n, category: null, rank: 1, sort: Number(n.id) || 0 }))
         ].sort((a, b) => a.rank - b.rank || b.sort - a.sort);
@@ -577,11 +585,12 @@
         const { feed, failed } = await buildFeed();
         if (token !== renderToken) return; // a newer render is already running
 
-        if (hubError) {
-          failed.unshift(hubError.code === 'permission-denied'
-            ? 'Announcements (Firebase denied access — publish the new Firestore rules)'
-            : 'Announcements');
-        }
+        Object.entries(HUB).forEach(([type, hub]) => {
+          if (!hub.error) return;
+          failed.unshift(hub.error.code === 'permission-denied'
+            ? LABELS[type] + ' (Firebase denied access — publish the new Firestore rules)'
+            : LABELS[type]);
+        });
         const banner = $('hubError');
         banner.style.display = failed.length ? 'block' : 'none';
         banner.textContent = failed.length ? `Couldn’t load ${failed.join(', ')}. Open the browser console (F12) for details.` : '';
@@ -590,7 +599,7 @@
         const container = $('hubFeed');
         const empty = $('hubEmpty');
 
-        if (!items.length && !hubReady) {
+        if (!items.length && !Object.values(HUB).every(hub => hub.ready)) {
           container.innerHTML = '';
           empty.innerHTML = '<div class="empty-icon">⏳</div><h3>Loading updates…</h3>';
           empty.style.display = 'block';
@@ -665,7 +674,6 @@
                 <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
                   <span class="text-muted text-sm">📍 ${esc(ev.location)}</span>
                   <span class="text-muted text-sm">🕐 ${esc(ev.time)}</span>
-                  <span class="text-muted text-sm">👥 ${(ev.attendees || 0).toLocaleString()} interested</span>
                   ${audienceLabel(ev)}
                 </div>
               </div>
@@ -698,7 +706,7 @@
       async function deleteItem(type, id) {
         if (!confirm(`Delete this ${type}? This can’t be undone.`)) return;
         try {
-          if (type === 'announcement') await deleteDoc(doc(db, HUB_COLLECTION, id));
+          if (HUB[type]) await deleteDoc(doc(db, HUB[type].collection, id));
           else await getStore(type).delete(id);
         } catch (err) {
           console.error(err);
@@ -711,7 +719,7 @@
 
       async function togglePin(id, pinned) {
         try {
-          await updateDoc(doc(db, HUB_COLLECTION, id), { pinned: !pinned });
+          await updateDoc(doc(db, HUB.announcement.collection, id), { pinned: !pinned });
         } catch (err) {
           console.error(err);
           UI.toast('Couldn’t update the pin: ' + (err.message || 'see the browser console.'), 'error');
@@ -735,7 +743,7 @@
         if (!initPage('admin-hub')) return;
 
         buildModals();
-        startAnnouncementSync();
+        startHubSync();
 
         $('btnCreate').addEventListener('click', () => openForm(typeFilter));
 
