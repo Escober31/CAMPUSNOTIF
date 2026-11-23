@@ -948,14 +948,10 @@ const NotificationsStore = {
   updateSidebarBadge() {
     // Students see the badge on Campus Hub (hub-visible unread only);
     // admins see it on Admin Hub (all unread).
-    const navCampusHub = document.getElementById('nav-campus-hub');
-    const navAdminHub = document.getElementById('nav-admin-hub');
-    const navTarget = navCampusHub || navAdminHub;
+       const navTarget = document.getElementById('nav-campus-hub');
     if (!navTarget) return;
 
-    const unread = navCampusHub
-      ? this.getForHub().filter(n => !n.read).length
-      : this.getUnreadCount();
+    const unread = this.getForHub().filter(n => !n.read).length;
 
     let badge = navTarget.querySelector('.nav-badge');
     if (unread > 0) {
@@ -1194,8 +1190,8 @@ function renderSidebar(activePage) {
   if (!user) return '';
 
   // For students, show only hub-visible unread count on Campus Hub nav item
-  const unreadCount = (role === 'admin')
-    ? NotificationsStore.getUnreadCount()
+    const unreadCount = (role === 'admin')
+    ? 0
     : NotificationsStore.getForHub().filter(n => !n.read).length;
 
   return `
