@@ -146,16 +146,6 @@
           </div>
         </div>
 
-        <div id="activeSessionBadge" style="display:none; margin-bottom:0.65rem; padding:0.5rem 0.75rem; background:var(--bg-glass); border:1px solid var(--primary-500); border-radius:var(--radius-md); text-align:center;">
-          <p style="font-size:0.8rem; margin-bottom:0.35rem; color:var(--text-primary);">
-            Currently signed in as <strong id="activeSessionUser" style="color:var(--primary-300);"></strong>
-          </p>
-          <div style="display:flex; gap:var(--space-sm); justify-content:center;">
-            <a href="dashboard.html" class="btn btn-primary btn-sm">Continue to Dashboard →</a>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="handleLogoutAndStay()">Switch Account</button>
-          </div>
-        </div>
-
         <button type="submit" class="login-btn-gradient w-full" id="loginBtn">
           <span class="btn-spinner" id="loginSpinner" style="display:none;" aria-hidden="true">
             <svg class="spinner-svg" viewBox="0 0 24 24" fill="none">
@@ -292,20 +282,6 @@
         eyeClosed.style.display = isPassword ? 'block' : 'none';
       }
       btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-    }
-
-    async function handleLogoutAndStay() {
-      try {
-        if (auth) {
-          await signOut(auth);
-        }
-      } catch (err) {
-        console.warn("Sign out error:", err);
-      }
-      Auth.clearCache();
-      const badge = document.getElementById('activeSessionBadge');
-      if (badge) badge.style.display = 'none';
-      UI.toast('Signed out. Please enter credentials to sign in.', 'info');
     }
 
     function openCreateAccountModal(e) {
@@ -525,21 +501,6 @@
       }
     }
 
-    // Display active session if user is logged in
-    window.addEventListener('DOMContentLoaded', () => {
-      if (Auth.isLoggedIn()) {
-        const user = Auth.getUser();
-        if (user) {
-          const badge = document.getElementById('activeSessionBadge');
-          const userSpan = document.getElementById('activeSessionUser');
-          if (badge && userSpan) {
-            userSpan.textContent = `${user.name} (Admin)`;
-            badge.style.display = 'block';
-          }
-        }
-      }
-    });
-
     // Expose handlers globally on window for inline HTML onclick/onsubmit attributes
     window.handleLogin = handleLogin;
     window.handleCreateAccount = handleCreateAccount;
@@ -549,7 +510,6 @@
     window.clearErrors = clearErrors;
     window.showFieldError = showFieldError;
     window.handleForgotPassword = handleForgotPassword;
-    window.handleLogoutAndStay = handleLogoutAndStay;
     window.selectRole = selectRole;
     window.fillDemo = fillDemo;
   </script>

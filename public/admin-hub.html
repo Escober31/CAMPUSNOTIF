@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="CampusNotify Admin Hub — Create and send announcements, events, and notifications.">
+    content="CampusNotify Admin Hub — Create and send announcements, events, notifications, and polls.">
   <title>Admin Hub — CampusNotify</title>
   <link rel="stylesheet" href="styles.css">
 
@@ -37,6 +37,37 @@
     .ah-actions-danger:hover { color: #ef4444; border-color: rgba(239, 68, 68, .5); }
     .ah-audience { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-muted); }
 
+
+    /* Poll form */
+    .form-textarea.pl-question { min-height: 84px; }
+    .pl-counter { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: .8rem; color: var(--text-muted); }
+    .pl-choices { display: flex; flex-direction: column; gap: 10px; }
+    .pl-choice { display: flex; align-items: center; gap: 10px; }
+    .pl-choice.dragging { opacity: .45; }
+    .pl-grip { cursor: grab; user-select: none; color: var(--text-muted); font-size: 1.1rem; line-height: 1; padding: 6px 2px; letter-spacing: -2px; }
+    .pl-grip:active { cursor: grabbing; }
+    .pl-num { width: 22px; flex-shrink: 0; text-align: center; font-size: .85rem; font-weight: 600; color: var(--text-muted); }
+    .pl-choice .form-input { flex: 1; min-width: 0; }
+    .pl-remove:disabled { opacity: .3; cursor: not-allowed; }
+    .pl-remove:not(:disabled):hover { color: #ef4444; }
+    .pl-add { margin-top: 10px; padding: 9px 16px; border-radius: var(--radius-md, 12px); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer;
+      color: #8b5cf6; background: transparent; border: 1px dashed rgba(139, 92, 246, .6); }
+    .pl-add:hover:not(:disabled) { background: rgba(139, 92, 246, .1); }
+    .pl-add:disabled { opacity: .4; cursor: not-allowed; }
+    .pl-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 var(--space-md, 16px); }
+    .pl-pill { padding: 5px 12px; border-radius: 999px; font-size: .82rem; color: var(--text-secondary, var(--text-primary)); border: 1px solid rgba(148, 163, 184, .3); }
+    .type-poll { color: #a78bfa; }
+    .pl-result { margin-bottom: 12px; }
+    .pl-result-head { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; margin-bottom: 5px; }
+    .pl-result-head span:last-child { color: var(--text-muted); white-space: nowrap; }
+    .pl-bar-track { height: 8px; border-radius: 999px; background: rgba(148, 163, 184, .2); overflow: hidden; }
+    .pl-bar { height: 100%; border-radius: 999px; background: #8b5cf6; }
+    .pl-voter-group { margin-bottom: var(--space-lg, 24px); }
+    .pl-voter-group h4 { margin: 0 0 8px; font-size: .95rem; display: flex; justify-content: space-between; gap: 12px; }
+    .pl-voter-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(148, 163, 184, .2); font-size: .88rem; }
+    .pl-voter-row small { display: block; color: var(--text-muted); }
+    .pl-voter-row time { color: var(--text-muted); font-size: .8rem; white-space: nowrap; }
+
     @media (max-width: 640px) {
       .ah-header-side { align-items: stretch; width: 100%; }
       .ah-row { grid-template-columns: 1fr; gap: 0; }
@@ -54,7 +85,7 @@
         <div class="page-header-row">
           <div>
             <h1>🛠️ <span class="text-gradient">Admin Hub</span></h1>
-            <p class="page-subtitle">Create and send announcements, events, and notifications to your campus.</p>
+            <p class="page-subtitle">Create and send announcements, events, notifications, and polls to your campus.</p>
           </div>
           <div class="ah-header-side">
             <div class="search-bar">
@@ -72,6 +103,7 @@
           <button class="hub-filter-chip active" data-type="announcement">📢 Announcements</button>
           <button class="hub-filter-chip" data-type="event">📅 Events</button>
           <button class="hub-filter-chip" data-type="notification">🔔 Notifications</button>
+          <button class="hub-filter-chip" data-type="poll">📊 Polls</button>
         </div>
         <div class="hub-category-filters" id="categoryFilters">
           <button class="hub-cat-chip active" data-cat="all">All</button>
@@ -89,7 +121,7 @@
       <div id="hubEmpty" class="empty-state" style="display:none;">
         <div class="empty-icon">📭</div>
         <h3>Nothing sent yet</h3>
-        <p>Use the buttons above to publish your first announcement, event, or notification.</p>
+        <p>Use the buttons above to publish your first announcement, event, notification, or poll.</p>
       </div>
     </main>
   </div>
@@ -296,7 +328,11 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="ntMessage">Message</label>
-              <textarea class="form-textarea" id="ntMessage" placeholder="Write your notification..." style="min-height:110px;"></textarea>
+              <textarea class="form-textarea" id="ntMessage" placeholder="Write your notification..." style="min-height:110px;" maxlength="1000"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ntCategory">Category</label>
+              <select class="form-select" id="ntCategory">${options(CATEGORIES)}</select>
             </div>
             <div class="ah-row">
               <div class="form-group">
@@ -308,11 +344,40 @@
                 <select class="form-select" id="ntIcon">${NOTIF_ICONS.map(i => `<option value="${i}">${i}</option>`).join('')}</select>
               </div>
             </div>
-            ${audienceFields('nt')}`
+            ${audienceFields('nt', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
+        },
+        poll: {
+          modalId: 'pollModal', prefix: 'pl',
+          html: `
+            <div class="form-group">
+              <label class="form-label" for="plQuestion">Question</label>
+              <textarea class="form-textarea pl-question" id="plQuestion" placeholder="e.g. What activity would you like for Foundation Week?" maxlength="200"></textarea>
+              <div class="pl-counter"><span>Ask one clear question students can answer by picking a choice.</span><span id="plQuestionCount">0/200</span></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="plDesc">Description <span class="ah-muted">(Optional)</span></label>
+              <input class="form-input" id="plDesc" type="text" placeholder="Add context for students" maxlength="300">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Choices <span class="ah-muted" id="plChoiceCount"></span></label>
+              <div class="pl-choices" id="plChoices"></div>
+              <button type="button" class="pl-add" id="plAddChoice">+ Add Choice</button>
+            </div>
+            <div class="ah-row">
+              <div class="form-group">
+                <label class="form-label" for="plCategory">Category</label>
+                <select class="form-select" id="plCategory">${options(CATEGORIES)}</select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="plClosing">Closing Date</label>
+                <input class="form-input" id="plClosing" type="date">
+              </div>
+            </div>
+            ${audienceFields('pl', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
         }
       };
 
-      const TITLES = { announcement: ['Create Announcement', 'Publish'], event: ['Create Event', 'Create Event'], notification: ['Send Notification', 'Send'] };
+      const TITLES = { announcement: ['Create Announcement', 'Publish'], event: ['Create Event', 'Create Event'], notification: ['Send Notification', 'Send'], poll: ['Create Poll', 'Create Poll'] };
 
       function buildModals() {
         $('modalHost').innerHTML = Object.keys(FORMS).map(kind =>
@@ -327,6 +392,122 @@
           if (t) $('ntIcon').value = t.icon;
         });
         $('modalHost').addEventListener('input', (e) => e.target.classList.remove('invalid'));
+        $('modalHost').insertAdjacentHTML('beforeend', `
+          <div class="modal-overlay" id="pollVotersModal">
+            <div class="modal ah-modal" role="dialog" aria-modal="true" aria-labelledby="pollVotersTitle">
+              <div class="modal-header">
+                <h2 id="pollVotersTitle">Poll voters</h2>
+                <button class="btn btn-ghost btn-icon sm" aria-label="Close" data-close="pollVotersModal">✕</button>
+              </div>
+              <div class="modal-body" id="pollVotersBody"></div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="pollVotersModal">Close</button>
+              </div>
+            </div>
+          </div>`);
+        initPollForm();
+      }
+
+      // ─── Poll form: choices list ───
+      const MIN_CHOICES = 2, MAX_CHOICES = 6;
+
+      function choiceRow(value = '') {
+        const row = document.createElement('div');
+        row.className = 'pl-choice';
+        row.innerHTML = `
+          <span class="pl-grip" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
+          <span class="pl-num"></span>
+          <input class="form-input" type="text" maxlength="80" value="${esc(value)}">
+          <button type="button" class="btn btn-ghost btn-icon sm pl-remove" data-remove-choice>🗑️</button>`;
+        return row;
+      }
+
+      function refreshChoices() {
+        const rows = [...$('plChoices').children];
+        rows.forEach((row, i) => {
+          row.querySelector('.pl-num').textContent = i + 1;
+          const input = row.querySelector('input');
+          input.placeholder = 'Choice ' + (i + 1);
+          input.setAttribute('aria-label', 'Choice ' + (i + 1));
+          const rm = row.querySelector('.pl-remove');
+          rm.disabled = rows.length <= MIN_CHOICES;
+          rm.setAttribute('aria-label', 'Remove choice ' + (i + 1));
+        });
+        $('plAddChoice').disabled = rows.length >= MAX_CHOICES;
+        $('plChoiceCount').textContent = `(${rows.length}/${MAX_CHOICES})`;
+      }
+
+      function addChoice(focus) {
+        if ($('plChoices').children.length >= MAX_CHOICES) return;
+        const row = choiceRow();
+        $('plChoices').appendChild(row);
+        refreshChoices();
+        if (focus) row.querySelector('input').focus();
+      }
+
+      function resetPollForm() {
+        $('plChoices').innerHTML = '';
+        for (let i = 0; i < MIN_CHOICES; i++) $('plChoices').appendChild(choiceRow());
+        refreshChoices();
+        const d = new Date(); d.setDate(d.getDate() + 7);
+        $('plClosing').min = today();
+        $('plClosing').value = isoDay(d);
+        $('plQuestionCount').textContent = '0/200';
+      }
+
+      function initPollForm() {
+        const list = $('plChoices');
+        let dragging = null;
+
+        $('plAddChoice').addEventListener('click', () => addChoice(true));
+        $('plQuestion').addEventListener('input', () => { $('plQuestionCount').textContent = $('plQuestion').value.length + '/200'; });
+
+        list.addEventListener('click', (e) => {
+          const rm = e.target.closest('[data-remove-choice]');
+          if (!rm || list.children.length <= MIN_CHOICES) return;
+          rm.closest('.pl-choice').remove();
+          refreshChoices();
+        });
+
+        // Enter adds a new choice instead of doing nothing
+        list.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter' || !e.target.matches('input')) return;
+          e.preventDefault();
+          const rows = [...list.children];
+          const next = e.target.closest('.pl-choice').nextElementSibling;
+          if (next) next.querySelector('input').focus();
+          else if (rows.length < MAX_CHOICES) addChoice(true);
+        });
+
+        // Drag to reorder (only from the grip, so text selection in the inputs still works)
+        list.addEventListener('mousedown', (e) => {
+          const grip = e.target.closest('.pl-grip');
+          if (grip) grip.closest('.pl-choice').draggable = true;
+        });
+        list.addEventListener('dragstart', (e) => {
+          if (!e.target.classList || !e.target.classList.contains('pl-choice')) return;
+          dragging = e.target;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', '');
+          setTimeout(() => dragging && dragging.classList.add('dragging'), 0);
+        });
+        list.addEventListener('dragover', (e) => {
+          if (!dragging) return;
+          e.preventDefault();
+          const after = [...list.children].filter(r => r !== dragging)
+            .find(r => e.clientY < r.getBoundingClientRect().top + r.offsetHeight / 2);
+          if (after) list.insertBefore(dragging, after); else list.appendChild(dragging);
+        });
+        list.addEventListener('dragend', () => {
+          if (!dragging) return;
+          dragging.classList.remove('dragging');
+          dragging.draggable = false;
+          dragging = null;
+          refreshChoices();
+        });
+        document.addEventListener('mouseup', () => {
+          list.querySelectorAll('.pl-choice[draggable="true"]').forEach(r => { if (!dragging) r.draggable = false; });
+        });
       }
 
       // Department and Year unlock only for "Specific Students"
@@ -348,10 +529,11 @@
         el.querySelectorAll('input[type="checkbox"]').forEach(i => { i.checked = false; });
         if (kind === 'event') $('evDate').value = today();
         if (kind === 'notification') $('ntIcon').value = NOTIF_TYPES[0].icon;
+        if (kind === 'poll') resetPollForm();
         syncAudience(f.prefix);
         el.querySelector('.modal-body').scrollTop = 0;
         UI.openModal(f.modalId);
-        setTimeout(() => { const first = el.querySelector('.form-input'); if (first) first.focus(); }, 150);
+        setTimeout(() => { const first = el.querySelector('.form-input, .form-textarea'); if (first) first.focus(); }, 150);
       }
 
       function validate(ids) {
@@ -364,17 +546,7 @@
         return missing.length === 0;
       }
 
-      function audience(p) {
-        const target = $(p + 'Target').value;
-        const students = target === 'students';
-        return {
-          target,
-          department: students ? $(p + 'Dept').value : '',
-          year: students ? $(p + 'Year').value : 'all'
-        };
-      }
-
-      // ─── Firebase: announcement_hub and event_hub ───
+      // ─── Firebase: announcement_hub, event_hub, notification_hub and poll_hub ───
       function toHubDoc(snapshotDoc) {
         const data = snapshotDoc.data({ serverTimestamps: 'estimate' });
         const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
@@ -388,13 +560,35 @@
 
       const HUB = {
         announcement: { collection: 'announcement_hub', items: [], error: null, ready: false, unsubscribe: null },
-        event: { collection: 'event_hub', items: [], error: null, ready: false, unsubscribe: null }
+        event: { collection: 'event_hub', items: [], error: null, ready: false, unsubscribe: null },
+        notification: { collection: 'notification_hub', items: [], error: null, ready: false, unsubscribe: null },
+        poll: { collection: 'poll_hub', items: [], error: null, ready: false, unsubscribe: null }
       };
+
+      // Who voted on which poll (poll_voters is readable by admins only)
+      const VOTERS = { items: [], error: null, unsubscribe: null };
+      let votersPollId = null;
 
       // Wait for the signed-in admin before listening, otherwise Firestore rejects the request.
       function startHubSync() {
         onAuthStateChanged(auth, (user) => {
-          Object.entries(HUB).forEach(([type, hub]) => {
+          if (VOTERS.unsubscribe) { VOTERS.unsubscribe(); VOTERS.unsubscribe = null; }
+          if (user) {
+            VOTERS.unsubscribe = onSnapshot(collection(db, 'poll_voters'), (snapshot) => {
+              VOTERS.items = snapshot.docs.map((d) => {
+                const data = d.data({ serverTimestamps: 'estimate' });
+                return { ...data, id: d.id, createdMs: data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0 };
+              });
+              VOTERS.error = null;
+              renderFeed();
+            }, (err) => {
+              console.error('Admin Hub: poll_voters listener failed', err);
+              VOTERS.items = [];
+              VOTERS.error = err;
+              renderFeed();
+            });
+          }
+          Object.values(HUB).forEach((hub) => {
             if (hub.unsubscribe) { hub.unsubscribe(); hub.unsubscribe = null; }
             if (!user) return;
 
@@ -414,17 +608,8 @@
         });
       }
 
-      // ─── Stores ───
-      const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications' };
-      const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification' };
-
-      // Notifications still use the local store; announcements and events use Firestore.
-      function getStore(type) {
-        if (type !== 'notification' || typeof NotificationsStore === 'undefined') {
-          throw new Error(LABELS[type] + ' store is not loaded');
-        }
-        return NotificationsStore;
-      }
+      const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications', poll: 'Polls' };
+      const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification', poll: '✚ New Poll' };
 
       // ─── Submit ───
       let sending = false;
@@ -459,7 +644,7 @@
         return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
       }
 
-      // Only "All Campus (Student Only)" is connected to Firebase for announcements and events.
+      // Only "All Campus (Student Only)" is connected to Firebase.
       function requireAllCampus(prefix) {
         if ($(prefix + 'Target').value !== 'all') {
           UI.toast('Only “All Campus (Student Only)” is connected to Firebase right now. Please choose it as the audience.', 'warning');
@@ -508,25 +693,46 @@
             location: $('evLocation').value.trim(),
             ...hubFields()
           };
+        } else if (kind === 'poll') {
+          if (!validate(['plQuestion', 'plClosing'])) return;
+          const texts = [...$('plChoices').querySelectorAll('input')].map(i => i.value.trim());
+          const filled = texts.filter(Boolean);
+          const dupes = new Set(filled.map(t => t.toLowerCase())).size !== filled.length;
+          if (filled.length < MIN_CHOICES || filled.length !== texts.length) {
+            [...$('plChoices').querySelectorAll('input')].forEach(i => { if (!i.value.trim()) i.classList.add('invalid'); });
+            UI.toast('Fill in every choice or remove the empty ones (at least ' + MIN_CHOICES + ' choices).', 'warning');
+            return;
+          }
+          if (dupes) { UI.toast('Two choices are the same. Please make each choice different.', 'warning'); return; }
+          if ($('plClosing').value < today()) {
+            $('plClosing').classList.add('invalid');
+            UI.toast('The closing date can’t be in the past.', 'warning');
+            return;
+          }
+          if (!requireAllCampus('pl')) return;
+          payload = {
+            question: $('plQuestion').value.trim(),
+            description: $('plDesc').value.trim(),
+            choices: filled.map((text, i) => ({ id: 'c' + (i + 1), text })),
+            category: $('plCategory').value,
+            closingDate: $('plClosing').value,
+            ...hubFields()
+          };
         } else {
-          if (!validate(['ntTitle', 'ntMessage'])) return;
+          if (!validate(['ntTitle', 'ntMessage']) || !requireAllCampus('nt')) return;
           payload = {
             title: $('ntTitle').value.trim(),
             message: $('ntMessage').value.trim(),
+            category: $('ntCategory').value,
             type: $('ntType').value,
             icon: $('ntIcon').value,
-            time: 'Just now',
-            ...audience('nt')
+            ...hubFields()
           };
         }
 
         try {
-          if (HUB[kind]) {
-            console.info('Admin Hub: publishing to ' + HUB[kind].collection, { ...payload, createdAt: '(server time)' });
-            await withTimeout(addDoc(collection(db, HUB[kind].collection), payload), 15000);
-          } else {
-            await getStore(kind).add(payload);
-          }
+          console.info('Admin Hub: publishing to ' + HUB[kind].collection, { ...payload, createdAt: '(server time)' });
+          await withTimeout(addDoc(collection(db, HUB[kind].collection), payload), 15000);
         } catch (err) {
           console.error(err);
           const denied = err && err.code === 'permission-denied';
@@ -536,64 +742,48 @@
           return;
         }
 
-        UI.toast({ announcement: 'Announcement published!', event: 'Event created!', notification: 'Notification sent!' }[kind], 'success');
+        UI.toast({ announcement: 'Announcement published!', event: 'Event created!', notification: 'Notification sent!', poll: 'Poll created!' }[kind], 'success');
         UI.closeModal(FORMS[kind].modalId);
         renderFeed();
       }
 
       // ─── Feed ───
-      async function buildFeed() {
-        const failed = [];
-        let notifications = [];
-        try {
-          const list = await getStore('notification').getAll();
-          notifications = Array.isArray(list) ? list : [];
-        } catch (err) {
-          console.error('Admin Hub: could not load notifications', err);
-          failed.push(LABELS.notification);
-        }
+      function buildFeed() {
         const dayMs = (d) => new Date((d || today()) + 'T00:00:00').getTime();
 
-        const feed = [
+        return [
           ...HUB.announcement.items.map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
           ...HUB.event.items.map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
-          // Announcements and events create their own notification; list only the ones sent by hand.
-          ...notifications.filter(n => !n.actionType).map(n => ({ type: 'notification', data: n, category: null, rank: 1, sort: Number(n.id) || 0 }))
+          ...HUB.notification.items.map(n => ({ type: 'notification', data: n, category: n.category, rank: 1, sort: n.createdMs || dayMs(n.date) })),
+          ...HUB.poll.items.map(p => ({ type: 'poll', data: p, category: p.category, rank: 1, sort: p.createdMs || dayMs(p.date) }))
         ].sort((a, b) => a.rank - b.rank || b.sort - a.sort);
-
-        return { feed, failed };
       }
 
       function applyFilters(feed) {
         return feed.filter(item => {
           if (item.type !== typeFilter) return false;
-          if (categoryFilter !== 'all') {
-            // Notifications have no category, so they only show when browsing them directly
-            if (item.type === 'notification') return typeFilter === 'notification';
-            if (item.category !== categoryFilter) return false;
-          }
+          if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
           if (!searchTerm) return true;
           const d = item.data;
-          return [d.title, d.body, d.description, d.message, d.category, d.author, d.location]
+          return [d.title, d.question, d.body, d.description, d.message, d.category, d.author, d.location]
             .some(v => v && String(v).toLowerCase().includes(searchTerm));
         });
       }
 
-      let renderToken = 0;
-      async function renderFeed() {
-        const token = ++renderToken;
-        const { feed, failed } = await buildFeed();
-        if (token !== renderToken) return; // a newer render is already running
-
+      function renderFeed() {
+        const feed = buildFeed();
+        const failed = [];
         Object.entries(HUB).forEach(([type, hub]) => {
           if (!hub.error) return;
-          failed.unshift(hub.error.code === 'permission-denied'
+          failed.push(hub.error.code === 'permission-denied'
             ? LABELS[type] + ' (Firebase denied access — publish the new Firestore rules)'
             : LABELS[type]);
         });
         const banner = $('hubError');
         banner.style.display = failed.length ? 'block' : 'none';
         banner.textContent = failed.length ? `Couldn’t load ${failed.join(', ')}. Open the browser console (F12) for details.` : '';
+
+        if (votersPollId && $('pollVotersModal') && $('pollVotersModal').classList.contains('active')) renderVoters();
 
         const items = applyFilters(feed);
         const container = $('hubFeed');
@@ -620,7 +810,8 @@
         container.innerHTML = items.map(i => {
           try {
             return i.type === 'announcement' ? announcementCard(i.data) :
-                   i.type === 'event' ? eventCard(i.data) : notificationCard(i.data);
+                   i.type === 'event' ? eventCard(i.data) :
+                   i.type === 'poll' ? pollCard(i.data) : notificationCard(i.data);
           } catch (err) {
             console.error('Admin Hub: could not draw an item', i, err);
             return '';
@@ -684,6 +875,76 @@
           </div>`;
       }
 
+      function pollCard(p) {
+        const choices = Array.isArray(p.choices) ? p.choices : [];
+        const closed = p.closingDate && p.closingDate < today();
+        const votes = VOTERS.items.filter(v => v.pollId === p.id);
+        const total = votes.length;
+        const results = choices.map(c => {
+          const n = votes.filter(v => String(v.choiceId) === String(c.id)).length;
+          const pct = total ? Math.round((n / total) * 100) : 0;
+          return `
+            <div class="pl-result">
+              <div class="pl-result-head"><span>${esc(c.text)}</span><span>${pct}% · ${n} ${n === 1 ? 'vote' : 'votes'}</span></div>
+              <div class="pl-bar-track"><div class="pl-bar" style="width:${pct}%;"></div></div>
+            </div>`;
+        }).join('');
+        return `
+          <div class="hub-feed-item hub-item-poll" id="hub-poll-${esc(p.id)}">
+            <div class="hub-type-label type-poll">📊 POLL</div>
+            <div class="flex items-center gap-md" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
+              <span class="tag">${esc(p.category)}</span>
+              <span class="badge ${closed ? '' : 'badge-primary'}">${closed ? 'Closed' : 'Open'}</span>
+            </div>
+            <h3 style="margin-bottom:var(--space-sm);">${esc(p.question)}</h3>
+            ${p.description ? `<p class="text-secondary text-sm" style="margin-bottom:var(--space-md); line-height:1.6;">${esc(p.description)}</p>` : ''}
+            <div style="margin-bottom:var(--space-md);">${results}</div>
+            ${VOTERS.error ? '<p class="text-sm" style="color:#fca5a5; margin-bottom:var(--space-md);">Couldn’t load votes. Publish the new Firestore rules, then refresh.</p>' : ''}
+            <div class="flex items-center gap-lg" style="flex-wrap:wrap;">
+              <span class="text-muted text-sm">👥 ${total} ${total === 1 ? 'student has' : 'students have'} voted</span>
+              <span class="text-muted text-sm">⏳ ${closed ? 'Closed' : 'Closes'} ${UI.formatDate(p.closingDate)}</span>
+              <span class="text-muted text-sm">✍️ ${esc(p.author)}</span>
+              ${audienceLabel(p)}
+            </div>
+            <div class="hub-actions">
+              <button class="hub-action-btn" data-action="voters" data-id="${esc(p.id)}">👥 Who voted</button>
+              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="poll" data-id="${esc(p.id)}">🗑️ Delete</button>
+            </div>
+          </div>`;
+      }
+
+      // ─── Who voted ───
+      function renderVoters() {
+        const poll = HUB.poll.items.find(x => x.id === votersPollId);
+        if (!poll) return;
+        const votes = VOTERS.items.filter(v => v.pollId === poll.id).sort((a, b) => a.createdMs - b.createdMs);
+        $('pollVotersTitle').textContent = poll.question;
+        const when = (ms) => ms ? new Date(ms).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+        if (!votes.length) {
+          $('pollVotersBody').innerHTML = '<div class="empty-state"><div class="empty-icon">🗳️</div><h3>No votes yet</h3><p>Students who vote will appear here.</p></div>';
+          return;
+        }
+        $('pollVotersBody').innerHTML = `<p class="text-muted text-sm" style="margin-bottom:var(--space-lg);">${votes.length} ${votes.length === 1 ? 'student has' : 'students have'} voted.</p>` +
+          (poll.choices || []).map(c => {
+            const group = votes.filter(v => String(v.choiceId) === String(c.id));
+            return `
+              <div class="pl-voter-group">
+                <h4><span>${esc(c.text)}</span><span class="text-muted">${group.length}</span></h4>
+                ${group.length ? group.map(v => `
+                  <div class="pl-voter-row">
+                    <div>${esc(v.voterName || 'Student')}<small>${esc([v.voterEmail, v.department, v.year].filter(Boolean).join(' · '))}</small></div>
+                    <time>${esc(when(v.createdMs))}</time>
+                  </div>`).join('') : '<div class="text-muted text-sm">No votes for this choice.</div>'}
+              </div>`;
+          }).join('');
+      }
+
+      function openVoters(pollId) {
+        votersPollId = pollId;
+        renderVoters();
+        UI.openModal('pollVotersModal');
+      }
+
       function notificationCard(n) {
         return `
           <div class="hub-feed-item hub-item-notification" id="hub-notif-${esc(n.id)}">
@@ -693,7 +954,7 @@
               <div style="flex:1; min-width:0;">
                 <div class="font-semibold text-sm" style="margin-bottom:2px;">${esc(n.title)}</div>
                 <div class="text-secondary" style="font-size:0.83rem; margin-bottom:4px;">${esc(n.message)}</div>
-                <div class="text-muted" style="font-size:0.75rem;">${esc(n.time)} ${audienceLabel(n)}</div>
+                <div class="text-muted" style="font-size:0.75rem;">${esc(n.category)} · ${UI.formatDate(n.date)} ${audienceLabel(n)}</div>
               </div>
             </div>
             <div class="hub-actions">
@@ -704,10 +965,13 @@
 
       // ─── Actions ───
       async function deleteItem(type, id) {
-        if (!confirm(`Delete this ${type}? This can’t be undone.`)) return;
+        if (!confirm(type === 'poll' ? 'Delete this poll and all of its votes? This can’t be undone.' : `Delete this ${type}? This can’t be undone.`)) return;
         try {
-          if (HUB[type]) await deleteDoc(doc(db, HUB[type].collection, id));
-          else await getStore(type).delete(id);
+          await deleteDoc(doc(db, HUB[type].collection, id));
+          if (type === 'poll') {
+            const votes = VOTERS.items.filter(v => v.pollId === id);
+            await Promise.all(votes.flatMap(v => [deleteDoc(doc(db, 'poll_voters', v.id)), deleteDoc(doc(db, 'poll_votes', v.id))]));
+          }
         } catch (err) {
           console.error(err);
           UI.toast('Couldn’t delete it: ' + (err.message || 'see the browser console.'), 'error');
@@ -761,6 +1025,7 @@
           const actionBtn = e.target.closest('[data-action]');
           if (!actionBtn) return;
           if (actionBtn.dataset.action === 'delete') deleteItem(actionBtn.dataset.type, actionBtn.dataset.id);
+          if (actionBtn.dataset.action === 'voters') openVoters(actionBtn.dataset.id);
           if (actionBtn.dataset.action === 'pin') togglePin(actionBtn.dataset.id, actionBtn.dataset.pinned === '1');
         });
 
@@ -791,7 +1056,7 @@
           if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
         });
 
-        // Deep link: admin-hub.html?create=announcement | event | notification
+        // Deep link: admin-hub.html?create=announcement | event | notification | poll
         const create = new URLSearchParams(window.location.search).get('create');
         if (FORMS[create]) {
           typeFilter = create;
