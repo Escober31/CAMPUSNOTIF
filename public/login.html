@@ -295,7 +295,6 @@
       const name = document.getElementById('newName').value.trim();
       const email = document.getElementById('newEmail').value.trim();
       const dept = document.getElementById('newDept')?.value || 'Administration';
-      const title = document.getElementById('newTitle')?.value.trim() || 'Administrator';
       const pw = document.getElementById('newPw').value;
       const pwConfirm = document.getElementById('newPwConfirm').value;
 
@@ -335,7 +334,6 @@
             fullName: name,
             email: email,
             department: dept,
-            position: title,
             role: "admin",
             createdAt: serverTimestamp()
           });
@@ -359,8 +357,8 @@
           email: email,
           role: "admin",
           department: dept,
-          position: title,
-          title: title,
+          position: "Administrator",
+          title: "Administrator",
           avatar: Auth.getInitials(name)
         };
         Auth.cacheUser(profile, true);
@@ -459,8 +457,8 @@
           email: adminData.email || user.email,
           role: "admin",
           department: adminData.department || "Administration",
-          position: adminData.position || adminData.title || "Administrator",
-          title: adminData.position || adminData.title || "Administrator",
+          position: "Administrator",
+          title: "Administrator",
           avatar: Auth.getInitials(adminData.fullName || user.email)
         };
 
@@ -533,7 +531,7 @@
           </div>
 
           <!-- Admin specific fields -->
-          <div class="grid-2" id="adminSpecificFields">
+          <div id="adminSpecificFields">
             <div class="form-group">
               <label class="form-label" for="newDept">Department / Office</label>
               <select id="newDept" class="form-select">
@@ -543,10 +541,6 @@
                 <option value="IT Services">IT Services</option>
                 <option value="Faculty & Staff">Faculty & Staff</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="newTitle">Admin Title / Position</label>
-              <input type="text" id="newTitle" class="form-input" placeholder="e.g. Dean of Students">
             </div>
           </div>
 
