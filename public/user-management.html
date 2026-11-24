@@ -127,31 +127,124 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     let allUsersList = [];
     let currentRoleFilter = 'all';
     let userToDelete = null;
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    let loadedForUid = null;
+    let unsubscribers = [];
+    let adminUsers = [];
+    let studentUsers = [];
+    let adminReady = false;
+    let studentReady = false;
+
+    // The last list is kept for this browser session, so coming back to this page draws instantly
+    // while the live data loads in the background.
+    const CACHE_KEY = 'campusnotify_admin_users_cache';
+
+    function currentAdminId() {
+      const u = Auth.getUser();
+      return u ? String(u.uid || u.id || '') : '';
+    }
+
+    function readCache() {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && cached.owner && cached.owner === currentAdminId() && Array.isArray(cached.users)) return cached.users;
+      } catch (e) { }
+      return null;
+    }
+
+    function writeCache() {
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ owner: currentAdminId(), users: allUsersList }));
+      } catch (e) { }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
       // Require authentication & admin role
       if (!Auth.requireAuth()) return;
       initPage('users');
 
-      await loadAllUsers();
+      // Show the last known list right away
+      const cached = readCache();
+      if (cached) {
+        allUsersList = cached;
+        updateCounters(allUsersList);
+        filterUsers();
+      }
+
+      // Firebase restores the signed-in admin a moment after the page opens. Reading Firestore
+      // before that happens is rejected (no signed-in user yet), so wait for Firebase to report the admin.
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          if (!cached) showTableMessage('You are not signed in. Please log in again.');
+          return;
+        }
+        if (loadedForUid === user.uid) return;
+        loadedForUid = user.uid;
+        loadAllUsers();
+      });
     });
 
-    async function loadAllUsers() {
+    function showTableMessage(html) {
       const tbody = document.getElementById('usersTableBody');
-      const empty = document.getElementById('usersEmpty');
+      document.getElementById('usersEmpty').style.display = 'none';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:var(--space-2xl); color:var(--text-muted);">${html}</td>
+        </tr>`;
+    }
 
+    function toIso(val) {
       try {
-        // Read all documents from both admin_account and student_account
-        const adminSnap = await getDocs(collection(db, "admin_account"));
-        const adminUsers = [];
-        adminSnap.forEach(d => {
+        if (!val) return null;
+        if (typeof val.toDate === 'function') return val.toDate().toISOString();
+        if (val.seconds) return new Date(val.seconds * 1000).toISOString();
+        return val;
+      } catch (e) { return null; }
+    }
+
+    function publishUsers() {
+      // Wait until both lists have answered once, so the totals never flash a half-loaded number
+      if (!adminReady || !studentReady) return;
+      allUsersList = [...adminUsers, ...studentUsers];
+      writeCache();
+      updateCounters(allUsersList);
+      filterUsers();
+    }
+
+    function handleLoadError(err) {
+      console.error("Error loading accounts from Firestore:", err);
+      const denied = err && err.code === 'permission-denied';
+      if (allUsersList.length > 0) {
+        UI.toast(denied ? 'Firebase denied access, so this list may be out of date.' : 'Could not refresh the list. Showing the last one.', 'warning');
+        return;
+      }
+      showTableMessage(`
+        Unable to load accounts from Cloud Firestore.<br>
+        <span style="font-size:0.8rem; color:var(--accent-amber);">${denied
+          ? 'Firebase denied access. Make sure you are signed in as an admin (an admin_account document exists for you) and the Firestore rules are published.'
+          : 'Check your internet connection and the credentials in <code>firebase-config.js</code>.'}</span><br>
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px;" onclick="loadAllUsers()">Try again</button>
+      `);
+    }
+
+    // Live listeners: the list fills as soon as Firebase answers and then stays up to date by itself
+    function loadAllUsers() {
+      unsubscribers.forEach(fn => fn());
+      unsubscribers = [];
+      adminReady = false;
+      studentReady = false;
+      if (allUsersList.length === 0) showTableMessage('Loading accounts from Cloud Firestore...');
+
+      unsubscribers.push(onSnapshot(collection(db, "admin_account"), (snap) => {
+        adminUsers = snap.docs.map(d => {
           const data = d.data();
-          adminUsers.push({
+          return {
             id: d.id,
             uid: data.uid || d.id,
             name: data.fullName || data.name || 'Unnamed Admin',
@@ -160,15 +253,17 @@
             department: data.department || 'Administration',
             position: data.position || data.title || 'Administrator',
             year: '—',
-            createdAt: data.createdAt
-          });
+            createdAt: toIso(data.createdAt)
+          };
         });
+        adminReady = true;
+        publishUsers();
+      }, handleLoadError));
 
-        const studentSnap = await getDocs(collection(db, "student_account"));
-        const studentUsers = [];
-        studentSnap.forEach(d => {
+      unsubscribers.push(onSnapshot(collection(db, "student_account"), (snap) => {
+        studentUsers = snap.docs.map(d => {
           const data = d.data();
-          studentUsers.push({
+          return {
             id: d.id,
             uid: data.uid || d.id,
             name: data.fullName || data.name || 'Unnamed Student',
@@ -177,25 +272,12 @@
             department: data.department || '—',
             position: '—',
             year: data.year || data.yearLevel || data.academicYear || '—',
-            createdAt: data.createdAt
-          });
+            createdAt: toIso(data.createdAt)
+          };
         });
-
-        allUsersList = [...adminUsers, ...studentUsers];
-        updateCounters(allUsersList);
-        filterUsers();
-
-      } catch (err) {
-        console.error("Error loading accounts from Firestore:", err);
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" style="text-align:center; padding:var(--space-2xl); color:var(--text-muted);">
-              Unable to load accounts from Cloud Firestore.<br>
-              <span style="font-size:0.8rem; color:var(--accent-amber);">If you have not yet added your real Firebase credentials in <code>firebase-config.js</code>, please update it.</span>
-            </td>
-          </tr>
-        `;
-      }
+        studentReady = true;
+        publishUsers();
+      }, handleLoadError));
     }
 
     function updateCounters(list) {
@@ -371,6 +453,7 @@
     }
 
     // Expose functions globally for inline HTML event handlers
+    window.loadAllUsers = loadAllUsers;
     window.setRoleFilter = setRoleFilter;
     window.filterUsers = filterUsers;
     window.openDeleteUserModal = openDeleteUserModal;

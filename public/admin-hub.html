@@ -213,6 +213,11 @@
       }
 
       function audienceLabel(item) {
+        // announcement_SS / event_SS documents carry target1 (department) and target2 (year level)
+        if (item.target1) {
+          const dept = DEPARTMENTS.find(d => d.value.toLowerCase() === String(item.target1).toLowerCase());
+          return `<span class="ah-audience">${esc('🎓 Specific Students · ' + (dept ? dept.label : item.target1) + ' · ' + (item.target2 || 'All Year Level'))}</span>`;
+        }
         const target = item.target || 'all';
         let label = (AUDIENCES.find(a => a.value === target) || AUDIENCES[0]).short;
         if (target === 'students') {
@@ -281,7 +286,7 @@
                 <select class="form-select" id="annPriority">${options(PRIORITIES)}</select>
               </div>
             </div>
-            ${audienceFields('ann', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}
+            ${audienceFields('ann', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}
             <div class="form-group">
               <label class="form-checkbox-group"><input type="checkbox" id="annPinned"> 📌 Pin this announcement</label>
             </div>`
@@ -317,7 +322,7 @@
                 <input class="form-input" id="evLocation" type="text" placeholder="e.g. Main Auditorium">
               </div>
             </div>
-            ${audienceFields('ev', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
+            ${audienceFields('ev', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}`
         },
         notification: {
           modalId: 'notificationModal', prefix: 'nt',
@@ -344,7 +349,7 @@
                 <select class="form-select" id="ntIcon">${NOTIF_ICONS.map(i => `<option value="${i}">${i}</option>`).join('')}</select>
               </div>
             </div>
-            ${audienceFields('nt', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
+            ${audienceFields('nt', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}`
         },
         poll: {
           modalId: 'pollModal', prefix: 'pl',
@@ -513,6 +518,13 @@
       // Department and Year unlock only for "Specific Students"
       function syncAudience(p) {
         const on = $(p + 'Target').value === 'students';
+        // Announcements and events need a real department when sent to Specific Students
+        if (p === 'ann' || p === 'ev' || p === 'nt') {
+          const dept = $(p + 'Dept');
+          dept.options[0].disabled = on;
+          if (on && dept.value === 'all') dept.selectedIndex = 1;
+          if (!on) dept.selectedIndex = 0;
+        }
         ['Dept', 'Year'].forEach(k => {
           $(p + k).disabled = !on;
           $(p + k + 'Field').classList.toggle('is-disabled', !on);
@@ -547,12 +559,13 @@
       }
 
       // ─── Firebase: announcement_hub, event_hub, notification_hub and poll_hub ───
-      function toHubDoc(snapshotDoc) {
+      function toHubDoc(snapshotDoc, collectionName) {
         const data = snapshotDoc.data({ serverTimestamps: 'estimate' });
         const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
         return {
           ...data,
           id: snapshotDoc.id,
+          _collection: collectionName,
           createdMs,
           date: data.date || (createdMs ? isoDay(new Date(createdMs)) : today())
         };
@@ -561,6 +574,9 @@
       const HUB = {
         announcement: { collection: 'announcement_hub', items: [], error: null, ready: false, unsubscribe: null },
         event: { collection: 'event_hub', items: [], error: null, ready: false, unsubscribe: null },
+        announcementSS: { collection: 'announcement_SS', items: [], error: null, ready: false, unsubscribe: null },
+        eventSS: { collection: 'event_SS', items: [], error: null, ready: false, unsubscribe: null },
+        notificationSS: { collection: 'notification_SS', items: [], error: null, ready: false, unsubscribe: null },
         notification: { collection: 'notification_hub', items: [], error: null, ready: false, unsubscribe: null },
         poll: { collection: 'poll_hub', items: [], error: null, ready: false, unsubscribe: null }
       };
@@ -593,7 +609,7 @@
             if (!user) return;
 
             hub.unsubscribe = onSnapshot(collection(db, hub.collection), (snapshot) => {
-              hub.items = snapshot.docs.map(toHubDoc);
+              hub.items = snapshot.docs.map((d) => toHubDoc(d, hub.collection));
               hub.error = null;
               hub.ready = true;
               renderFeed();
@@ -608,7 +624,7 @@
         });
       }
 
-      const LABELS = { announcement: 'Announcements', event: 'Events', notification: 'Notifications', poll: 'Polls' };
+      const LABELS = { announcement: 'Announcements', announcementSS: 'Specific-student announcements', eventSS: 'Specific-student events', notificationSS: 'Specific-student notifications', event: 'Events', notification: 'Notifications', poll: 'Polls' };
       const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification', poll: '✚ New Poll' };
 
       // ─── Submit ───
@@ -658,6 +674,49 @@
         return true;
       }
 
+      // Announcements and events: "All Campus" → announcement_hub / event_hub,
+      // "Specific Students" → announcement_SS / event_SS with target1 (department) and target2 (year level).
+      // Faculty & Staff is not connected yet.
+      function requireAudience(prefix) {
+        const target = $(prefix + 'Target').value;
+        if (target === 'faculty') {
+          UI.toast('Faculty & Staff is not connected to Firebase yet. Choose All Campus or Specific Students.', 'warning');
+          $(prefix + 'Target').focus();
+          return false;
+        }
+        if (target === 'students' && $(prefix + 'Dept').value === 'all') {
+          UI.toast('Pick a specific department for Specific Students.', 'warning');
+          $(prefix + 'Dept').focus();
+          return false;
+        }
+        if (!auth.currentUser) {
+          UI.toast('You are not signed in. Please log in again.', 'error');
+          return false;
+        }
+        return true;
+      }
+
+      function audienceTarget(prefix, kind) {
+        if ($(prefix + 'Target').value !== 'students') {
+          return { collection: HUB[kind].collection, fields: hubFields(), sentTo: '' };
+        }
+        const dept = $(prefix + 'Dept');
+        const year = $(prefix + 'Year').value;
+        const target1 = dept.value.toLowerCase();
+        const target2 = year === 'all' ? 'All Year Level' : year;
+        return {
+          collection: HUB[kind + 'SS'].collection,
+          fields: {
+            author: currentAuthor(),
+            authorId: auth.currentUser.uid,
+            createdAt: serverTimestamp(),
+            target1,
+            target2
+          },
+          sentTo: dept.options[dept.selectedIndex].text + ' · ' + target2
+        };
+      }
+
       function hubFields() {
         return {
           author: currentAuthor(),
@@ -671,8 +730,10 @@
 
       async function send(kind) {
         let payload;
+        let aud = null;
         if (kind === 'announcement') {
-          if (!validate(['annTitle', 'annBody']) || !requireAllCampus('ann')) return;
+          if (!validate(['annTitle', 'annBody']) || !requireAudience('ann')) return;
+          aud = audienceTarget('ann', 'announcement');
           payload = {
             title: $('annTitle').value.trim(),
             body: $('annBody').value.trim(),
@@ -680,10 +741,11 @@
             priority: $('annPriority').value,
             pinned: $('annPinned').checked,
             date: today(),
-            ...hubFields()
+            ...aud.fields
           };
         } else if (kind === 'event') {
-          if (!validate(['evTitle', 'evDesc', 'evDate', 'evTime', 'evLocation']) || !requireAllCampus('ev')) return;
+          if (!validate(['evTitle', 'evDesc', 'evDate', 'evTime', 'evLocation']) || !requireAudience('ev')) return;
+          aud = audienceTarget('ev', 'event');
           payload = {
             title: $('evTitle').value.trim(),
             description: $('evDesc').value.trim(),
@@ -691,7 +753,7 @@
             date: $('evDate').value,
             time: to12h($('evTime').value),
             location: $('evLocation').value.trim(),
-            ...hubFields()
+            ...aud.fields
           };
         } else if (kind === 'poll') {
           if (!validate(['plQuestion', 'plClosing'])) return;
@@ -719,20 +781,22 @@
             ...hubFields()
           };
         } else {
-          if (!validate(['ntTitle', 'ntMessage']) || !requireAllCampus('nt')) return;
+          if (!validate(['ntTitle', 'ntMessage']) || !requireAudience('nt')) return;
+          aud = audienceTarget('nt', 'notification');
           payload = {
             title: $('ntTitle').value.trim(),
             message: $('ntMessage').value.trim(),
             category: $('ntCategory').value,
             type: $('ntType').value,
             icon: $('ntIcon').value,
-            ...hubFields()
+            ...aud.fields
           };
         }
 
         try {
-          console.info('Admin Hub: publishing to ' + HUB[kind].collection, { ...payload, createdAt: '(server time)' });
-          await withTimeout(addDoc(collection(db, HUB[kind].collection), payload), 15000);
+          const collectionName = aud ? aud.collection : HUB[kind].collection;
+          console.info('Admin Hub: publishing to ' + collectionName, { ...payload, createdAt: '(server time)' });
+          await withTimeout(addDoc(collection(db, collectionName), payload), 15000);
         } catch (err) {
           console.error(err);
           const denied = err && err.code === 'permission-denied';
@@ -742,7 +806,7 @@
           return;
         }
 
-        UI.toast({ announcement: 'Announcement published!', event: 'Event created!', notification: 'Notification sent!', poll: 'Poll created!' }[kind], 'success');
+        UI.toast(({ announcement: 'Announcement published!', event: 'Event created!', notification: 'Notification sent!', poll: 'Poll created!' }[kind]) + (aud && aud.sentTo ? ' Sent to ' + aud.sentTo + '.' : ''), 'success');
         UI.closeModal(FORMS[kind].modalId);
         renderFeed();
       }
@@ -752,9 +816,9 @@
         const dayMs = (d) => new Date((d || today()) + 'T00:00:00').getTime();
 
         return [
-          ...HUB.announcement.items.map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
-          ...HUB.event.items.map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
-          ...HUB.notification.items.map(n => ({ type: 'notification', data: n, category: n.category, rank: 1, sort: n.createdMs || dayMs(n.date) })),
+          ...[...HUB.announcement.items, ...HUB.announcementSS.items].map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
+          ...[...HUB.event.items, ...HUB.eventSS.items].map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
+          ...[...HUB.notification.items, ...HUB.notificationSS.items].map(n => ({ type: 'notification', data: n, category: n.category, rank: 1, sort: n.createdMs || dayMs(n.date) })),
           ...HUB.poll.items.map(p => ({ type: 'poll', data: p, category: p.category, rank: 1, sort: p.createdMs || dayMs(p.date) }))
         ].sort((a, b) => a.rank - b.rank || b.sort - a.sort);
       }
@@ -838,8 +902,8 @@
                 ${audienceLabel(a)}
               </div>
               <div class="hub-actions">
-                <button class="hub-action-btn" data-action="pin" data-id="${esc(a.id)}" data-pinned="${a.pinned ? '1' : '0'}">${a.pinned ? '📌 Unpin' : '📌 Pin'}</button>
-                <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="announcement" data-id="${esc(a.id)}">🗑️ Delete</button>
+                <button class="hub-action-btn" data-action="pin" data-id="${esc(a.id)}" data-collection="${esc(a._collection || 'announcement_hub')}" data-pinned="${a.pinned ? '1' : '0'}">${a.pinned ? '📌 Unpin' : '📌 Pin'}</button>
+                <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="announcement" data-collection="${esc(a._collection || 'announcement_hub')}" data-id="${esc(a.id)}">🗑️ Delete</button>
               </div>
             </div>
           </div>`;
@@ -870,7 +934,7 @@
               </div>
             </div>
             <div class="hub-actions">
-              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="event" data-id="${esc(ev.id)}">🗑️ Delete</button>
+              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="event" data-collection="${esc(ev._collection || 'event_hub')}" data-id="${esc(ev.id)}">🗑️ Delete</button>
             </div>
           </div>`;
       }
@@ -958,16 +1022,16 @@
               </div>
             </div>
             <div class="hub-actions">
-              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="notification" data-id="${esc(n.id)}">🗑️ Delete</button>
+              <button class="hub-action-btn ah-actions-danger" data-action="delete" data-type="notification" data-collection="${esc(n._collection || 'notification_hub')}" data-id="${esc(n.id)}">🗑️ Delete</button>
             </div>
           </div>`;
       }
 
       // ─── Actions ───
-      async function deleteItem(type, id) {
+      async function deleteItem(type, id, collectionName) {
         if (!confirm(type === 'poll' ? 'Delete this poll and all of its votes? This can’t be undone.' : `Delete this ${type}? This can’t be undone.`)) return;
         try {
-          await deleteDoc(doc(db, HUB[type].collection, id));
+          await deleteDoc(doc(db, collectionName || HUB[type].collection, id));
           if (type === 'poll') {
             const votes = VOTERS.items.filter(v => v.pollId === id);
             await Promise.all(votes.flatMap(v => [deleteDoc(doc(db, 'poll_voters', v.id)), deleteDoc(doc(db, 'poll_votes', v.id))]));
@@ -981,9 +1045,9 @@
         renderFeed();
       }
 
-      async function togglePin(id, pinned) {
+      async function togglePin(id, pinned, collectionName) {
         try {
-          await updateDoc(doc(db, HUB.announcement.collection, id), { pinned: !pinned });
+          await updateDoc(doc(db, collectionName || HUB.announcement.collection, id), { pinned: !pinned });
         } catch (err) {
           console.error(err);
           UI.toast('Couldn’t update the pin: ' + (err.message || 'see the browser console.'), 'error');
@@ -1024,9 +1088,9 @@
 
           const actionBtn = e.target.closest('[data-action]');
           if (!actionBtn) return;
-          if (actionBtn.dataset.action === 'delete') deleteItem(actionBtn.dataset.type, actionBtn.dataset.id);
+          if (actionBtn.dataset.action === 'delete') deleteItem(actionBtn.dataset.type, actionBtn.dataset.id, actionBtn.dataset.collection);
           if (actionBtn.dataset.action === 'voters') openVoters(actionBtn.dataset.id);
-          if (actionBtn.dataset.action === 'pin') togglePin(actionBtn.dataset.id, actionBtn.dataset.pinned === '1');
+          if (actionBtn.dataset.action === 'pin') togglePin(actionBtn.dataset.id, actionBtn.dataset.pinned === '1', actionBtn.dataset.collection);
         });
 
         // Filters and search
