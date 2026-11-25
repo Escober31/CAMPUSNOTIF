@@ -186,8 +186,8 @@ const Auth = {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem('campusnotify_user', JSON.stringify(user));
     storage.setItem('campusnotify_role', user.role);
-    // Set flag for daily login reward auto-prompt (students only)
-    if (user.role === 'student') {
+    // Set flag for daily login reward auto-prompt (students, staff and admins)
+    if (user.role === 'student' || user.role === 'staff' || user.role === 'admin') {
       localStorage.setItem('campusnotify_just_logged_in', 'true');
     }
     window.location.href = 'dashboard.html';
@@ -1501,14 +1501,18 @@ const ForYouFeed = {
   }
 };
 
-// ─── Daily Login UI & Game Skins Controller (Students Only) ───
+// ─── Daily Login UI & Game Skins Controller (Students, Staff and Admins) ───
 const DailyLoginUI = {
   _activeLockerGame: 'chess',
 
+  // Students, staff and admins can use daily login rewards (rule lives in DailyLoginStore).
+  // Pages that don't load stores.js simply skip the feature.
+  _eligible() {
+    return typeof DailyLoginStore !== 'undefined' && DailyLoginStore.isEligible();
+  },
+
   init() {
-    // Only student role is eligible for daily login rewards
-    const role = Auth.getRole();
-    if (role !== 'student') return;
+    if (!this._eligible()) return;
 
     this.injectModals();
     this.checkAutoPrompt();
@@ -1558,7 +1562,7 @@ const DailyLoginUI = {
   },
 
   checkAutoPrompt() {
-    if (Auth.getRole() !== 'student') return;
+    if (!this._eligible()) return;
 
     const canClaim = DailyLoginStore.canClaimToday();
     const justLoggedIn = localStorage.getItem('campusnotify_just_logged_in') === 'true';
@@ -1575,8 +1579,8 @@ const DailyLoginUI = {
   },
 
   openModal() {
-    if (Auth.getRole() !== 'student') {
-      UI.toast('Daily Login Rewards are available exclusively for Students.', 'info');
+    if (!this._eligible()) {
+      UI.toast('Daily Login Rewards are not available for this account.', 'info');
       return;
     }
     this.injectModals();
@@ -1591,8 +1595,8 @@ const DailyLoginUI = {
   },
 
   openLockerModal(game = 'chess') {
-    if (Auth.getRole() !== 'student') {
-      UI.toast('Game Skins & Displays Locker is available for Students.', 'info');
+    if (!this._eligible()) {
+      UI.toast('Game Skins & Displays Locker is not available for this account.', 'info');
       return;
     }
     this.injectModals();
@@ -1997,7 +2001,7 @@ const DailyLoginUI = {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    if (Auth.getRole() !== 'student') {
+    if (!this._eligible()) {
       container.innerHTML = '';
       return;
     }

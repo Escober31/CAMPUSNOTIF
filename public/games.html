@@ -889,8 +889,8 @@
     function applyAllEquippedGameSkins() {
       if (typeof DailyLoginStore === 'undefined') return;
 
-      const role = (typeof Auth !== 'undefined') ? Auth.getRole() : 'student';
-      const isStudent = role === 'student';
+      // Daily rewards and skins are open to students, staff and admins.
+      const isStudent = DailyLoginStore.isEligible();
 
       const btnRewards = document.getElementById('btnStudentDailyRewards');
       const btnLocker = document.getElementById('btnGameSkinsLocker');

@@ -731,9 +731,15 @@ const DailyLoginStore = {
     return `${this._baseKey}_${id}`;
   },
 
-  isStudent() {
+  // Daily Login rewards are open to students, staff and admins.
+  isEligible() {
     const role = Auth.getRole();
-    return role === 'student';
+    return role === 'student' || role === 'staff' || role === 'admin';
+  },
+
+  // Older name, kept so existing callers still work.
+  isStudent() {
+    return this.isEligible();
   },
 
   getSchedule() {
@@ -803,14 +809,14 @@ const DailyLoginStore = {
   },
 
   canClaimToday(userId) {
-    if (!this.isStudent()) return false;
+    if (!this.isEligible()) return false;
     const state = this.getState(userId);
     const today = this._getTodayDateStr();
     return state.lastClaimDate !== today;
   },
 
   getStatus(userId) {
-    const isStudent = this.isStudent();
+    const isStudent = this.isEligible();
     if (!isStudent) {
       return {
         isStudent: false,
@@ -864,8 +870,8 @@ const DailyLoginStore = {
   },
 
   claimToday(userId) {
-    if (!this.isStudent()) {
-      return { success: false, message: 'Daily Login rewards are reserved for students only.' };
+    if (!this.isEligible()) {
+      return { success: false, message: 'Daily Login rewards are not available for this account.' };
     }
 
     const state = this.getState(userId);
@@ -993,4 +999,3 @@ if (typeof window !== 'undefined') {
   window.GameSkinsCatalog = GameSkinsCatalog;
   window.DailyLoginStore = DailyLoginStore;
 }
-

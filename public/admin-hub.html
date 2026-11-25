@@ -35,6 +35,12 @@
 
     /* Sent-items list */
     .ah-actions-danger:hover { color: #ef4444; border-color: rgba(239, 68, 68, .5); }
+
+    /* Delete confirmation popup */
+    .modal.ah-confirm { max-width: 440px; }
+    .ah-confirm .modal-body p { margin: 0; line-height: 1.6; color: var(--text-secondary); }
+    .ah-btn-danger { background: #ef4444; border-color: #ef4444; color: #fff; }
+    .ah-btn-danger:hover { background: #dc2626; border-color: #dc2626; }
     .ah-audience { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-muted); }
 
 
@@ -409,6 +415,21 @@
                 <button class="btn btn-secondary" data-close="pollVotersModal">Close</button>
               </div>
             </div>
+          </div>
+          <div class="modal-overlay" id="deleteConfirmModal">
+            <div class="modal ah-modal ah-confirm" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+              <div class="modal-header">
+                <h2 id="deleteConfirmTitle">Delete this item?</h2>
+                <button class="btn btn-ghost btn-icon sm" aria-label="Close" data-close="deleteConfirmModal">✕</button>
+              </div>
+              <div class="modal-body">
+                <p id="deleteConfirmText">This can’t be undone.</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="deleteConfirmModal">Cancel</button>
+                <button class="btn ah-btn-danger" id="deleteConfirmBtn" data-confirm-delete>🗑️ Delete</button>
+              </div>
+            </div>
           </div>`);
         initPollForm();
       }
@@ -609,7 +630,10 @@
             if (!user) return;
 
             hub.unsubscribe = onSnapshot(collection(db, hub.collection), (snapshot) => {
-              hub.items = snapshot.docs.map((d) => toHubDoc(d, hub.collection));
+              hub.items = snapshot.docs
+                .map((d) => toHubDoc(d, hub.collection))
+                // Items sent by staff (senderRole: "staff") are private to the Staff Hub — hide them from the Admin Hub
+                .filter((item) => String(item.senderRole || '').toLowerCase() !== 'staff');
               hub.error = null;
               hub.ready = true;
               renderFeed();
@@ -1029,8 +1053,20 @@
       }
 
       // ─── Actions ───
+      // Pressing Delete opens the confirmation popup; the popup's Delete button runs deleteItem().
+      let pendingDelete = null;
+
+      function askDelete(type, id, collectionName) {
+        pendingDelete = { type, id, collectionName };
+        $('deleteConfirmTitle').textContent = `Delete this ${type}?`;
+        $('deleteConfirmText').textContent = type === 'poll'
+          ? 'This poll and all of its votes will be removed. This can’t be undone.'
+          : `This ${type} will be removed for everyone. This can’t be undone.`;
+        UI.openModal('deleteConfirmModal');
+        $('deleteConfirmBtn').focus();
+      }
+
       async function deleteItem(type, id, collectionName) {
-        if (!confirm(type === 'poll' ? 'Delete this poll and all of its votes? This can’t be undone.' : `Delete this ${type}? This can’t be undone.`)) return;
         try {
           await deleteDoc(doc(db, collectionName || HUB[type].collection, id));
           if (type === 'poll') {
@@ -1087,9 +1123,17 @@
             return submit(kind);
           }
 
+          if (e.target.closest('[data-confirm-delete]')) {
+            UI.closeModal('deleteConfirmModal');
+            const item = pendingDelete;
+            pendingDelete = null;
+            if (item) deleteItem(item.type, item.id, item.collectionName);
+            return;
+          }
+
           const actionBtn = e.target.closest('[data-action]');
           if (!actionBtn) return;
-          if (actionBtn.dataset.action === 'delete') deleteItem(actionBtn.dataset.type, actionBtn.dataset.id, actionBtn.dataset.collection);
+          if (actionBtn.dataset.action === 'delete') askDelete(actionBtn.dataset.type, actionBtn.dataset.id, actionBtn.dataset.collection);
           if (actionBtn.dataset.action === 'voters') openVoters(actionBtn.dataset.id);
           if (actionBtn.dataset.action === 'pin') togglePin(actionBtn.dataset.id, actionBtn.dataset.pinned === '1', actionBtn.dataset.collection);
         });

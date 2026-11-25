@@ -55,6 +55,9 @@
             <button class="tab-btn" data-role="admin" onclick="setRoleFilter('admin')">
               🛡️ Admins (<span id="tabCountAdmins">0</span>)
             </button>
+            <button class="tab-btn" data-role="staff" onclick="setRoleFilter('staff')">
+              🧑‍🏫 Staff (<span id="tabCountStaff">0</span>)
+            </button>
             <button class="tab-btn" data-role="student" onclick="setRoleFilter('student')">
               🎓 Students (<span id="tabCountStudents">0</span>)
             </button>
@@ -138,8 +141,13 @@
     let unsubscribers = [];
     let adminUsers = [];
     let studentUsers = [];
+    let staffUsers = [];
     let adminReady = false;
     let studentReady = false;
+    let staffReady = false;
+
+    // Firestore collection that holds the staff accounts (change this if yours is named differently)
+    const STAFF_COLLECTION = 'staff_account';
 
     // The last list is kept for this browser session, so coming back to this page draws instantly
     // while the live data loads in the background.
@@ -210,8 +218,8 @@
 
     function publishUsers() {
       // Wait until both lists have answered once, so the totals never flash a half-loaded number
-      if (!adminReady || !studentReady) return;
-      allUsersList = [...adminUsers, ...studentUsers];
+      if (!adminReady || !studentReady || !staffReady) return;
+      allUsersList = [...adminUsers, ...staffUsers, ...studentUsers];
       writeCache();
       updateCounters(allUsersList);
       filterUsers();
@@ -239,19 +247,22 @@
       unsubscribers = [];
       adminReady = false;
       studentReady = false;
+      staffReady = false;
       if (allUsersList.length === 0) showTableMessage('Loading accounts from Cloud Firestore...');
 
       unsubscribers.push(onSnapshot(collection(db, "admin_account"), (snap) => {
         adminUsers = snap.docs.map(d => {
           const data = d.data();
+          const isStaff = String(data.role || '').toLowerCase() === 'staff';
           return {
             id: d.id,
             uid: data.uid || d.id,
-            name: data.fullName || data.name || 'Unnamed Admin',
+            name: data.fullName || data.name || (isStaff ? 'Unnamed Staff' : 'Unnamed Admin'),
             email: data.email || '—',
-            role: 'admin',
-            department: data.department || 'Administration',
-            position: data.position || data.title || 'Administrator',
+            role: isStaff ? 'staff' : 'admin',
+            collection: 'admin_account',
+            department: data.department || (isStaff ? '—' : 'Administration'),
+            position: data.position || data.title || (isStaff ? 'Staff' : 'Administrator'),
             year: '—',
             createdAt: toIso(data.createdAt)
           };
@@ -269,6 +280,7 @@
             name: data.fullName || data.name || 'Unnamed Student',
             email: data.email || '—',
             role: 'student',
+            collection: 'student_account',
             department: data.department || '—',
             position: '—',
             year: data.year || data.yearLevel || data.academicYear || '—',
@@ -278,19 +290,48 @@
         studentReady = true;
         publishUsers();
       }, handleLoadError));
+
+      unsubscribers.push(onSnapshot(collection(db, STAFF_COLLECTION), (snap) => {
+        staffUsers = snap.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            uid: data.uid || d.id,
+            name: data.fullName || data.name || 'Unnamed Staff',
+            email: data.email || '—',
+            role: 'staff',
+            collection: STAFF_COLLECTION,
+            department: data.department || '—',
+            position: data.position || data.title || data.jobTitle || 'Staff',
+            year: '—',
+            createdAt: toIso(data.createdAt)
+          };
+        });
+        staffReady = true;
+        publishUsers();
+      }, (err) => {
+        // Don't let a staff-list problem hide the admins and students
+        console.error('Error loading staff accounts from Firestore (' + STAFF_COLLECTION + '):', err);
+        staffUsers = [];
+        staffReady = true;
+        publishUsers();
+        UI.toast('Could not load staff accounts' + (err && err.code === 'permission-denied' ? ': Firebase denied access (check the Firestore rules for ' + STAFF_COLLECTION + ').' : '.'), 'warning');
+      }));
     }
 
     function updateCounters(list) {
       const admins = list.filter(u => u.role === 'admin').length;
+      const staff = list.filter(u => u.role === 'staff').length;
       const students = list.filter(u => u.role === 'student').length;
       const total = list.length;
 
       document.getElementById('statTotalUsers').textContent = total;
-      document.getElementById('statAdmins').textContent = admins;
+      document.getElementById('statAdmins').textContent = admins + staff;
       document.getElementById('statStudents').textContent = students;
 
       document.getElementById('tabCountAll').textContent = total;
       document.getElementById('tabCountAdmins').textContent = admins;
+      document.getElementById('tabCountStaff').textContent = staff;
       document.getElementById('tabCountStudents').textContent = students;
     }
 
@@ -345,15 +386,17 @@
 
         const roleBadge = u.role === 'admin'
           ? '<span class="badge badge-primary">🛡️ Admin</span>'
-          : '<span class="badge badge-info">🎓 Student</span>';
+          : u.role === 'staff'
+            ? '<span class="badge badge-warning">🧑‍🏫 Staff</span>'
+            : '<span class="badge badge-info">🎓 Student</span>';
 
-        const yearOrPosition = u.role === 'admin' ? (u.position || '—') : (u.year || '—');
+        const yearOrPosition = (u.role === 'admin' || u.role === 'staff') ? (u.position || '—') : (u.year || '—');
         const createdDate = formatCreatedAt(u.createdAt);
         const initials = Auth.getInitials(u.name);
 
         const actionButton = isSelf
           ? `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.4; cursor:not-allowed;" title="You cannot delete your own account">🗑️ Delete</button>`
-          : `<button class="btn btn-danger btn-sm" onclick="openDeleteUserModal('${u.id}', '${u.role}', '${escapeHtml(u.name)}', '${escapeHtml(u.email)}')">🗑️ Delete</button>`;
+          : `<button class="btn btn-danger btn-sm" onclick="openDeleteUserModal('${u.id}', '${u.role}', '${escapeHtml(u.name)}', '${escapeHtml(u.email)}', '${u.collection || ''}')">🗑️ Delete</button>`;
 
         return `
           <tr id="user-row-${u.id}">
@@ -406,12 +449,13 @@
         .replace(/'/g, '&#39;');
     }
 
-    function openDeleteUserModal(id, role, name, email) {
-      userToDelete = { id, role, name, email };
-      const roleStr = role === 'admin' ? 'Admin' : 'Student';
+    function openDeleteUserModal(id, role, name, email, collectionName) {
+      userToDelete = { id, role, name, email, collection: collectionName };
+      const roleStr = role === 'admin' ? 'Admin' : role === 'staff' ? 'Staff' : 'Student';
+      const roleBadgeClass = role === 'admin' ? 'badge-primary' : role === 'staff' ? 'badge-warning' : 'badge-info';
       document.getElementById('deleteUserNotice').innerHTML = `
         Are you sure you want to permanently delete <b>${escapeHtml(name)}</b> (<code style="color:var(--primary-300);">${escapeHtml(email)}</code>)?<br>
-        Role: <span class="badge ${role === 'admin' ? 'badge-primary' : 'badge-info'}">${roleStr}</span>
+        Role: <span class="badge ${roleBadgeClass}">${roleStr}</span>
       `;
       UI.openModal('deleteUserModal');
     }
@@ -429,7 +473,8 @@
         // NOTE: The Firebase client SDK cannot delete another user's Auth record (which requires the Firebase Admin SDK or Cloud Functions).
         // However, the login check in step 3 verifies that admin_account/{uid} exists (and student website checks student_account/{uid});
         // therefore, deleting the Firestore document here effectively blocks anyone whose document is gone from logging in.
-        const collectionName = userToDelete.role === 'admin' ? 'admin_account' : 'student_account';
+        const collectionName = userToDelete.collection ||
+          (userToDelete.role === 'admin' ? 'admin_account' : userToDelete.role === 'staff' ? STAFF_COLLECTION : 'student_account');
         await deleteDoc(doc(db, collectionName, userToDelete.id));
 
         UI.closeModal('deleteUserModal');
