@@ -1518,7 +1518,31 @@ const DailyLoginUI = {
     this.checkAutoPrompt();
   },
 
+  // Performance tweaks for the rewards popup. Injected once; they only override how things are drawn,
+  // not how they look.
+  injectPerfStyles() {
+    if (document.getElementById('dailyPerfStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'dailyPerfStyles';
+    style.textContent = `
+      /* Full-screen blur is the most expensive effect on the page: drop it, the dark overlay stays */
+      .daily-modal-overlay { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+      /* Hidden popups must not keep running (infinite) animations in the background */
+      .daily-modal-overlay:not(.active) * { animation-play-state: paused !important; }
+      /* Each day card is laid out and painted on its own */
+      .daily-day-card { contain: layout style; }
+      /* Confetti + points bubble: GPU layers, no glow shadows, never block clicks */
+      .daily-confetti-particle { will-change: transform, opacity; pointer-events: none; box-shadow: none !important; }
+      .daily-points-counter-bubble { will-change: transform, opacity; pointer-events: none; }
+      @media (prefers-reduced-motion: reduce) {
+        .daily-modal-overlay *, .daily-confetti-particle { animation: none !important; transition-duration: .01s !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  },
+
   injectModals() {
+    this.injectPerfStyles();
     if (document.getElementById('dailyLoginModalOverlay')) return;
 
     // Daily Login Rewards Modal HTML
@@ -1586,7 +1610,8 @@ const DailyLoginUI = {
     this.injectModals();
     this.renderModal();
     const el = document.getElementById('dailyLoginModalOverlay');
-    if (el) el.classList.add('active');
+    // Show on the next frame so the open animation isn't competing with the content being built
+    if (el) requestAnimationFrame(() => el.classList.add('active'));
   },
 
   closeModal() {
@@ -1603,7 +1628,7 @@ const DailyLoginUI = {
     this._activeLockerGame = game;
     this.renderLocker();
     const el = document.getElementById('gameSkinsLockerOverlay');
-    if (el) el.classList.add('active');
+    if (el) requestAnimationFrame(() => el.classList.add('active'));
   },
 
   closeLockerModal() {
@@ -1768,7 +1793,7 @@ const DailyLoginUI = {
     setTimeout(() => {
       const activeCard = body.querySelector('.daily-day-card.today-active');
       if (activeCard && window.innerWidth <= 820) {
-        activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        activeCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
       }
     }, 120);
   },
@@ -1803,10 +1828,17 @@ const DailyLoginUI = {
   handleClaim() {
     const claimBtn = document.getElementById('btnClaimDailyReward');
     if (claimBtn) {
+      if (claimBtn.disabled) return; // already claiming
       claimBtn.disabled = true;
       claimBtn.innerHTML = `<span>✨</span> Claiming...`;
     }
 
+    // Let the browser paint the button change before the (heavier) claim work runs,
+    // so the click feels instant.
+    requestAnimationFrame(() => setTimeout(() => this._finishClaim(claimBtn), 0));
+  },
+
+  _finishClaim(claimBtn) {
     const result = DailyLoginStore.claimToday();
     if (!result.success) {
       UI.toast(result.message, 'warning');
@@ -1838,11 +1870,6 @@ const DailyLoginUI = {
     // 3. Points counter animation rolling up from 0 to +X pts
     this.animatePointsCounter(targetPoints, animAnchor);
 
-    // Secondary sparkle burst near claim button if separate
-    if (claimBtn && activeCard && claimBtn !== activeCard) {
-      setTimeout(() => this.spawnConfetti(claimBtn), 140);
-    }
-
     // 4. After the flip & glow completes, transition card to green, re-render, and celebrate
     setTimeout(() => {
       if (activeCard) {
@@ -1863,26 +1890,34 @@ const DailyLoginUI = {
 
       UI.toast(`🎉 Claimed ${result.reward.title}! +${result.reward.points} Arcade Points & Game Skins unlocked!`, 'success');
 
-      // Refresh any active on-page widgets
-      const banner = document.getElementById('studentDailyBannerContainer');
-      if (banner) {
-        this.renderBanner('studentDailyBannerContainer');
-      }
-
-      // If on games page, refresh games stats & skins
-      if (typeof refreshStatsUI === 'function') {
-        refreshStatsUI();
-      }
-      if (typeof applyAllEquippedGameSkins === 'function') {
-        applyAllEquippedGameSkins();
-      }
+      // Refresh on-page widgets a moment later, so this frame isn't doing everything at once
+      const refreshWidgets = () => {
+        const banner = document.getElementById('studentDailyBannerContainer');
+        if (banner) {
+          this.renderBanner('studentDailyBannerContainer');
+        }
+        // If on games page, refresh games stats & skins
+        if (typeof refreshStatsUI === 'function') {
+          refreshStatsUI();
+        }
+        if (typeof applyAllEquippedGameSkins === 'function') {
+          applyAllEquippedGameSkins();
+        }
+      };
+      if (window.requestIdleCallback) requestIdleCallback(refreshWidgets, { timeout: 400 });
+      else setTimeout(refreshWidgets, 80);
     }, 720);
   },
 
   spawnConfetti(sourceEl) {
+    // Respect "reduce motion" and keep low-end devices smooth with fewer particles
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || window.innerWidth <= 820;
+    const count = lowEnd ? 14 : 24;
+
+    // Measure once, before touching the DOM
     let originX = window.innerWidth / 2;
     let originY = window.innerHeight / 2;
-
     if (sourceEl) {
       const rect = sourceEl.getBoundingClientRect();
       originX = rect.left + rect.width / 2;
@@ -1896,7 +1931,10 @@ const DailyLoginUI = {
     ];
     const emojis = ['✨', '⭐', '🎁', '🎉'];
 
-    const count = 38;
+    const fragment = document.createDocumentFragment();
+    const particles = [];
+    let maxDuration = 0;
+
     for (let i = 0; i < count; i++) {
       const isEmoji = i % 5 === 0;
       const el = document.createElement('div');
@@ -1909,38 +1947,41 @@ const DailyLoginUI = {
       const rot = (Math.random() - 0.5) * 720;
       const scale = 0.6 + Math.random() * 0.7;
       const duration = 0.8 + Math.random() * 0.4;
+      maxDuration = Math.max(maxDuration, duration);
 
       if (isEmoji) {
         el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
         el.style.fontSize = `${1 + Math.random() * 0.8}rem`;
         el.style.background = 'transparent';
       } else {
-        const isCircle = Math.random() > 0.5;
-        const w = 7 + Math.random() * 7;
-        const h = 5 + Math.random() * 8;
-        el.style.width = `${w}px`;
-        el.style.height = `${h}px`;
+        el.style.width = `${7 + Math.random() * 7}px`;
+        el.style.height = `${5 + Math.random() * 8}px`;
         el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        el.style.borderRadius = isCircle ? '50%' : '2px';
-        el.style.boxShadow = `0 0 8px ${el.style.backgroundColor}`;
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
       }
 
       el.style.position = 'fixed';
       el.style.left = `${originX}px`;
       el.style.top = `${originY}px`;
-      el.style.transform = 'translate(-50%, -50%) scale(0.2)';
+      el.style.transform = 'translate3d(-50%, -50%, 0) scale(0.2)';
       el.style.opacity = '1';
       el.style.transition = `transform ${duration}s cubic-bezier(0.12, 0.8, 0.32, 1), opacity ${duration}s ease-in`;
 
-      document.body.appendChild(el);
+      particles.push({ el, destX, destY, rot, scale });
+      fragment.appendChild(el);
+    }
 
-      requestAnimationFrame(() => {
-        el.style.transform = `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) rotate(${rot}deg) scale(${scale})`;
+    // One DOM insert, one animation frame for all particles
+    document.body.appendChild(fragment);
+    requestAnimationFrame(() => {
+      particles.forEach(({ el, destX, destY, rot, scale }) => {
+        el.style.transform = `translate3d(calc(-50% + ${destX}px), calc(-50% + ${destY}px), 0) rotate(${rot}deg) scale(${scale})`;
         el.style.opacity = '0';
       });
+    });
 
-      setTimeout(() => el.remove(), duration * 1000 + 100);
-    }
+    // One cleanup timer for the whole burst
+    setTimeout(() => particles.forEach(({ el }) => el.remove()), maxDuration * 1000 + 100);
   },
 
   animatePointsCounter(targetPoints, anchorEl) {
