@@ -169,9 +169,9 @@
       ];
       const NOTIF_ICONS = ['📢', '🔔', '⚠️', '🔴', '✅', '📅', '🎉', '💡', '🏫', '💻'];
       const AUDIENCES = [
-        { value: 'all', label: '👥 All Campus (Student Only)', short: '👥 All Students' },
+        { value: 'all', label: '👥 All Campus', short: '👥 All Campus' },
         { value: 'students', label: '🎓 Specific Students', short: '🎓 Specific Students' },
-        { value: 'faculty', label: '🧑‍🏫 Faculty & Staff', short: '🧑‍🏫 Faculty & Staff' }
+        { value: 'faculty', label: '🧑‍🏫 Instructors and Professors', short: '🧑‍🏫 Instructors and Professors' }
       ];
       const DEPARTMENTS = [
         { value: 'all', label: 'All Departments' },
@@ -224,7 +224,7 @@
           const dept = DEPARTMENTS.find(d => d.value.toLowerCase() === String(item.target1).toLowerCase());
           return `<span class="ah-audience">${esc('🎓 Specific Students · ' + (dept ? dept.label : item.target1) + ' · ' + (item.target2 || 'All Year Level'))}</span>`;
         }
-        const target = item.target || 'all';
+        const target = item.target === 'Instructors and Professors' ? 'faculty' : (item.target || 'all');
         let label = (AUDIENCES.find(a => a.value === target) || AUDIENCES[0]).short;
         if (target === 'students') {
           if (item.department && item.department !== 'all') label += ' · ' + item.department;
@@ -292,7 +292,7 @@
                 <select class="form-select" id="annPriority">${options(PRIORITIES)}</select>
               </div>
             </div>
-            ${audienceFields('ann', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}
+            ${audienceFields('ann', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed). <strong>Instructors and Professors</strong> goes only to the Staff Inbox of instructors and professors.')}
             <div class="form-group">
               <label class="form-checkbox-group"><input type="checkbox" id="annPinned"> 📌 Pin this announcement</label>
             </div>`
@@ -328,7 +328,7 @@
                 <input class="form-input" id="evLocation" type="text" placeholder="e.g. Main Auditorium">
               </div>
             </div>
-            ${audienceFields('ev', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}`
+            ${audienceFields('ev', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed). <strong>Instructors and Professors</strong> goes only to the Staff Inbox of instructors and professors.')}`
         },
         notification: {
           modalId: 'notificationModal', prefix: 'nt',
@@ -355,7 +355,7 @@
                 <select class="form-select" id="ntIcon">${NOTIF_ICONS.map(i => `<option value="${i}">${i}</option>`).join('')}</select>
               </div>
             </div>
-            ${audienceFields('nt', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed).')}`
+            ${audienceFields('nt', '<strong>All Campus</strong> goes to the Campus Hub. <strong>Specific Students</strong> goes only to students of the chosen department and year level (shown in their For You feed). <strong>Instructors and Professors</strong> goes only to the Staff Inbox of instructors and professors.')}`
         },
         poll: {
           modalId: 'pollModal', prefix: 'pl',
@@ -384,7 +384,7 @@
                 <input class="form-input" id="plClosing" type="date">
               </div>
             </div>
-            ${audienceFields('pl', 'Students see this on Campus Hub only when the audience is <strong>All Campus (Student Only)</strong>.')}`
+            ${audienceFields('pl', 'Students see this on Campus Hub only when the audience is <strong>All Campus</strong>.')}`
         }
       };
 
@@ -598,6 +598,9 @@
         announcementSS: { collection: 'announcement_SS', items: [], error: null, ready: false, unsubscribe: null },
         eventSS: { collection: 'event_SS', items: [], error: null, ready: false, unsubscribe: null },
         notificationSS: { collection: 'notification_SS', items: [], error: null, ready: false, unsubscribe: null },
+        announcementIP: { collection: 'announcement_IP', items: [], error: null, ready: false, unsubscribe: null },
+        eventIP: { collection: 'event_IP', items: [], error: null, ready: false, unsubscribe: null },
+        notificationIP: { collection: 'notification_IP', items: [], error: null, ready: false, unsubscribe: null },
         notification: { collection: 'notification_hub', items: [], error: null, ready: false, unsubscribe: null },
         poll: { collection: 'poll_hub', items: [], error: null, ready: false, unsubscribe: null }
       };
@@ -648,7 +651,7 @@
         });
       }
 
-      const LABELS = { announcement: 'Announcements', announcementSS: 'Specific-student announcements', eventSS: 'Specific-student events', notificationSS: 'Specific-student notifications', event: 'Events', notification: 'Notifications', poll: 'Polls' };
+      const LABELS = { announcement: 'Announcements', announcementSS: 'Specific-student announcements', eventSS: 'Specific-student events', notificationSS: 'Specific-student notifications', announcementIP: 'Instructor and professor announcements', eventIP: 'Instructor and professor events', notificationIP: 'Instructor and professor notifications', event: 'Events', notification: 'Notifications', poll: 'Polls' };
       const CREATE_LABELS = { announcement: '✚ New Announcement', event: '✚ New Event', notification: '✚ New Notification', poll: '✚ New Poll' };
 
       // ─── Submit ───
@@ -684,10 +687,10 @@
         return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
       }
 
-      // Only "All Campus (Student Only)" is connected to Firebase.
+      // Polls are only connected to "All Campus".
       function requireAllCampus(prefix) {
         if ($(prefix + 'Target').value !== 'all') {
-          UI.toast('Only “All Campus (Student Only)” is connected to Firebase right now. Please choose it as the audience.', 'warning');
+          UI.toast('Polls can only be sent to “All Campus” right now. Please choose it as the audience.', 'warning');
           $(prefix + 'Target').focus();
           return false;
         }
@@ -700,14 +703,9 @@
 
       // Announcements and events: "All Campus" → announcement_hub / event_hub,
       // "Specific Students" → announcement_SS / event_SS with target1 (department) and target2 (year level).
-      // Faculty & Staff is not connected yet.
+      // "Instructors and Professors" → announcement_IP / event_IP / notification_IP with target "Instructors and Professors".
       function requireAudience(prefix) {
         const target = $(prefix + 'Target').value;
-        if (target === 'faculty') {
-          UI.toast('Faculty & Staff is not connected to Firebase yet. Choose All Campus or Specific Students.', 'warning');
-          $(prefix + 'Target').focus();
-          return false;
-        }
         if (target === 'students' && $(prefix + 'Dept').value === 'all') {
           UI.toast('Pick a specific department for Specific Students.', 'warning');
           $(prefix + 'Dept').focus();
@@ -721,6 +719,18 @@
       }
 
       function audienceTarget(prefix, kind) {
+        if ($(prefix + 'Target').value === 'faculty') {
+          return {
+            collection: HUB[kind + 'IP'].collection,
+            fields: {
+              author: currentAuthor(),
+              authorId: auth.currentUser.uid,
+              createdAt: serverTimestamp(),
+              target: 'Instructors and Professors'
+            },
+            sentTo: 'Instructors and Professors'
+          };
+        }
         if ($(prefix + 'Target').value !== 'students') {
           return { collection: HUB[kind].collection, fields: hubFields(), sentTo: '' };
         }
@@ -841,9 +851,9 @@
         const dayMs = (d) => new Date((d || today()) + 'T00:00:00').getTime();
 
         return [
-          ...[...HUB.announcement.items, ...HUB.announcementSS.items].map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
-          ...[...HUB.event.items, ...HUB.eventSS.items].map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
-          ...[...HUB.notification.items, ...HUB.notificationSS.items].map(n => ({ type: 'notification', data: n, category: n.category, rank: 1, sort: n.createdMs || dayMs(n.date) })),
+          ...[...HUB.announcement.items, ...HUB.announcementSS.items, ...HUB.announcementIP.items].map(a => ({ type: 'announcement', data: a, category: a.category, rank: a.pinned ? 0 : 1, sort: a.createdMs || dayMs(a.date) })),
+          ...[...HUB.event.items, ...HUB.eventSS.items, ...HUB.eventIP.items].map(e => ({ type: 'event', data: e, category: e.category, rank: 1, sort: dayMs(e.date) })),
+          ...[...HUB.notification.items, ...HUB.notificationSS.items, ...HUB.notificationIP.items].map(n => ({ type: 'notification', data: n, category: n.category, rank: 1, sort: n.createdMs || dayMs(n.date) })),
           ...HUB.poll.items.map(p => ({ type: 'poll', data: p, category: p.category, rank: 1, sort: p.createdMs || dayMs(p.date) }))
         ].sort((a, b) => a.rank - b.rank || b.sort - a.sort);
       }
